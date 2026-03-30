@@ -216,6 +216,15 @@
       transition: var(--transition);
     }
 
+    /* ===== T6 US-03: CSS responsivo para .carnet-preview img ===== */
+    .carnet-preview img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      width: 100%;
+      object-fit: contain;
+      transition: var(--transition);
+    }
     .carnet::before {
       content: '';
       position: absolute;
@@ -585,6 +594,27 @@
         -webkit-tap-highlight-color: rgba(57, 169, 53, 0.1);
       }
     }
+
+    /* ===== T6 US-03 ===== */
+    .carnet-preview img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      width: 100%;
+      object-fit: contain;
+      transition: var(--transition);
+    }
+
+    /* ===== MEDIDAS PARA IMPRESIÓN ===== */
+    @media print {
+
+      .carnet-preview img {
+        max-width: var(--carnet-width) !important;
+        height: var(--carnet-height) !important;
+        object-fit: contain !important;
+      }
+    }
+
   </style>
 </head>
 <body>

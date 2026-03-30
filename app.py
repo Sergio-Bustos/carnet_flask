@@ -81,6 +81,8 @@ def actualizar_base_datos_sena():
                     red_tecnologica TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    
+                    
                 )
             """)
             print("Tabla empleados creada exitosamente")
@@ -101,7 +103,8 @@ def actualizar_base_datos_sena():
                 'nivel_formacion': 'TEXT DEFAULT "Técnico"',
                 'red_tecnologica': 'TEXT',
                 'created_at': 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP',
-                'updated_at': 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP'
+                'updated_at': 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP',
+                'carnet_disponible': 'INTEGER DEFAULT 0'
             }
             
             # Agregar columnas faltantes
@@ -1083,10 +1086,30 @@ def dashboard_admin():
     if 'usuario' not in session or session['rol'] != 'admin':
         flash('Debes iniciar sesión como administrador para acceder.', 'error')
         return redirect(url_for('login'))
-    
-    # Obtener estadísticas para el dashboard
+
     stats = obtener_estadisticas_dashboard()
-    return render_template("dashboard_admin.html", usuario=session['usuario'], stats=stats)
+
+    # Consultar carnets marcados como disponibles
+    conn = sqlite3.connect('carnet.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM empleados WHERE carnet_disponible = 1")
+    carnets_disponibles = cursor.fetchone()[0]
+    cursor.execute("""
+        SELECT nombre, cedula, codigo
+        FROM empleados
+        WHERE carnet_disponible = 1
+    """)
+    carnets = cursor.fetchall()
+    conn.close()
+
+    stats['carnets_disponibles'] = carnets_disponibles
+
+    return render_template(
+        "dashboard_admin.html",
+        usuario=session['usuario'],
+        stats=stats,
+        carnets=carnets   # ESTA ES LA NUEVA VARIABLE
+    )
 
 @app.route('/dashboard_aprendiz')
 def dashboard_aprendiz():
@@ -1231,11 +1254,12 @@ def api_lista_aprendices_filtrada():
 def api_buscar_aprendiz(cedula):
     """Buscar un aprendiz específico por cédula"""
     try:
+
         cedula_limpia = ''.join(filter(str.isdigit, cedula))
         empleado = buscar_empleado_completo(cedula_limpia)
         
         if empleado:
-            # Verificar foto
+            # ✅ VERIFICAR FOTO
             if empleado['foto']:
                 ruta_foto = os.path.join('static/fotos', empleado['foto'])
                 empleado['foto_existe'] = os.path.exists(ruta_foto)
@@ -1243,7 +1267,17 @@ def api_buscar_aprendiz(cedula):
             else:
                 empleado['foto_existe'] = False
                 empleado['foto_url'] = None
-            
+
+            # ✅ VERIFICAR CARNET (CORRECTO)
+            carpeta_carnets = os.path.join(app.root_path, 'static', 'carnets')
+
+            try:
+                archivos = os.listdir(carpeta_carnets)
+                empleado['carnet_generado'] = any(cedula_limpia in f for f in archivos)
+            except Exception as e:
+                print("Error leyendo carnets:", e)
+                empleado['carnet_generado'] = False
+
             return jsonify({'success': True, 'data': empleado})
         else:
             return jsonify({'success': False, 'message': 'Aprendiz no encontrado'})
@@ -1258,6 +1292,7 @@ def api_buscar_aprendiz(cedula):
 
 @app.route('/agregar', methods=['GET', 'POST'])
 def agregar():
+
     print(f"RUTA AGREGAR ACCEDIDA - MÉTODO: {request.method}")
     
     if 'usuario' not in session or session['rol'] != 'admin':
@@ -1614,6 +1649,20 @@ def generar_carnet_web():
             print("Combinando anverso y reverso...")
             reverso_path = f"reverso_{empleado['cedula']}.png"  # Nombre del reverso esperado
             archivo_combinado = combinar_anverso_reverso(nombre_archivo, reverso_path, empleado['nombre'])
+
+
+            conn = sqlite3.connect('carnet.db')
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                UPDATE empleados 
+                SET carnet_disponible = 1 
+                WHERE cedula = ?
+            """, (cedula_limpia,))
+
+            conn.commit()
+            conn.close()
+            
             print(f"Archivo combinado: {archivo_combinado}")
             
             print("Carnet generado exitosamente!")

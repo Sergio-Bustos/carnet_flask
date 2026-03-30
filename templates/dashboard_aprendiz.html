@@ -538,7 +538,19 @@
                         </div>
                         <button type="submit" class="action-button" id="btnConsultar">🔍 Buscar Aprendiz</button>
                     </form>
-                    <div id="resultadoConsulta" style="margin-top:30px"></div>
+                    <div id="resultadoConsulta" style="margin-top:30px">
+
+                    {% if carnet_disponible %}
+                        <div class="alert alert-success">
+                            🎉 Tu carnet ya está disponible
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            ⏳ Tu carnet aún no ha sido generado
+                        </div>
+                    {% endif %}
+
+                    </div>
                 </div>
             </div>
 
@@ -798,7 +810,11 @@
                 html += '<div class="info-display-item"><div class="info-display-label">' + c[0] + '</div><div class="info-display-value">' + c[1] + '</div></div>';
             });
             html += '</div></div>';
-
+            if (aprendiz.carnet_generado) {
+                html += '<div class="alert alert-success">🎉 Tu carnet ya está disponible</div>';
+            } else {
+                html += '<div class="alert alert-warning">⏳ Tu carnet aún no ha sido generado</div>';
+            }
             /* ══ CASO 1: Ya tiene foto → solo el mensaje, SIN formulario ══ */
             if (tieneFoto) {
                 html +=
