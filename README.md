@@ -126,7 +126,6 @@ Para ejecutar en red local (LAN), utiliza el script `iniciar_servidor.ps1` en Wi
 | `usuario` | `123456` | Administrador |
 | `aprendiz` | `aprendiz123` | Aprendiz |
 
-> ⚠️ Cambiar las credenciales antes de despliegue en producción.
 
 ---
 
