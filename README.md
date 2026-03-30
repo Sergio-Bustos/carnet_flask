@@ -174,7 +174,7 @@ Excel SENA → Carga masiva → Validación de duplicados → Registro en BD
 - Juan David Cadena
 - Edison Andrés Martínez
 - Sergio Bustos
-- 
+ 
 ---
 
 ## 🏛️ Información Institucional
