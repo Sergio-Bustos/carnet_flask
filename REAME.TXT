@@ -1,0 +1,7 @@
+docker-compose down        # Apaga y elimina los contenedores actuales
+docker-compose build --no-cache   # Reconstruye la imagen desde cero con todos los cambios
+docker-compose up -d       # Levanta los contenedores en segundo plano
+
+
+
+http://172.20.10.8:5000

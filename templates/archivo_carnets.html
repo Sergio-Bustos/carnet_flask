@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archivo de Carnets - SENA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e8f5e8 0%, #d4f1d4 100%);
+            min-height: 100vh;
+            padding: 15px;
+            padding-top: 70px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+            animation: slideUp 0.6s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: clamp(0.9rem, 3vw, 1.2rem);
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 20px 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .group-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .group-controls span {
+            font-weight: 600;
+            color: #333;
+            font-size: clamp(0.85rem, 2.5vw, 1rem);
+            width: 100%;
+            text-align: center;
+        }
+
+        .group-btn {
+            padding: 10px 18px;
+            border: 2px solid #28a745;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: clamp(0.85rem, 2.5vw, 0.95rem);
+            transition: all 0.3s ease;
+            color: #28a745;
+            background: white;
+            flex: 1;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .group-btn.active {
+            background: #28a745;
+            color: white;
+        }
+
+        .group-btn:hover {
+            background: #28a745;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .search-input {
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #28a745;
+            box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+        }
+
+        .stats-section {
+            padding: 20px 15px;
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+            border-left: 4px solid #28a745;
+        }
+
+        .stat-number {
+            font-size: clamp(1.5rem, 5vw, 2rem);
+            font-weight: bold;
+            color: #28a745;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: clamp(0.75rem, 2.5vw, 0.9rem);
+            font-weight: 500;
+        }
+
+        .content {
+            padding: 20px 15px;
+        }
+
+        .grupos-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .grupo {
+            background: #f8f9fa;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease;
+        }
+
+        .grupo:hover {
+            transform: translateY(-2px);
+        }
+
+        .grupo-header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            gap: 10px;
+        }
+
+        .grupo-header h3 {
+            font-size: clamp(1rem, 3vw, 1.3rem);
+            font-weight: 600;
+            word-break: break-word;
+        }
+
+        .grupo-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+            opacity: 0.9;
+            flex-shrink: 0;
+        }
+
+        .grupo-toggle {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            transition: all 0.3s ease;
+            min-width: 35px;
+        }
+
+        .grupo-toggle:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .carnets-grid {
+            display: none;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            padding: 15px;
+            background: white;
+        }
+
+        .carnets-grid.show {
+            display: grid;
+            animation: slideDown 0.4s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .carnet-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .carnet-card:hover {
+            border-color: #28a745;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.15);
+        }
+
+        .carnet-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .carnet-foto {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #28a745;
+            flex-shrink: 0;
+        }
+
+        .carnet-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .carnet-info h4 {
+            color: #333;
+            font-size: clamp(0.95rem, 3vw, 1.1rem);
+            margin-bottom: 4px;
+            word-break: break-word;
+        }
+
+        .carnet-info p {
+            color: #666;
+            font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+        }
+
+        .carnet-details {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            margin-bottom: 15px;
+            font-size: clamp(0.75rem, 2.5vw, 0.85rem);
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .detail-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .detail-value {
+            color: #333;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .carnet-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: clamp(0.8rem, 2.5vw, 0.85rem);
+            font-weight: 600;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #545862;
+            transform: translateY(-2px);
+        }
+
+        .back-button {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            background: #28a745;
+            color: white;
+            padding: 10px 16px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: clamp(0.85rem, 2.5vw, 0.95rem);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .back-button:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(40, 167, 69, 0.4);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        .empty-state h3 {
+            font-size: clamp(1.2rem, 4vw, 1.5rem);
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .empty-state p {
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
+            line-height: 1.6;
+        }
+
+        /* TABLET - 600px+ */
+        @media (min-width: 600px) {
+            body {
+                padding: 20px;
+                padding-top: 80px;
+            }
+
+            .controls {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                padding: 25px 20px;
+            }
+
+            .group-controls {
+                justify-content: flex-start;
+            }
+
+            .group-controls span {
+                width: auto;
+                text-align: left;
+            }
+
+            .search-box {
+                width: auto;
+                min-width: 280px;
+            }
+
+            .carnets-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 18px;
+                padding: 20px;
+            }
+
+            .carnet-details {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .carnet-actions {
+                flex-direction: row;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+                gap: 15px;
+            }
+
+            .stat-card {
+                padding: 18px;
+            }
+
+            .header {
+                padding: 30px;
+            }
+
+            .content {
+                padding: 25px;
+            }
+
+            .back-button {
+                top: 20px;
+                left: 20px;
+                padding: 12px 20px;
+            }
+        }
+
+        /* DESKTOP - 900px+ */
+        @media (min-width: 900px) {
+            .carnets-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 20px;
+                padding: 25px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                gap: 20px;
+            }
+
+            .stat-card {
+                padding: 20px;
+            }
+
+            .content {
+                padding: 30px;
+            }
+
+            .grupos-container {
+                gap: 30px;
+            }
+        }
+
+        /* LARGE DESKTOP - 1200px+ */
+        @media (min-width: 1200px) {
+            .carnets-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        /* MÓVILES MUY PEQUEÑOS */
+        @media (max-width: 360px) {
+            body {
+                padding: 10px;
+                padding-top: 65px;
+            }
+
+            .container {
+                border-radius: 15px;
+            }
+
+            .header {
+                padding: 20px 15px;
+            }
+
+            .controls {
+                padding: 15px 12px;
+            }
+
+            .stats-section {
+                padding: 15px 12px;
+            }
+
+            .content {
+                padding: 15px 12px;
+            }
+
+            .carnets-grid {
+                padding: 12px;
+                gap: 12px;
+            }
+
+            .carnet-card {
+                padding: 14px;
+            }
+
+            .carnet-foto {
+                width: 50px;
+                height: 50px;
+            }
+
+            .back-button {
+                top: 10px;
+                left: 10px;
+                padding: 8px 12px;
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Touch improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .btn,
+            .group-btn,
+            .back-button,
+            .grupo-header {
+                -webkit-tap-highlight-color: rgba(40, 167, 69, 0.1);
+            }
+        }
+
+        /* Loading spinner */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+            color: #28a745;
+            font-size: clamp(1rem, 3vw, 1.2rem);
+        }
+    </style>
+</head>
+<body>
+    <a href="{{ url_for('dashboard_admin') }}" class="back-button">
+        <span>🏠</span>
+        <span>Volver</span>
+    </a>
+
+    <div class="container">
+        <div class="header">
+            <h1>📁 Archivo de Carnets</h1>
+            <p>Gestiona y visualiza todos los carnets generados</p>
+        </div>
+
+        <!-- Controles -->
+        <div class="controls">
+            <div class="group-controls">
+                <span>Agrupar por:</span>
+                <a href="{{ url_for('archivo_carnets', agrupar='programa') }}" 
+                   class="group-btn {{ 'active' if agrupar_por == 'programa' else '' }}">
+                    📚 Programa
+                </a>
+                <a href="{{ url_for('archivo_carnets', agrupar='ficha') }}" 
+                   class="group-btn {{ 'active' if agrupar_por == 'ficha' else '' }}">
+                    🎯 Ficha
+                </a>
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="searchInput" class="search-input" 
+                       placeholder="🔍 Buscar aprendiz...">
+            </div>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="stats-section">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">{{ estadisticas.total_carnets }}</div>
+                    <div class="stat-label">Carnets Generados</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ estadisticas.total_grupos }}</div>
+                    <div class="stat-label">{{ 'Programas' if agrupar_por == 'programa' else 'Fichas' }}</div>
+                </div>
+                {% for nivel, cantidad in estadisticas.niveles_count.items() %}
+                <div class="stat-card">
+                    <div class="stat-number">{{ cantidad }}</div>
+                    <div class="stat-label">{{ nivel }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Contenido -->
+        <div class="content">
+            {% if grupos %}
+                <div class="grupos-container">
+                    {% for grupo_nombre, aprendices in grupos.items() %}
+                    <div class="grupo" data-grupo="{{ grupo_nombre.lower() }}">
+                        <div class="grupo-header" onclick="toggleGrupo('{{ loop.index0 }}')">
+                            <div>
+                                <h3>
+                                    {% if agrupar_por == 'programa' %}
+                                        📚 {{ grupo_nombre }}
+                                    {% else %}
+                                        🎯 Ficha {{ grupo_nombre }}
+                                    {% endif %}
+                                </h3>
+                            </div>
+                            <div class="grupo-info">
+                                <span>{{ aprendices|length }}</span>
+                                <button class="grupo-toggle" id="toggle-{{ loop.index0 }}">▼</button>
+                            </div>
+                        </div>
+                        
+                        <div class="carnets-grid" id="carnets-{{ loop.index0 }}">
+                            {% for aprendiz in aprendices %}
+                            <div class="carnet-card" data-nombre="{{ aprendiz.nombre.lower() }}">
+                                <div class="carnet-header">
+                                    {% if aprendiz.foto %}
+                                    <img src="{{ url_for('static', filename='fotos/' + aprendiz.foto) }}" 
+                                         alt="Foto {{ aprendiz.nombre }}" class="carnet-foto">
+                                    {% else %}
+                                    <div class="carnet-foto" style="background: #28a745; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.2rem;">
+                                        {{ aprendiz.nombre.split()[0][0] }}{{ aprendiz.nombre.split()[-1][0] if aprendiz.nombre.split()|length > 1 else '' }}
+                                    </div>
+                                    {% endif %}
+                                    <div class="carnet-info">
+                                        <h4>{{ aprendiz.nombre }}</h4>
+                                        <p>{{ aprendiz.tipo_documento }} {{ aprendiz.cedula }}</p>
+                                    </div>
+                                </div>
+
+                                <div class="carnet-details">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Código:</span>
+                                        <span class="detail-value">{{ aprendiz.codigo }}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Nivel:</span>
+                                        <span class="detail-value">{{ aprendiz.nivel_formacion }}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Ficha:</span>
+                                        <span class="detail-value">{{ aprendiz.codigo_ficha }}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Sangre:</span>
+                                        <span class="detail-value">{{ aprendiz.tipo_sangre }}</span>
+                                    </div>
+                                    <div class="detail-item" style="grid-column: 1 / -1;">
+                                        <span class="detail-label">Generado:</span>
+                                        <span class="detail-value">{{ aprendiz.fecha_emision }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="carnet-actions">
+                                    <a href="{{ url_for('ver_carnet_archivo', cedula=aprendiz.cedula) }}" 
+                                       class="btn btn-primary">
+                                        👁️ Ver Carnet
+                                    </a>
+                                    {% if aprendiz.carnet_archivo %}
+                                    <a href="{{ url_for('descargar_carnet', carnet=aprendiz.carnet_archivo) }}" 
+                                       class="btn btn-secondary">
+                                        💾 Descargar
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <h3>📂 No hay carnets generados</h3>
+                    <p>Aún no se han generado carnets en el sistema.<br>
+                    Comienza registrando aprendices y generando sus carnets.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        // Función para alternar la visibilidad de los grupos
+        function toggleGrupo(index) {
+            const carnetsGrid = document.getElementById(`carnets-${index}`);
+            const toggle = document.getElementById(`toggle-${index}`);
+            
+            if (carnetsGrid.classList.contains('show')) {
+                carnetsGrid.classList.remove('show');
+                toggle.textContent = '▼';
+            } else {
+                carnetsGrid.classList.add('show');
+                toggle.textContent = '▲';
+            }
+        }
+
+        // Función de búsqueda mejorada
+        const searchInput = document.getElementById('searchInput');
+        let searchTimeout;
+
+        searchInput.addEventListener('input', function(e) {
+            clearTimeout(searchTimeout);
+            
+            searchTimeout = setTimeout(() => {
+                const searchTerm = e.target.value.toLowerCase();
+                const carnetCards = document.querySelectorAll('.carnet-card');
+                const grupos = document.querySelectorAll('.grupo');
+
+                carnetCards.forEach(card => {
+                    const nombre = card.getAttribute('data-nombre');
+                    
+                    if (nombre.includes(searchTerm)) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                // Mostrar/ocultar grupos según si tienen resultados
+                grupos.forEach(grupo => {
+                    const carnetsGrid = grupo.querySelector('.carnets-grid');
+                    const visibleCards = Array.from(carnetsGrid.querySelectorAll('.carnet-card'))
+                        .filter(card => card.style.display !== 'none');
+                    
+                    if (searchTerm === '') {
+                        grupo.style.display = 'block';
+                        carnetsGrid.classList.remove('show');
+                        const toggle = grupo.querySelector('.grupo-toggle');
+                        if (toggle) toggle.textContent = '▼';
+                    } else if (visibleCards.length > 0) {
+                        grupo.style.display = 'block';
+                        carnetsGrid.classList.add('show');
+                        const toggle = grupo.querySelector('.grupo-toggle');
+                        if (toggle) toggle.textContent = '▲';
+                    } else {
+                        grupo.style.display = 'none';
+                    }
+                });
+            }, 300);
+        });
+
+        // Expandir primer grupo por defecto
+        document.addEventListener('DOMContentLoaded', function() {
+            const firstToggle = document.querySelector('.grupo-toggle');
+            if (firstToggle) {
+                toggleGrupo(0);
+            }
+        });
+
+        // Animación de entrada para las tarjetas
+        if ('IntersectionObserver' in window) {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animation = 'slideUp 0.6s ease forwards';
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.carnet-card').forEach(card => {
+                observer.observe(card);
+            });
+        }
+    </script>
+</body>
+</html>

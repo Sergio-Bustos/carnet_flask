@@ -1,0 +1,3157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Administrativo - SENA</title>
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body { overflow-x: hidden; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── TOP HEADER ── */
+        .top-header {
+            background: linear-gradient(135deg, #39A935 0%, #1e5c1e 100%);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            height: 70px;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+
+        .mobile-menu-toggle {
+            display: none;
+            background: none; border: none;
+            color: white; font-size: 28px;
+            cursor: pointer; padding: 8px;
+            min-width: 44px; min-height: 44px;
+            align-items: center; justify-content: center;
+        }
+
+        .logo {
+            width: 45px; height: 45px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            flex-shrink: 0;
+        }
+
+        .header-title  { font-size: 20px; font-weight: 700; }
+        .header-subtitle { font-size: 12px; opacity: 0.9; display: none; }
+
+        .header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+        .user-info {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 15px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 25px;
+            border: 1px solid rgba(255,255,255,0.2);
+            font-size: 14px; font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .btn-logout {
+            padding: 8px 15px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: flex; align-items: center; gap: 6px;
+            font-size: 13px; font-weight: 600;
+            white-space: nowrap; min-height: 44px;
+        }
+        .btn-logout:hover { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
+
+        /* ── LAYOUT ── */
+        .main-layout {
+            display: flex;
+            margin-top: 70px;
+            min-height: calc(100vh - 70px);
+        }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            width: 280px;
+            background: white;
+            box-shadow: 5px 0 20px rgba(0,0,0,0.1);
+            position: fixed;
+            left: 0; top: 70px;
+            height: calc(100vh - 70px);
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            z-index: 999;
+        }
+
+        .sidebar::-webkit-scrollbar { width: 8px; }
+        .sidebar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .sidebar::-webkit-scrollbar-thumb { background: #39A935; border-radius: 10px; }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            border-bottom: 2px solid #f0f0f0;
+            background: linear-gradient(135deg, #f8f9fa, #fff);
+        }
+        .sidebar-title   { font-size: 18px; font-weight: 700; color: #1e5c1e; margin-bottom: 5px; }
+        .sidebar-subtitle { font-size: 11px; color: #999; }
+
+        .sidebar-menu { padding: 20px 0; }
+        .menu-section { margin-bottom: 25px; }
+        .menu-section-title {
+            font-size: 10px; font-weight: 700; color: #39A935;
+            text-transform: uppercase; letter-spacing: 1.2px;
+            padding: 0 20px; margin-bottom: 10px;
+        }
+
+        .menu-item {
+            display: flex; align-items: center;
+            padding: 12px 20px;
+            color: #333; text-decoration: none;
+            transition: all 0.3s;
+            cursor: pointer; position: relative;
+            border: none; background: none;
+            width: 100%; text-align: left;
+            font-size: 14px; font-weight: 500;
+            min-height: 48px;
+        }
+        .menu-item::before {
+            content: ''; position: absolute;
+            left: 0; top: 0; bottom: 0; width: 4px;
+            background: #39A935; transform: scaleY(0);
+            transition: transform 0.3s;
+        }
+        .menu-item:hover, .menu-item:active {
+            background: linear-gradient(90deg, rgba(57,169,53,0.1), transparent);
+            color: #39A935; padding-left: 25px;
+        }
+        .menu-item.active {
+            background: linear-gradient(90deg, rgba(57,169,53,0.15), transparent);
+            color: #39A935; font-weight: 700;
+        }
+        .menu-item.active::before { transform: scaleY(1); }
+
+        .menu-icon {
+            width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            margin-right: 12px; font-size: 20px;
+            border-radius: 10px; transition: all 0.3s;
+            background: rgba(57,169,53,0.05); flex-shrink: 0;
+        }
+        .menu-item:hover .menu-icon { transform: scale(1.1); background: rgba(57,169,53,0.15); }
+        .menu-item.active .menu-icon { background: rgba(57,169,53,0.2); }
+
+        .menu-text { flex: 1; font-size: 13px; line-height: 1.3; }
+        .menu-badge {
+            background: linear-gradient(135deg, #FF5252, #FF1744);
+            color: white; font-size: 10px;
+            padding: 3px 8px; border-radius: 12px;
+            font-weight: 700; flex-shrink: 0;
+        }
+
+        /* ── CONTENT AREA ── */
+        .content-area {
+            flex: 1; margin-left: 280px;
+            padding: 30px 20px;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            min-height: calc(100vh - 70px);
+            transition: margin-left 0.3s;
+            width: calc(100% - 280px);
+            min-width: 0;
+            overflow-x: hidden;
+        }
+
+        .content-section { display: none; animation: fadeInUp 0.4s ease; }
+        .content-section.active { display: block; }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0);    }
+        }
+
+        /* ── SECTION HEADERS ── */
+        .section-header { margin-bottom: 25px; }
+        .section-title  { font-size: 28px; font-weight: 800; color: #1e5c1e; margin-bottom: 8px; line-height: 1.2; }
+        .section-subtitle { color: #666; font-size: 15px; }
+
+        /* ── WELCOME ── */
+        .welcome-alert {
+            background: linear-gradient(135deg, #39A935, #1e5c1e);
+            color: white; border-radius: 15px;
+            padding: 20px; margin-bottom: 30px;
+            display: flex; align-items: center; gap: 15px;
+            box-shadow: 0 10px 30px rgba(57,169,53,0.3);
+            position: relative; overflow: hidden;
+        }
+        .welcome-icon { font-size: 28px; flex-shrink: 0; }
+        .welcome-text { font-size: 15px; font-weight: 500; line-height: 1.4; }
+
+        /* ── STATS ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 20px; margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white; padding: 25px 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+            border-top: 4px solid #39A935;
+            cursor: pointer; min-height: 110px;
+            display: flex; flex-direction: column; justify-content: center;
+        }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(57,169,53,0.2); }
+        .stat-number { font-size: 36px; font-weight: 800; color: #39A935; margin-bottom: 8px; line-height: 1; }
+        .stat-label  { color: #666; font-size: 14px; font-weight: 600; line-height: 1.3; }
+
+        /* ── CARDS ── */
+        .info-card {
+            background: white; border-radius: 15px;
+            padding: 25px 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+            border-left: 4px solid #39A935;
+            width: 100%;
+            max-width: 100%;
+            overflow: hidden;
+        }
+        .info-card h3 { color: #1e5c1e; margin-bottom: 15px; font-size: 17px; font-weight: 700; }
+
+        /* ── ACTION BUTTONS ── */
+        .action-button {
+            background: linear-gradient(135deg, #39A935, #2E7D32);
+            color: white; border: none;
+            padding: 14px 22px; border-radius: 12px;
+            font-weight: 700; cursor: pointer;
+            transition: all 0.3s; font-size: 14px;
+            text-decoration: none;
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 8px; margin: 6px;
+            box-shadow: 0 5px 15px rgba(57,169,53,0.3);
+            min-height: 48px; white-space: nowrap;
+            max-width: 100%;
+        }
+        .action-button:hover { background: linear-gradient(135deg, #2E7D32, #1e5c1e); transform: translateY(-2px); }
+        .action-button.orange { background: linear-gradient(135deg, #FF9800, #F57C00); box-shadow: 0 5px 15px rgba(255,152,0,0.3); }
+        .action-button.orange:hover { background: linear-gradient(135deg, #F57C00, #E65100); }
+        .action-button.red   { background: linear-gradient(135deg, #f44336, #d32f2f); box-shadow: 0 5px 15px rgba(244,67,54,0.3); }
+        .action-button.red:hover { background: linear-gradient(135deg, #d32f2f, #c62828); }
+
+        /* ── FORMS ── */
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 8px; font-weight: 700; color: #333; font-size: 13px; }
+        .form-input {
+            width: 100%; padding: 14px 16px;
+            border: 2px solid #e0e0e0; border-radius: 10px;
+            font-size: 14px; transition: all 0.3s;
+            background: #f8f9fa; min-height: 48px;
+            max-width: 100%;
+            -webkit-appearance: none;
+        }
+        .form-input:focus {
+            outline: none; border-color: #39A935;
+            background: white; box-shadow: 0 0 0 4px rgba(57,169,53,0.1);
+        }
+
+        /* ── INFO DISPLAY ── */
+        .info-display {
+            background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+            border: 2px solid #39A935;
+            border-radius: 12px; padding: 20px; margin: 15px 0;
+        }
+        .info-display-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px; margin: 12px 0;
+        }
+        .info-display-item { padding: 12px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .info-display-label { font-size: 11px; color: #39A935; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+        .info-display-value { font-size: 15px; color: #1e5c1e; font-weight: 600; word-break: break-word; }
+
+        .filtros-lista-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 12px;
+            margin-top: 16px;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .aprendices-table {
+            width: 100%;
+            min-width: 480px;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        }
+
+        .aprendices-table thead {
+            background: linear-gradient(135deg, #39A935, #2E7D32);
+            color: white;
+        }
+        .aprendices-table th {
+            padding: 10px 8px;
+            text-align: left; font-weight: 700; font-size: 12px;
+            white-space: nowrap;
+        }
+        .aprendices-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 12px; vertical-align: middle;
+        }
+        .aprendices-table tbody tr:hover {
+            background: linear-gradient(90deg, rgba(57,169,53,0.05), transparent);
+        }
+
+        .foto-thumbnail {
+            width: 38px; height: 46px;
+            object-fit: cover; border-radius: 6px;
+            border: 2px solid #39A935;
+        }
+        .foto-placeholder {
+            width: 38px; height: 46px;
+            background: #f0f0f0; border-radius: 6px;
+            border: 2px dashed #ccc;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+        }
+
+        .action-btn-pequeño {
+            background: linear-gradient(135deg, #39A935, #2E7D32);
+            color: white; border: none;
+            padding: 6px 10px; border-radius: 7px;
+            font-weight: 600; cursor: pointer;
+            font-size: 11px; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 4px;
+            min-height: 34px; white-space: nowrap;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .search-section { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .search-section .form-input { flex: 1; min-width: 200px; }
+
+        .button-group { display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap; }
+
+        .alert {
+            padding: 15px 18px; border-radius: 10px;
+            margin-bottom: 20px; border-left: 4px solid;
+            font-size: 14px; line-height: 1.5;
+        }
+        .alert-success { background: #d4edda; border-color: #39A935; color: #155724; }
+        .alert-error   { background: #f8d7da; border-color: #f44336; color: #721c24; }
+        .alert-warning { background: #fff3cd; border-color: #FF9800; color: #856404; }
+
+        .file-input-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; margin-bottom: 15px; }
+        .file-input-wrapper input[type=file] { position: absolute; left: -9999px; }
+        .file-input-label {
+            display: flex; align-items: center; justify-content: center;
+            padding: 30px; border: 2px dashed #39A935;
+            border-radius: 12px; background: #f0f8f4;
+            cursor: pointer; transition: all 0.3s;
+            font-weight: 600; color: #39A935; text-align: center;
+        }
+        .file-input-label:hover { background: #e0f2e9; border-color: #2E7D32; }
+        .file-name { margin-top: 10px; font-size: 12px; color: #666; padding: 8px; background: #f8f9fa; border-radius: 8px; display: none; }
+        .file-name.show { display: block; }
+
+        .success-message {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            border: 2px solid #39A935; border-radius: 15px;
+            padding: 30px; text-align: center; margin: 20px 0;
+        }
+        .success-message h4 { color: #155724; font-size: 24px; margin-bottom: 15px; }
+        .success-message p  { color: #155724; font-size: 16px; line-height: 1.8; }
+
+        .spinner {
+            display: inline-block; width: 40px; height: 40px;
+            border: 4px solid rgba(57,169,53,0.3);
+            border-top-color: #39A935; border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading-overlay {
+            display: none; position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 2000;
+            justify-content: center; align-items: center;
+        }
+        .loading-overlay.active { display: flex; }
+        .loading-content { background: white; padding: 40px; border-radius: 15px; text-align: center; }
+
+        .sidebar-overlay {
+            display: none; position: fixed;
+            top: 70px; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 998;
+        }
+        .sidebar-overlay.active { display: block; }
+
+        @media (min-width: 600px) {
+            .filtros-lista-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (min-width: 960px) {
+            .filtros-lista-grid { grid-template-columns: 1fr 1fr 1fr 1fr auto; align-items: end; }
+            .stats-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-toggle { display: flex; }
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .content-area { margin-left: 0; padding: 20px 15px; width: 100%; }
+            .header-title { font-size: 16px; }
+            .user-info span { display: none; }
+            .user-info { padding: 8px; min-width: 40px; justify-content: center; }
+            .btn-logout span:last-child { display: none; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+            .stat-number { font-size: 30px; }
+            .section-title { font-size: 22px; }
+            .info-display-row { grid-template-columns: 1fr; }
+            .button-group { flex-direction: column; }
+            .button-group button,
+            .button-group .action-button { width: 100%; margin: 4px 0; }
+            .search-section { flex-direction: column; }
+            .search-section .form-input { width: 100%; }
+        }
+
+        @media (max-width: 480px) {
+            .top-header { padding: 10px 12px; height: 60px; }
+            .main-layout { margin-top: 60px; }
+            .sidebar { top: 60px; height: calc(100vh - 60px); width: 85%; max-width: 300px; }
+            .sidebar-overlay { top: 60px; }
+            .logo { width: 38px; height: 38px; font-size: 20px; }
+            .header-title { font-size: 15px; }
+            .content-area { padding: 15px 10px; width: 100%; }
+            .welcome-alert { flex-direction: column; text-align: center; padding: 15px; }
+            .stats-grid { grid-template-columns: 1fr; gap: 10px; }
+            .stat-card { padding: 18px 15px; min-height: 90px; }
+            .stat-number { font-size: 26px; }
+            .section-title { font-size: 20px; }
+            .info-card { padding: 18px 14px; }
+            .action-button { padding: 12px 16px; font-size: 13px; margin: 4px; min-height: 44px; }
+            .form-input { padding: 12px 14px; }
+            .foto-thumbnail, .foto-placeholder { width: 30px; height: 36px; font-size: 14px; }
+            .action-btn-pequeño { padding: 5px 7px; font-size: 10px; min-height: 30px; }
+            .aprendices-table th { padding: 8px 5px; font-size: 11px; }
+            .aprendices-table td { padding: 8px 5px; font-size: 11px; }
+            .aprendices-table { min-width: 400px; }
+            .filtros-lista-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 360px) {
+            .header-title { font-size: 14px; }
+            .stat-number { font-size: 22px; }
+            .section-title { font-size: 18px; }
+        }
+
+        @media (hover: none) and (pointer: coarse) {
+            .menu-item, .action-button, .btn-logout,
+            .form-input, .action-btn-pequeño { min-height: 44px; }
+            .mobile-menu-toggle { min-width: 48px; min-height: 48px; }
+        }
+
+        #contenedorCardsAprendices {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .lista-card {
+            background: white;
+            border: 1px solid #e8f5e9;
+            border-left: 4px solid #39A935;
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .lista-card-top {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .lista-card-top .foto-thumbnail { width: 44px; height: 52px; flex-shrink: 0; }
+        .lista-card-top .foto-placeholder { width: 44px; height: 52px; font-size: 20px; flex-shrink: 0; }
+
+        .lista-card-nombre { font-size: 13px; font-weight: 700; color: #1e5c1e; line-height: 1.3; word-break: break-word; }
+        .lista-card-cedula { font-size: 11px; color: #888; margin-top: 2px; }
+
+        .lista-card-datos { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; margin-bottom: 10px; }
+        .lista-card-dato { font-size: 11px; color: #555; }
+        .lista-card-dato span { font-weight: 600; color: #2E7D32; }
+
+        .lista-card-btn {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            width: 100%; padding: 10px;
+            background: linear-gradient(135deg, #39A935, #2E7D32);
+            color: white; border: none; border-radius: 8px;
+            font-size: 13px; font-weight: 700; cursor: pointer; min-height: 42px;
+        }
+
+        @media (max-width: 768px) {
+            #tablaWrapperAprendices  { display: none !important; }
+            #contenedorCardsAprendices { display: flex !important; }
+        }
+
+        @media (min-width: 769px) {
+            #contenedorCardsAprendices { display: none !important; }
+        }
+
+        .ac-topbar {
+            display: flex; align-items: flex-start; justify-content: space-between;
+            gap: 12px; flex-wrap: wrap;
+            background: white; border-radius: 14px; padding: 14px 18px;
+            margin-bottom: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.07);
+            border-left: 4px solid #39A935;
+        }
+        .ac-topbar-left { display: flex; align-items: center; gap: 10px; }
+        .ac-topbar-icon { font-size: 28px; }
+        .ac-topbar-title { font-size: 17px; font-weight: 800; color: #1e5c1e; }
+        .ac-topbar-sub   { font-size: 12px; color: #888; }
+        .ac-topbar-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 1; justify-content: flex-end; }
+
+        .ac-search-wrap {
+            display: flex; align-items: center;
+            background: #f4f4f4; border-radius: 8px; padding: 0 10px; gap: 6px;
+            border: 2px solid transparent; transition: border-color 0.2s;
+        }
+        .ac-search-wrap:focus-within { border-color: #39A935; background: white; }
+        .ac-search-icon { font-size: 14px; color: #999; }
+        .ac-search-input {
+            border: none; background: transparent;
+            padding: 9px 0; font-size: 13px; width: 180px; outline: none; color: #333;
+        }
+
+        .ac-group-btns { display: flex; gap: 4px; }
+        .ac-group-btn {
+            padding: 7px 12px; border-radius: 7px; font-size: 12px; font-weight: 600;
+            border: 2px solid #e0e0e0; background: white; color: #666; cursor: pointer;
+            transition: all 0.2s; white-space: nowrap;
+        }
+        .ac-group-btn.active { background: linear-gradient(135deg,#39A935,#2E7D32); color: white; border-color: #39A935; }
+
+        .ac-stats-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+        .ac-stat {
+            flex: 1; min-width: 80px; background: white; border-radius: 10px;
+            padding: 10px 12px; text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-top: 3px solid #39A935;
+        }
+        .ac-stat span { display: block; font-size: 22px; font-weight: 800; color: #39A935; line-height: 1; }
+        .ac-stat small { font-size: 11px; color: #888; margin-top: 2px; display: block; }
+
+        .ac-loading { text-align:center; padding:40px; color:#666; }
+        .ac-loading p { margin-top:12px; font-size:14px; }
+
+        .ac-grupo { background: white; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); overflow: hidden; }
+        .ac-grupo-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 11px 16px; background: linear-gradient(135deg, #39A935, #2E7D32);
+            color: white; cursor: pointer; user-select: none;
+        }
+        .ac-grupo-titulo { font-size: 14px; font-weight: 700; }
+        .ac-grupo-badge { background: rgba(255,255,255,0.25); border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: 700; }
+        .ac-grupo-toggle { font-size: 12px; opacity: 0.8; transition: transform 0.2s; }
+        .ac-grupo-toggle.open { transform: rotate(180deg); }
+
+        .ac-carnets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; padding: 12px; }
+
+        .ac-carnet-card {
+            background: white; border: 1px solid #e8f5e9; border-radius: 12px; padding: 12px;
+            display: flex; flex-direction: column; gap: 8px;
+            transition: box-shadow 0.2s, transform 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .ac-carnet-card:hover { box-shadow: 0 8px 20px rgba(57,169,53,0.15); transform: translateY(-2px); }
+
+        .ac-carnet-top { display: flex; align-items: center; gap: 10px; }
+        .ac-carnet-foto { width: 48px; height: 58px; object-fit: cover; border-radius: 8px; border: 2px solid #39A935; flex-shrink: 0; }
+        .ac-carnet-sinfoto {
+            width: 48px; height: 58px; background: #f0f0f0; border-radius: 8px;
+            border: 2px dashed #ccc; display: flex; align-items: center;
+            justify-content: center; font-size: 20px; flex-shrink: 0; color: #bbb;
+        }
+        .ac-carnet-nombre { font-size: 12px; font-weight: 800; color: #1e5c1e; line-height: 1.3; word-break: break-word; }
+        .ac-carnet-cedula { font-size: 11px; color: #888; margin-top: 2px; }
+
+        .ac-carnet-datos { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; background: #f8fff8; border-radius: 6px; padding: 6px 8px; }
+        .ac-carnet-dato { font-size: 10px; color: #555; }
+        .ac-carnet-dato b { color: #2E7D32; display: block; }
+
+        .ac-carnet-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 2px; }
+        .ac-btn-ver, .ac-btn-dl, .ac-btn-delfoto {
+            display: flex; align-items: center; justify-content: center; gap: 4px;
+            padding: 7px 2px; border-radius: 7px; font-size: 11px; font-weight: 700;
+            border: none; cursor: pointer; text-decoration: none; white-space: nowrap;
+            height: 34px; width: 100%; transition: opacity 0.2s;
+        }
+        .ac-btn-ver:hover, .ac-btn-dl:hover, .ac-btn-delfoto:hover { opacity: 0.88; }
+        .ac-btn-ver     { background: linear-gradient(135deg,#39A935,#2E7D32); color:white; }
+        .ac-btn-dl      { background: linear-gradient(135deg,#39A935,#2E7D32); color:white; }
+        .ac-btn-delfoto { background: linear-gradient(135deg,#f44336,#d32f2f); color:white; }
+
+        .ac-empty { text-align:center; padding:30px; color:#999; }
+        .ac-empty-icon { font-size:40px; margin-bottom:8px; }
+
+        @media (max-width: 768px) { .ac-carnets-grid { grid-template-columns: repeat(auto-fill, minmax(180px,1fr)); gap: 8px; padding: 8px; } }
+        @media (max-width: 600px) {
+            .ac-topbar { padding: 12px; }
+            .ac-search-input { width: 130px; }
+            .ac-topbar-right { width: 100%; justify-content: flex-start; }
+            .ac-stat span { font-size: 18px; }
+            .ac-carnets-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+        }
+        @media (max-width: 380px) { .ac-carnets-grid { grid-template-columns: 1fr; } .ac-search-input { width: 100px; } }
+
+        .gc-search-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-top: 14px; }
+        .gc-search-row .form-input { flex: 1; min-width: 180px; margin: 0; }
+        .gc-search-row .action-button { flex-shrink: 0; min-width: 110px; }
+
+        .gc-info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 14px 0; }
+        .gc-info-item { background: #f8f9fa; border-radius: 8px; padding: 10px 12px; border-left: 3px solid #39A935; }
+        .gc-info-label { font-size: 10px; font-weight: 700; color: #39A935; text-transform: uppercase; margin-bottom: 3px; }
+        .gc-info-value { font-size: 13px; font-weight: 600; color: #1e5c1e; word-break: break-word; }
+
+        .gc-foto-preview { width: 80px; height: 96px; object-fit: cover; border-radius: 10px; border: 3px solid #39A935; display: block; margin: 0 auto 12px; }
+        .gc-sin-foto { width: 80px; height: 96px; background: #f0f0f0; border-radius: 10px; border: 3px dashed #ccc; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 12px; }
+
+        .gc-btn-generar {
+            width: 100%; padding: 14px;
+            background: linear-gradient(135deg,#39A935,#2E7D32);
+            color: white; border: none; border-radius: 10px;
+            font-size: 16px; font-weight: 700; cursor: pointer; min-height: 50px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            margin-top: 16px; box-shadow: 0 5px 15px rgba(57,169,53,0.3); transition: all 0.3s;
+        }
+        .gc-btn-generar:hover { background: linear-gradient(135deg,#2E7D32,#1e5c1e); transform: translateY(-2px); }
+        .gc-btn-generar:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        .gc-resultado-ok { text-align: center; padding: 20px 10px; }
+        .gc-resultado-icon { font-size: 52px; margin-bottom: 10px; }
+        .gc-resultado-titulo { font-size: 20px; font-weight: 800; color: #1e5c1e; margin-bottom: 6px; }
+        .gc-resultado-sub    { font-size: 14px; color: #666; margin-bottom: 20px; }
+
+        .gc-btns-resultado { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        .gc-btns-resultado a, .gc-btns-resultado button { flex: 1; min-width: 140px; max-width: 220px; justify-content: center; }
+
+        .gc-alerta-foto { background: #FFF3CD; border-left: 4px solid #FF9800; border-radius: 8px; padding: 12px 14px; color: #856404; font-size: 13px; margin-top: 10px; }
+
+        @media (max-width: 480px) {
+            .gc-info-grid { grid-template-columns: 1fr 1fr; }
+            .gc-btns-resultado a, .gc-btns-resultado button { min-width: 100%; max-width: 100%; }
+        }
+
+        .mc-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 4000; align-items: center; justify-content: center; padding: 16px; backdrop-filter: blur(3px); }
+        .mc-overlay.open { display: flex; }
+
+        .mc-box {
+            background: white; border-radius: 16px; width: 100%; max-width: 900px;
+            max-height: 95vh; overflow-y: auto; padding: 24px; position: relative;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.35); animation: mcEntrada 0.25s ease;
+        }
+        @keyframes mcEntrada { from { opacity:0; transform:scale(0.93) translateY(16px); } to { opacity:1; transform:scale(1) translateY(0); } }
+
+        .mc-close { position: absolute; top: 12px; right: 14px; background: #f0f0f0; border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #555; transition: background 0.2s; }
+        .mc-close:hover { background: #e0e0e0; }
+
+        .mc-nombre { font-size: 16px; font-weight: 800; color: #1e5c1e; margin-bottom: 16px; padding-right: 36px; line-height: 1.3; }
+
+        .mc-caras { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+        .mc-caras .mc-img-wrap img { width: 100%; height: auto; display: block; border-radius: 8px; }
+
+        @media (max-width: 600px) { .mc-caras { grid-template-columns: 1fr; } }
+
+        .mc-cara-label { font-size: 11px; font-weight: 700; color: #39A935; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; text-align: center; }
+
+        .mc-img-wrap { border: 2px solid #e8f5e9; border-radius: 10px; overflow: hidden; background: #fafffe; min-height: 350px; display: flex; align-items: center; justify-content: center; }
+        .mc-img-wrap img { width: 100%; height: auto; display: block; border-radius: 8px; }
+        .mc-spinner { padding: 30px; }
+
+        .mc-error { color: #999; font-size: 12px; text-align: center; padding: 20px; }
+
+        .mc-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+
+
+        @media (max-width: 500px) { .mc-caras { grid-template-columns: 1fr; } .mc-btns { flex-direction: column; } .mc-btns .action-button { width: 100%; } }
+
+        .ef-advertencia { background: linear-gradient(135deg,#FFF8E1,#FFE4B5); border-left: 5px solid #FF9800 !important; }
+        .ef-fichas-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+        .ef-fichas-header h3 { margin: 0; }
+
+        .ef-fichas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-top: 4px; }
+
+        .ef-ficha-card { border: 1px solid #e8f5e9; border-left: 4px solid #39A935; border-radius: 10px; background: #fafffe; padding: 14px; transition: box-shadow 0.2s, transform 0.2s; display: flex; flex-direction: column; }
+        .ef-ficha-card:hover { box-shadow: 0 6px 18px rgba(57,169,53,0.15); transform: translateY(-2px); }
+
+        .ef-ficha-num { font-size: 15px; font-weight: 800; color: #1e5c1e; margin-bottom: 3px; }
+        .ef-ficha-prog { font-size: 11px; color: #666; margin-bottom: 10px; line-height: 1.3; }
+        .ef-ficha-stats { display: flex; gap: 6px; flex-wrap: wrap; min-height: 56px; align-content: flex-start; margin-bottom: 12px; }
+        .ef-ficha-stat { background: #E8F5E9; border-radius: 6px; padding: 4px 8px; font-size: 11px; color: #1e5c1e; font-weight: 600; height: 24px; display: flex; align-items: center; }
+        .ef-ficha-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: auto; }
+        .ef-btn-ver, .ef-btn-del { width: 100%; height: 38px; padding: 0 8px; border-radius: 7px; color: white; border: none; cursor: pointer; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 5px; white-space: nowrap; box-sizing: border-box; }
+        .ef-btn-ver { background: linear-gradient(135deg,#39A935,#2E7D32); }
+        .ef-btn-ver:hover { background: linear-gradient(135deg,#2E7D32,#1e5c1e); }
+        .ef-btn-del { background: linear-gradient(135deg,#f44336,#d32f2f); }
+        .ef-btn-del:hover { background: linear-gradient(135deg,#d32f2f,#b71c1c); }
+
+        .ef-btn-editar { padding: 5px 10px; border-radius: 6px; background: linear-gradient(135deg,#1976D2,#1565C0); color: white; border: none; cursor: pointer; font-size: 11px; font-weight: 700; min-height: 30px; white-space: nowrap; }
+
+        .mea-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 4100; align-items: center; justify-content: center; padding: 16px; backdrop-filter: blur(3px); }
+        .mea-overlay.open { display: flex; }
+        .mea-box { background: white; border-radius: 14px; width: 100%; max-width: 580px; padding: 24px; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,0.3); animation: mcEntrada 0.22s ease; max-height: 90vh; overflow-y: auto; }
+        .mea-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .mea-grid .form-group { margin-bottom: 0; }
+        .mea-full { grid-column: 1 / -1; }
+        @media (max-width: 500px) { .mea-grid { grid-template-columns: 1fr; } }
+
+        @media (max-width: 600px) { .ef-fichas-grid { grid-template-columns: 1fr; } .ef-ficha-btns { flex-direction: column; } }
+
+        .menu-item-orange:hover, .menu-item-orange:active { background: linear-gradient(90deg, rgba(255,152,0,0.12), transparent) !important; color: #E65100 !important; }
+        .menu-item-orange.active { background: linear-gradient(90deg, rgba(255,152,0,0.18), transparent) !important; color: #E65100 !important; }
+        .menu-item-orange::before { background: linear-gradient(135deg, #FF9800, #F57C00) !important; }
+        .menu-icon-orange { background: rgba(255,152,0,0.08) !important; }
+        .menu-item-orange:hover .menu-icon-orange, .menu-item-orange.active .menu-icon-orange { background: rgba(255,152,0,0.18) !important; }
+
+        .acconf-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 5000; align-items: center; justify-content: center; padding: 16px; backdrop-filter: blur(4px); }
+        .acconf-overlay.open { display: flex; }
+        .acconf-box { background: white; border-radius: 16px; width: 100%; max-width: 420px; padding: 28px 24px 22px; box-shadow: 0 24px 60px rgba(0,0,0,0.35); animation: mcEntrada 0.22s ease; font-family: inherit; }
+        .acconf-icon { width: 52px; height: 52px; background: linear-gradient(135deg,#FFF3CD,#FFE082); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; margin: 0 auto 14px; border: 3px solid #FF9800; }
+        .acconf-titulo { text-align: center; font-size: 17px; font-weight: 800; color: #E65100; margin-bottom: 14px; }
+        .acconf-body { background: #FFF8E1; border-left: 4px solid #FF9800; border-radius: 8px; padding: 12px 14px; font-size: 13px; color: #333; line-height: 1.55; margin-bottom: 18px; }
+        .acconf-nombre { font-weight: 800; color: #1e5c1e; font-size: 14px; margin-bottom: 6px; }
+        .acconf-aviso { color: #555; font-size: 12px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed #FFCC80; }
+        .acconf-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .acconf-btn-cancel { height: 42px; border-radius: 8px; background: linear-gradient(135deg,#6C757D,#495057); color: white; border: none; cursor: pointer; font-size: 13px; font-weight: 700; font-family: inherit; }
+        .acconf-btn-delete { height: 42px; border-radius: 8px; background: linear-gradient(135deg,#f44336,#d32f2f); color: white; border: none; cursor: pointer; font-size: 13px; font-weight: 700; font-family: inherit; transition: opacity 0.2s; }
+        .acconf-btn-cancel:hover { opacity: 0.85; }
+        .acconf-btn-delete:hover { background: linear-gradient(135deg,#d32f2f,#b71c1c); }
+
+        .gc-topbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 16px 20px; background: white; border-bottom: 1px solid #e8f5e9; }
+        .gc-topbar-left { display: flex; align-items: center; gap: 12px; }
+        .gc-topbar-icon { font-size: 28px; }
+        .gc-topbar-title { font-size: 18px; font-weight: 800; color: #1e5c1e; }
+        .gc-topbar-sub   { font-size: 12px; color: #888; }
+        .gc-topbar-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .gc-search-wrap { display: flex; align-items: center; gap: 6px; background: #f5f5f5; border-radius: 8px; padding: 7px 12px; }
+        .gc-search-input { border: none; background: transparent; outline: none; font-size: 13px; width: 180px; font-family: inherit; }
+        .gc-filter-btn { padding: 7px 12px; border-radius: 8px; border: 2px solid #e0e0e0; background: white; font-size: 12px; font-weight: 700; cursor: pointer; color: #555; font-family: inherit; transition: all 0.2s; }
+        .gc-filter-btn.active { border-color: #39A935; background: #E8F5E9; color: #1e5c1e; }
+
+        .gc-stats-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; padding: 16px 20px; background: #f8fffe; border-bottom: 1px solid #e8f5e9; box-sizing: border-box; width: 100%; }
+        .gc-stat-box { border-radius: 16px; padding: 22px 12px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 3px 12px rgba(0,0,0,0.09); transition: transform 0.2s, box-shadow 0.2s; min-height: 120px; width: 100%; box-sizing: border-box; }
+        .gc-stat-box:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.13); }
+        .gc-stat-box.total { background: linear-gradient(145deg,#E8F5E9,#C8E6C9); border-left: 5px solid #1e5c1e; }
+        .gc-stat-box.foto  { background: linear-gradient(145deg,#E3F2FD,#BBDEFB); border-left: 5px solid #1565C0; }
+        .gc-stat-box.sinf  { background: linear-gradient(145deg,#FFF8E1,#FFE082); border-left: 5px solid #FF9800; }
+        .gc-stat-box.gen   { background: linear-gradient(145deg,#E8EAF6,#C5CAE9); border-left: 5px solid #3F51B5; }
+        .gc-stat-box.falt  { background: linear-gradient(145deg,#FCE4EC,#F8BBD9); border-left: 5px solid #E91E63; }
+        .gc-stat-num { font-size: 42px; font-weight: 900; line-height: 1; }
+        .gc-stat-num.total { color: #1e5c1e; } .gc-stat-num.foto { color: #1565C0; } .gc-stat-num.sinf { color: #E65100; } .gc-stat-num.gen { color: #3F51B5; } .gc-stat-num.falt { color: #C2185B; }
+        .gc-stat-label { font-size: 13px; font-weight: 700; margin-top: 2px; }
+        .gc-stat-box.total .gc-stat-label { color: #2E7D32; } .gc-stat-box.gen .gc-stat-label { color: #3F51B5; } .gc-stat-box.falt .gc-stat-label { color: #C2185B; } .gc-stat-box.foto .gc-stat-label { color: #1565C0; } .gc-stat-box.sinf .gc-stat-label { color: #E65100; }
+        .gc-stat-icon { font-size: 26px; }
+        @media (max-width: 600px) { .gc-stats-row { grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; } .gc-stat-box { min-height: 90px; padding: 16px; } .gc-stat-num { font-size: 32px; } }
+
+        .gc-lista-wrap { overflow-x: auto; }
+        .gc-tabla { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .gc-tabla thead tr { background: linear-gradient(135deg,#1e5c1e,#2E7D32); color: white; }
+        .gc-tabla thead th { padding: 11px 14px; text-align: left; font-weight: 700; white-space: nowrap; }
+        .gc-tabla tbody tr { border-bottom: 1px solid #f0f0f0; transition: background 0.15s; }
+        .gc-tabla tbody tr:hover { background: #f5fff5; }
+        .gc-tabla tbody td { padding: 10px 14px; vertical-align: middle; }
+        .gc-foto-thumb { width: 36px; height: 44px; object-fit: cover; border-radius: 5px; border: 2px solid #39A935; }
+        .gc-sinfoto-thumb { width: 36px; height: 44px; background: #f5f5f5; border-radius: 5px; border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #bbb; }
+        .gc-badge-foto { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; }
+        .gc-badge-con  { background:#E8F5E9; color:#2E7D32; }
+        .gc-badge-sin  { background:#FFF3CD; color:#E65100; }
+
+        .gc-btn-delfoto { padding: 5px 10px; border-radius: 6px; background: linear-gradient(135deg,#f44336,#d32f2f); color: white; border: none; cursor: pointer; font-size: 11px; font-weight: 700; white-space: nowrap; font-family: inherit; }
+        .gc-btn-delfoto:hover { opacity: 0.85; }
+        .gc-btn-delfoto:disabled { background: #e0e0e0; color: #aaa; cursor: default; }
+
+        .gc-paginacion { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 12px 16px; border-top: 1px solid #e8f5e9; font-size: 12px; color: #666; }
+        .gc-pag-btns { display: flex; gap: 4px; }
+        .gc-pag-btn { padding: 5px 10px; border-radius: 6px; border: 1px solid #ddd; background: white; cursor: pointer; font-size: 12px; font-family: inherit; }
+        .gc-pag-btn.active { background: #1e5c1e; color: white; border-color: #1e5c1e; }
+        .gc-pag-btn:disabled { opacity: 0.4; cursor: default; }
+
+        @media (max-width: 768px) {
+            .gc-topbar { flex-direction: column; align-items: flex-start; }
+            .gc-topbar-right { width: 100%; }
+            .gc-search-input { width: 120px; }
+            .gc-tabla thead th:nth-child(4), .gc-tabla tbody td:nth-child(4),
+            .gc-tabla thead th:nth-child(5), .gc-tabla tbody td:nth-child(5) { display: none; }
+        }
+        @media (max-width: 480px) { .gc-tabla thead th:nth-child(3), .gc-tabla tbody td:nth-child(3) { display: none; } }
+
+        .gc-sel-bar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 10px 20px; background: #f0fff0; border-bottom: 1px solid #c8e6c9; }
+        .gc-sel-left { display: flex; align-items: center; gap: 12px; }
+        .gc-sel-label { font-size: 13px; color: #1e5c1e; font-weight: 600; }
+        .gc-sel-count { background: #1e5c1e; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; }
+        .gc-btn-generar-masivo { padding: 9px 18px; border-radius: 8px; background: linear-gradient(135deg,#1e5c1e,#39A935); color: white; border: none; cursor: pointer; font-size: 13px; font-weight: 700; font-family: inherit; display: flex; align-items: center; gap: 6px; transition: opacity 0.2s; box-shadow: 0 3px 10px rgba(57,169,53,0.3); }
+        .gc-btn-generar-masivo:hover { opacity: 0.88; }
+        .gc-btn-generar-masivo:disabled { background: linear-gradient(135deg,#aaa,#ccc); box-shadow: none; cursor: default; }
+
+        .gc-check { width: 18px; height: 18px; cursor: pointer; accent-color: #39A935; }
+
+        .gc-badge-generado { background:#E8F5E9; color:#1e5c1e; border:1px solid #a5d6a7; }
+        .gc-badge-pendiente { background:#FFF3E0; color:#E65100; border:1px solid #FFCC80; }
+
+        .gc-btn-gen-ind { padding: 5px 10px; border-radius: 6px; background: linear-gradient(135deg,#1e5c1e,#39A935); color: white; border: none; cursor: pointer; font-size: 11px; font-weight: 700; white-space: nowrap; font-family: inherit; }
+        .gc-btn-gen-ind:hover { opacity: 0.85; }
+
+        .gcok-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 5100; align-items: center; justify-content: center; padding: 16px; backdrop-filter: blur(4px); }
+        .gcok-overlay.open { display: flex; }
+        .gcok-box { background: white; border-radius: 20px; width: 100%; max-width: 460px; padding: 36px 28px 28px; text-align: center; box-shadow: 0 24px 60px rgba(0,0,0,0.3); animation: mcEntrada 0.25s ease; }
+        .gcok-icon { font-size: 56px; margin-bottom: 10px; }
+        .gcok-titulo { font-size: 22px; font-weight: 900; color: #1e5c1e; margin-bottom: 10px; }
+        .gcok-sub { font-size: 14px; color: #555; margin-bottom: 20px; line-height: 1.5; }
+        .gcok-stats { background: #f0fff0; border-radius: 12px; padding: 14px 20px; margin-bottom: 22px; text-align: left; }
+        .gcok-stat-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #c8e6c9; font-size: 14px; }
+        .gcok-stat-row:last-child { border-bottom: none; }
+        .gcok-stat-num { font-weight: 900; font-size: 18px; color: #1e5c1e; }
+        .gcok-btn-ok { width: 100%; height: 46px; border-radius: 10px; background: linear-gradient(135deg,#39A935,#2E7D32); color: white; border: none; cursor: pointer; font-size: 15px; font-weight: 700; font-family: inherit; }
+        .gcok-btn-ok:hover { opacity: 0.88; }
+
+        @media (max-width: 600px) { .gc-sel-bar { flex-direction: column; align-items: flex-start; } .gc-btn-generar-masivo { width: 100%; justify-content: center; } }
+
+        .imp-topbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 16px 20px; background: white; border-bottom: 1px solid #e8f5e9; }
+        .imp-topbar-left { display: flex; align-items: center; gap: 12px; }
+        .imp-topbar-title { font-size: 18px; font-weight: 800; color: #1e5c1e; }
+        .imp-topbar-sub   { font-size: 12px; color: #888; }
+
+        .imp-stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; padding: 16px 20px; background: #f8fffe; border-bottom: 1px solid #e8f5e9; }
+        .imp-stat-box { border-radius: 14px; padding: 16px 12px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+        .imp-stat-box.total  { background:linear-gradient(145deg,#E8F5E9,#C8E6C9); border-left:5px solid #1e5c1e; }
+        .imp-stat-box.fichas { background:linear-gradient(145deg,#E3F2FD,#BBDEFB); border-left:5px solid #1565C0; }
+        .imp-stat-box.selecc { background:linear-gradient(145deg,#FFF8E1,#FFE082); border-left:5px solid #FF9800; }
+        .imp-stat-num { font-size: 36px; font-weight: 900; line-height:1; }
+        .imp-stat-num.total  { color:#1e5c1e; } .imp-stat-num.fichas { color:#1565C0; } .imp-stat-num.selecc { color:#E65100; }
+        .imp-stat-label { font-size: 12px; font-weight: 700; color: #555; }
+
+        .imp-sel-bar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 10px 20px; background: #f0fff0; border-bottom: 1px solid #c8e6c9; }
+        .imp-sel-left { display: flex; align-items: center; gap: 12px; }
+        .imp-sel-count { background: #1e5c1e; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; }
+        .imp-btn-print { padding: 9px 18px; border-radius: 8px; background: linear-gradient(135deg,#1565C0,#0D47A1); color: white; border: none; cursor: pointer; font-size: 13px; font-weight: 700; font-family: inherit; display: flex; align-items: center; gap: 6px; box-shadow: 0 3px 10px rgba(21,101,192,0.3); transition: opacity 0.2s; }
+        .imp-btn-print:hover { opacity: 0.88; }
+        .imp-btn-print:disabled { background:linear-gradient(135deg,#aaa,#ccc); box-shadow:none; cursor:default; }
+
+        .imp-grupos { padding: 16px 20px; }
+        .imp-grupo-card { background: white; border-radius: 12px; border: 1px solid #e0f2e0; margin-bottom: 14px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .imp-grupo-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding: 12px 16px; background: linear-gradient(135deg,#1e5c1e,#2E7D32); color: white; cursor: pointer; }
+        .imp-grupo-titulo { font-size: 14px; font-weight: 800; }
+        .imp-grupo-sub    { font-size: 11px; opacity: 0.85; }
+        .imp-grupo-badge  { background: rgba(255,255,255,0.25); padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+        .imp-grupo-header-right { display:flex; align-items:center; gap:10px; }
+        .imp-grupo-check-all { display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; }
+
+        .imp-tabla { width:100%; border-collapse:collapse; font-size:13px; }
+        .imp-tabla thead tr { background:#f5fff5; }
+        .imp-tabla thead th { padding:9px 12px; text-align:left; font-weight:700; color:#1e5c1e; border-bottom:1px solid #e0f2e0; }
+        .imp-tabla tbody tr { border-bottom:1px solid #f5f5f5; transition:background 0.15s; }
+        .imp-tabla tbody tr:hover { background:#f9fff9; }
+        .imp-tabla tbody td { padding:9px 12px; vertical-align:middle; }
+        .imp-thumb { width:32px; height:40px; object-fit:cover; border-radius:4px; border:2px solid #39A935; }
+
+        .imp-btn-ver { padding:5px 10px; border-radius:6px; background:linear-gradient(135deg,#39A935,#2E7D32); color:white; border:none; cursor:pointer; font-size:11px; font-weight:700; font-family:inherit; }
+        .imp-btn-ver:hover { opacity:0.85; }
+
+        @media(max-width:768px){ .imp-stats-row { grid-template-columns:1fr; } .imp-sel-bar { flex-direction:column; align-items:flex-start; } .imp-btn-print { width:100%; justify-content:center; } .imp-tabla thead th:nth-child(4), .imp-tabla tbody td:nth-child(4) { display:none; } }
+
+        .db-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 18px 20px 6px; }
+        .db-titulo { font-size: 20px; font-weight: 900; color: #1e5c1e; }
+        .db-sub    { font-size: 12px; color: #888; }
+        .db-refresh { padding: 7px 14px; border-radius: 8px; background: #f0fff0; border: 1.5px solid #c8e6c9; color: #1e5c1e; cursor: pointer; font-size: 12px; font-weight: 700; font-family: inherit; display: flex; align-items: center; gap: 5px; transition: background 0.2s; }
+        .db-refresh:hover { background: #c8e6c9; }
+        .db-refresh.spinning .db-refresh-icon { animation: dbSpin 0.7s linear infinite; }
+        @keyframes dbSpin { to { transform: rotate(360deg); } }
+
+        .db-section-label { font-size: 11px; font-weight: 800; color: #888; text-transform: uppercase; letter-spacing: 1px; padding: 14px 20px 6px; }
+
+        .db-metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 0 20px 4px; }
+        .db-metrics-grid.three { grid-template-columns: repeat(3, 1fr); }
+        .db-metric-card { border-radius: 14px; padding: 16px 14px 14px; display: flex; flex-direction: column; box-shadow: 0 2px 10px rgba(0,0,0,0.07); cursor: default; transition: transform 0.18s, box-shadow 0.18s; position: relative; overflow: hidden; }
+        .db-metric-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+        .db-metric-card.verde  { background:linear-gradient(145deg,#E8F5E9,#C8E6C9); border-left:5px solid #2E7D32; }
+        .db-metric-card.azul   { background:linear-gradient(145deg,#E3F2FD,#BBDEFB); border-left:5px solid #1565C0; }
+        .db-metric-card.naranja{ background:linear-gradient(145deg,#FFF3E0,#FFCC80); border-left:5px solid #E65100; }
+        .db-metric-card.rojo   { background:linear-gradient(145deg,#FCE4EC,#F8BBD9); border-left:5px solid #C62828; }
+        .db-metric-card.violeta{ background:linear-gradient(145deg,#EDE7F6,#D1C4E9); border-left:5px solid #4527A0; }
+        .db-metric-card.teal   { background:linear-gradient(145deg,#E0F2F1,#B2DFDB); border-left:5px solid #00695C; }
+
+        .db-metric-icon  { font-size: 22px; margin-bottom: 6px; }
+        .db-metric-num   { font-size: 38px; font-weight: 900; line-height: 1; margin-bottom: 4px; transition: all 0.4s ease; }
+        .db-metric-num.verde  { color: #1e5c1e; } .db-metric-num.azul { color: #1565C0; } .db-metric-num.naranja { color: #E65100; } .db-metric-num.rojo { color: #C62828; } .db-metric-num.violeta { color: #4527A0; } .db-metric-num.teal { color: #00695C; }
+        .db-metric-label { font-size: 11px; font-weight: 700; color: #555; line-height: 1.3; }
+        .db-metric-sub   { font-size: 10px; color: #888; margin-top: 3px; }
+        .db-metric-num.updating { opacity: 0.5; transform: scale(0.9); }
+
+        .db-progress-wrap { margin-top: 8px; }
+        .db-progress-bar  { height: 6px; border-radius: 3px; background: rgba(0,0,0,0.12); overflow: hidden; }
+        .db-progress-fill { height: 100%; border-radius: 3px; background: currentColor; transition: width 0.6s ease; }
+        .db-progress-text { font-size: 10px; color: #666; margin-top: 3px; }
+
+        .db-timestamp { text-align: right; padding: 6px 20px 0; font-size: 11px; color: #aaa; }
+
+        .db-accesos { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; padding: 0 20px 20px; }
+        .db-acceso-btn { padding: 12px 10px; border-radius: 10px; border: 2px solid #e0f2e0; background: white; color: #1e5c1e; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.18s; text-align: center; }
+        .db-acceso-btn:hover { background: #e8f5e9; border-color: #39A935; transform: translateY(-2px); }
+        .db-acceso-btn.orange { border-color: #FFCC80; color: #E65100; }
+        .db-acceso-btn.orange:hover { background: #FFF3E0; }
+        .db-acceso-btn.red { border-color: #F8BBD9; color: #C62828; }
+        .db-acceso-btn.red:hover { background: #FCE4EC; }
+        .db-acceso-btn.blue { border-color: #BBDEFB; color: #1565C0; }
+        .db-acceso-btn.blue:hover { background: #E3F2FD; }
+
+        @media (max-width: 900px) { .db-metrics-grid { grid-template-columns: repeat(2, 1fr); } .db-metrics-grid.three { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 500px) { .db-metrics-grid, .db-metrics-grid.three { grid-template-columns: 1fr 1fr; } .db-metric-num { font-size: 28px; } }
+    </style>
+</head>
+<body>
+
+<header class="top-header">
+    <div class="header-left">
+        <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+        <div class="logo">🎓</div>
+        <div>
+            <div class="header-title">SENA</div>
+            <div class="header-subtitle">Sistema de Carnets Digitales</div>
+        </div>
+    </div>
+    <div class="header-right">
+        <div class="user-info">
+            <span>👤 Bienvenido, <strong>admin</strong></span>
+        </div>
+        <a href="{{ url_for('logout') }}" class="btn-logout">
+            <span>🚪</span><span>Cerrar Sesión</span>
+        </a>
+    </div>
+</header>
+
+<div class="main-layout">
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2 class="sidebar-title">📊 Panel de Control</h2>
+            <p class="sidebar-subtitle">Administración del Sistema</p>
+        </div>
+        <nav class="sidebar-menu">
+            <div class="menu-section">
+                <div class="menu-section-title">Principal</div>
+                <a href="#" class="menu-item active" onclick="showSection('dashboard')">
+                    <div class="menu-icon">📊</div>
+                    <span class="menu-text">Dashboard</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-section-title">Gestión de Datos</div>
+                <a href="#" class="menu-item" onclick="showSection('cargar-excel')">
+                    <div class="menu-icon">📁</div>
+                    <span class="menu-text">Cargar Plantilla Excel</span>
+                    <span class="menu-badge">Nuevo</span>
+                </a>
+                <a href="#" class="menu-item menu-item-orange" onclick="showSection('cargar-foto')">
+                    <div class="menu-icon menu-icon-orange">📸</div>
+                    <span class="menu-text">Cargar Foto</span>
+                </a>
+
+            </div>
+            <div class="menu-section">
+                <div class="menu-section-title">Carnets</div>
+                <a href="#" class="menu-item" onclick="showSection('gestionar-carnets')">
+                    <div class="menu-icon">🎴</div>
+                    <span class="menu-text">Generar y Gestionar Carnets</span>
+                </a>
+                <a href="#" class="menu-item" onclick="showSection('archivo-carnets')">
+                    <div class="menu-icon">📂</div>
+                    <span class="menu-text">Archivo de Carnets</span>
+                </a>
+                <a href="#" class="menu-item" id="menuImprimir" onclick="showSection('imprimir-carnets')" style="opacity:0.45;pointer-events:none" title="Genera carnets primero para habilitar este botón">
+                    <div class="menu-icon">🖨️</div>
+                    <span class="menu-text">Imprimir Carnets</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-section-title">Sistema</div>
+                <a href="#" class="menu-item" onclick="showSection('eliminar-aprendices')">
+                    <div class="menu-icon">🗑️</div>
+                    <span class="menu-text">Eliminar Fichas y Editar Aprendices</span>
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <main class="content-area">
+
+        <!-- DASHBOARD -->
+        <div id="dashboard" class="content-section active">
+            <div class="db-header">
+                <div>
+                    <div class="db-titulo">📊 Panel de Control</div>
+                    <div class="db-sub">Métricas en tiempo real del sistema</div>
+                </div>
+                <button class="db-refresh" onclick="dbCargarMetricas()" id="dbRefreshBtn">
+                    <span class="db-refresh-icon">🔄</span> Actualizar
+                </button>
+            </div>
+            <div class="db-timestamp" id="dbTimestamp">Cargando...</div>
+            <div class="db-section-label">👥 Aprendices Registrados</div>
+            <div class="db-metrics-grid">
+                <div class="db-metric-card verde"><div class="db-metric-icon">👥</div><div class="db-metric-num verde" id="dbTotal">—</div><div class="db-metric-label">Total Registrados</div><div class="db-metric-sub">Acumulado histórico</div></div>
+                <div class="db-metric-card azul"><div class="db-metric-icon">📅</div><div class="db-metric-num azul" id="dbHoy">—</div><div class="db-metric-label">Registrados Hoy</div><div class="db-metric-sub">Nuevos ingresos del día</div></div>
+                <div class="db-metric-card teal"><div class="db-metric-icon">📈</div><div class="db-metric-num teal" id="dbSemana">—</div><div class="db-metric-label">Esta Semana</div><div class="db-metric-sub">Últimos 7 días</div></div>
+                <div class="db-metric-card naranja"><div class="db-metric-icon">📸</div><div class="db-metric-num naranja" id="dbConFoto">—</div><div class="db-metric-label">Con Foto</div><div class="db-progress-wrap"><div class="db-progress-bar" style="color:#E65100"><div class="db-progress-fill" id="dbFotoBar" style="width:0%;background:#E65100"></div></div><div class="db-progress-text" id="dbFotoPct">0% del total</div></div></div>
+            </div>
+            <div class="db-section-label">🎴 Gestión de Carnets</div>
+            <div class="db-metrics-grid three">
+                <div class="db-metric-card violeta"><div class="db-metric-icon">🎴</div><div class="db-metric-num violeta" id="dbCarnetTotal">—</div><div class="db-metric-label">Total Generados</div><div class="db-metric-sub">Histórico en disco</div></div>
+                <div class="db-metric-card azul"><div class="db-metric-icon">⚡</div><div class="db-metric-num azul" id="dbCarnetHoy">—</div><div class="db-metric-label">Generados Hoy</div><div class="db-metric-sub">Últimas 24 horas</div></div>
+                <div class="db-metric-card teal"><div class="db-metric-icon">📅</div><div class="db-metric-num teal" id="dbCarnetSemana">—</div><div class="db-metric-label">Esta Semana</div><div class="db-metric-sub">Últimos 7 días</div></div>
+                <div class="db-metric-card verde"><div class="db-metric-icon">✅</div><div class="db-metric-num verde" id="dbCarnetConFoto">—</div><div class="db-metric-label">Con Foto Vigente</div><div class="db-metric-sub">Carnet + foto activa</div></div>
+                <div class="db-metric-card rojo"><div class="db-metric-icon">⚠️</div><div class="db-metric-num rojo" id="dbCarnetSinFoto">—</div><div class="db-metric-label">Sin Foto</div><div class="db-metric-sub">Foto eliminada</div></div>
+                <div class="db-metric-card naranja"><div class="db-metric-icon">⏳</div><div class="db-metric-num naranja" id="dbCarnetPendiente">—</div><div class="db-metric-label">Pendientes</div><div class="db-metric-sub">Tienen foto, falta generar</div></div>
+            </div>
+            <div class="db-section-label">⚡ Accesos Rápidos</div>
+            <div class="db-accesos">
+                <button class="db-acceso-btn" onclick="showSection('cargar-excel')">📁 Cargar Excel</button>
+                <button class="db-acceso-btn orange" onclick="showSection('cargar-foto')">📸 Cargar Foto</button>
+                <button class="db-acceso-btn blue" onclick="showSection('gestionar-carnets')">🎴 Gestionar Carnets</button>
+                <button class="db-acceso-btn blue" onclick="showSection('imprimir-carnets')">🖨️ Imprimir</button>
+                <button class="db-acceso-btn" onclick="showSection('archivo-carnets')">📂 Archivo</button>
+                <button class="db-acceso-btn red" onclick="showSection('eliminar-aprendices')">🗑️ Eliminar Fichas</button>
+            </div>
+        </div>
+
+        <!-- CARGAR FOTO -->
+        <div id="cargar-foto" class="content-section">
+            <div class="section-header">
+                <h1 class="section-title">📸 Cargar Foto</h1>
+                <p class="section-subtitle">Busca un aprendiz y carga su foto para su carnet digital</p>
+            </div>
+            <div class="info-card">
+                <h3>Buscar Aprendiz por Cédula</h3>
+                <form id="formBuscarAprendizFoto" style="margin-top:20px">
+                    <div class="form-group">
+                        <label class="form-label">Número de Cédula:</label>
+                        <input type="text" id="cedulaBuscarFoto" class="form-input" placeholder="Ej: 1006342488" required>
+                    </div>
+                    <button type="submit" class="action-button">🔍 Buscar Aprendiz</button>
+                </form>
+            </div>
+            <div id="infoAprendizFoto" style="display:none"></div>
+        </div>
+
+        <!-- CARGAR EXCEL -->
+        <div id="cargar-excel" class="content-section">
+            <div class="section-header">
+                <h1 class="section-title">📁 Cargar Plantilla Excel</h1>
+                <p class="section-subtitle">Importa datos de aprendices desde un archivo Excel</p>
+            </div>
+            <div class="info-card">
+                <h3>Instrucciones de Carga</h3>
+                <ol style="margin:20px 0;color:#666;line-height:1.8">
+                    <li>Descarga la plantilla Excel con los datos actuales</li>
+                    <li>Completa todos los campos requeridos</li>
+                    <li>Guarda el archivo en formato .xlsx</li>
+                    <li>Selecciona y carga el archivo</li>
+                </ol>
+                <a href="{{ url_for('descargar_plantilla') }}" class="action-button" style="text-decoration:none">📥 Descargar Plantilla Excel</a>
+                <form action="{{ url_for('cargar_plantilla') }}" method="POST" enctype="multipart/form-data" style="margin-top:30px" id="uploadForm">
+                    <div class="form-group">
+                        <label class="form-label">Seleccionar Archivo Excel:</label>
+                        <input type="file" name="excel_file" id="excel_file" accept=".xlsx,.xls" required class="form-input">
+                    </div>
+                    <button type="submit" class="action-button" id="uploadBtn">📤 Cargar Archivo</button>
+                </form>
+                <div id="uploadResult" style="margin-top:20px"></div>
+            </div>
+        </div>
+
+        <!-- VER LISTA DE APRENDICES -->
+        <div id="ver-lista-aprendices" class="content-section">
+            <div class="section-header">
+                <h1 class="section-title">👥 Lista de Aprendices</h1>
+                <p class="section-subtitle">Consulta y gestiona toda la información de los aprendices registrados</p>
+            </div>
+            <div class="info-card">
+                <h3>Filtros de Búsqueda</h3>
+                <div class="filtros-lista-grid">
+                    <div class="form-group" style="margin-bottom:0">
+                        <label class="form-label">Buscar por Ficha:</label>
+                        <div style="position:relative" id="fichaWrap">
+                            <input type="text" id="filtroFicha" class="form-input"
+                                   placeholder="Digita o selecciona ficha..."
+                                   autocomplete="off"
+                                   oninput="fichaFiltrar(this.value)"
+                                   onfocus="fichaAbrir()"
+                                   onkeydown="fichaTecla(event)">
+                            <div id="fichaDropdown" style="
+                                display:none;position:absolute;top:calc(100% + 3px);left:0;right:0;
+                                background:white;border:2px solid #39A935;border-radius:10px;
+                                box-shadow:0 8px 24px rgba(0,0,0,0.13);z-index:9999;
+                                max-height:230px;overflow-y:auto;
+                            "></div>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0">
+                        <label class="form-label">Buscar por Cédula (CC/TI):</label>
+                        <input type="text" id="filtroCedula" class="form-input" placeholder="Ej: 1006342488">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0">
+                        <label class="form-label">Estado de Foto:</label>
+                        <select id="filtroFoto" class="form-input">
+                            <option value="">Todos</option>
+                            <option value="con_foto">Con Foto</option>
+                            <option value="sin_foto">Sin Foto</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0">
+                        <label class="form-label">Mostrar:</label>
+                        <select id="filtroMostrar" class="form-input">
+                            <option value="">Resultados de Búsqueda</option>
+                            <option value="todos">Todos los Aprendices</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0">
+                        <label class="form-label" style="visibility:hidden">Buscar</label>
+                        <button class="action-button" onclick="cargarListaAprendices()"
+                                style="width:100%;margin:0;justify-content:center">
+                            👁️ Ver Aprendices
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h3>Listado de Aprendices Registrados</h3>
+                <div id="estadisticasLista" style="display:none;margin-top:12px;font-size:14px;color:#1e5c1e"></div>
+                <div id="contenedorTablaAprendices" style="text-align:center;padding:40px">
+                    <p style="font-size:16px;color:#666">📋 Haz clic en "Ver Aprendices" para cargar la lista</p>
+                </div>
+                <div class="table-wrapper" id="tablaWrapperAprendices" style="display:none">
+                    <table class="aprendices-table" id="tablaListaAprendices">
+                        <thead>
+                            <tr>
+                                <th>Foto</th><th>Nombre</th><th>Cédula</th>
+                                <th>Programa</th><th>Ficha</th><th style="text-align:center">Carnet</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyListaAprendices"></tbody>
+                    </table>
+                </div>
+                <div id="contenedorCardsAprendices"></div>
+                <div id="mensajeSinAprendices" style="text-align:center;padding:40px;color:#666;display:none">
+                    <p style="font-size:16px">📭 No se encontraron aprendices con los filtros seleccionados</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- GESTIONAR CARNETS -->
+        <div id="gestionar-carnets" class="content-section" style="padding:0">
+            <div class="gc-topbar">
+                <div class="gc-topbar-left">
+                    <span class="gc-topbar-icon">🎴</span>
+                    <div>
+                        <div class="gc-topbar-title">Generar y Gestionar Carnets</div>
+                        <div class="gc-topbar-sub">Selecciona aprendices con foto y genera carnets</div>
+                    </div>
+                </div>
+                <div class="gc-topbar-right">
+                    <div class="gc-search-wrap">
+                        <span>🔍</span>
+                        <input type="text" id="gcListaBuscar" class="gc-search-input"
+                               placeholder="Buscar nombre o cédula..."
+                               oninput="gcListaFiltrar(this.value)">
+                    </div>
+                    <button class="gc-filter-btn active" id="gcFiltroTodos" onclick="gcListaSetFiltro('todos')">👥 Todos</button>
+                    <button class="gc-filter-btn" id="gcFiltroCon" onclick="gcListaSetFiltro('con_foto')">✅ Con foto</button>
+                    <button class="gc-filter-btn" id="gcFiltroSin" onclick="gcListaSetFiltro('sin_foto')">⚠️ Sin foto</button>
+                    <button class="gc-filter-btn" id="gcFiltroGenerados" onclick="gcListaSetFiltro('generados')">🎴 Generados</button>
+                    <button class="gc-filter-btn" id="gcFiltroFaltan" onclick="gcListaSetFiltro('faltan')">⏳ Faltan</button>
+                    <button class="action-button" onclick="gcListaCargar()" style="margin:0;padding:8px 14px;min-height:36px;font-size:12px">🔄 Actualizar</button>
+                </div>
+            </div>
+            <div class="gc-stats-row" id="gcStatsRow" style="display:none">
+                <div class="gc-stat-box total" style="cursor:pointer" onclick="gcListaSetFiltro('todos')"><div class="gc-stat-icon">👥</div><div class="gc-stat-num total" id="gcStatTotal">0</div><div class="gc-stat-label">Total</div></div>
+                <div class="gc-stat-box foto" style="cursor:pointer" onclick="gcListaSetFiltro('con_foto')"><div class="gc-stat-icon">📸</div><div class="gc-stat-num foto" id="gcStatConFoto">0</div><div class="gc-stat-label">Con Foto</div></div>
+                <div class="gc-stat-box sinf" style="cursor:pointer" onclick="gcListaSetFiltro('sin_foto')"><div class="gc-stat-icon">⚠️</div><div class="gc-stat-num sinf" id="gcStatSinFoto">0</div><div class="gc-stat-label">Sin Foto</div></div>
+                <div class="gc-stat-box gen" style="cursor:pointer" onclick="gcListaSetFiltro('generados')"><div class="gc-stat-icon">🎴</div><div class="gc-stat-num gen" id="gcStatGenerados">0</div><div class="gc-stat-label">Generados</div></div>
+                <div class="gc-stat-box falt" style="cursor:pointer" onclick="gcListaSetFiltro('faltan')"><div class="gc-stat-icon">⏳</div><div class="gc-stat-num falt" id="gcStatFaltan">0</div><div class="gc-stat-label">Faltan Generar</div></div>
+            </div>
+            <div class="gc-sel-bar" id="gcSelBar">
+                <div class="gc-sel-left">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#1e5c1e;font-weight:600">
+                        <input type="checkbox" id="gcCheckTodos" class="gc-check" onchange="gcToggleSelTodos(this)">
+                        Seleccionar todos
+                    </label>
+                    <span class="gc-sel-label">Seleccionados:</span>
+                    <div class="gc-sel-count" id="gcSelCount">0</div>
+                </div>
+                <button class="gc-btn-generar-masivo" id="gcBtnMasivo" onclick="gcGenerarMasivo()" disabled>🆔 Generar Carnets Seleccionados</button>
+            </div>
+            <div class="gc-lista-wrap">
+                <table class="gc-tabla" id="gcTabla" style="display:none">
+                    <thead><tr>
+                        <th style="width:40px"></th><th style="width:58px">Foto</th><th>Nombre</th>
+                        <th>Cédula</th><th>Programa</th><th>Ficha</th>
+                        <th style="text-align:center">Estado</th><th style="text-align:center">Acción</th>
+                    </tr></thead>
+                    <tbody id="gcTbody"></tbody>
+                </table>
+            </div>
+            <div class="gc-paginacion" id="gcPaginacion" style="display:none">
+                <span id="gcPagInfo">Mostrando 0 de 0</span>
+                <div class="gc-pag-btns" id="gcPagBtns"></div>
+            </div>
+            <div id="gcListaLoading" style="text-align:center;padding:40px;color:#666"><div class="spinner"></div><p style="margin-top:12px">Cargando aprendices...</p></div>
+            <div id="gcListaVacio" style="display:none;text-align:center;padding:40px;color:#999"><p style="font-size:32px">📭</p><p>No se encontraron aprendices</p></div>
+        </div>
+
+        <div id="gcokOverlay" class="gcok-overlay">
+            <div class="gcok-box">
+                <div class="gcok-icon">🎉</div>
+                <div class="gcok-titulo">¡Carnets Generados Exitosamente!</div>
+                <div class="gcok-sub">Los carnets se han generado correctamente y están disponibles para visualización y descarga.</div>
+                <div class="gcok-stats">
+                    <div class="gcok-stat-row"><span>Total procesados:</span><span class="gcok-stat-num" id="gcokTotal">0</span></div>
+                    <div class="gcok-stat-row"><span>✅ Carnets generados:</span><span class="gcok-stat-num" id="gcokGenerados">0</span></div>
+                    <div class="gcok-stat-row" id="gcokErrorRow" style="display:none"><span>⚠️ Con errores:</span><span class="gcok-stat-num" style="color:#E65100" id="gcokErrores">0</span></div>
+                </div>
+                <button class="gcok-btn-ok" onclick="gcokCerrar()">✅ Entendido</button>
+            </div>
+        </div>
+
+        <!-- ARCHIVO CARNETS -->
+        <div id="archivo-carnets" class="content-section">
+            <div class="ac-topbar">
+                <div class="ac-topbar-left">
+                    <span class="ac-topbar-icon">📂</span>
+                    <div><div class="ac-topbar-title">Archivo de Carnets</div><div class="ac-topbar-sub">Historial de carnets generados</div></div>
+                </div>
+                <div class="ac-topbar-right">
+                    <div class="ac-search-wrap">
+                        <span class="ac-search-icon">🔍</span>
+                        <input type="text" id="acBuscarInput" class="ac-search-input" placeholder="Buscar por nombre o cédula..." oninput="acFiltrar(this.value)">
+                    </div>
+                    <div class="ac-group-btns">
+                        <button class="ac-group-btn active" id="acBtnPrograma" onclick="acAgrupar('programa')">📚 Programa</button>
+                        <button class="ac-group-btn" id="acBtnFicha" onclick="acAgrupar('ficha')">🎫 Ficha</button>
+                    </div>
+                </div>
+            </div>
+            <div class="ac-stats-row" id="acStatsRow" style="display:none">
+                <div class="ac-stat"><span id="acStatTotal">0</span><small>Carnets</small></div>
+                <div class="ac-stat"><span id="acStatFichas">0</span><small>Fichas</small></div>
+                <div class="ac-stat"><span id="acStatProgramas">0</span><small>Programas</small></div>
+            </div>
+            <div id="acContenido"><div class="ac-loading"><div class="spinner"></div><p>Cargando carnets...</p></div></div>
+        </div>
+
+        <!-- ELIMINAR APRENDICES -->
+        <div id="eliminar-aprendices" class="content-section">
+            <div class="section-header">
+                <h1 class="section-title">🗑️ Eliminar Fichas y Editar Aprendices</h1>
+                <p class="section-subtitle">Gestiona, edita y elimina fichas completas del sistema</p>
+            </div>
+            <div class="info-card ef-advertencia">
+                <h3 style="color:#E65100">⚠️ Advertencia Importante</h3>
+                <p style="color:#E65100;margin:8px 0;font-weight:600">Eliminar una ficha borrará <strong>PERMANENTEMENTE</strong> todos los aprendices asociados. Esta acción es irreversible.</p>
+            </div>
+            <div class="info-card">
+                <h3>🔍 Buscar Ficha por Número</h3>
+                <div class="search-section" style="margin-top:14px">
+                    <input type="text" id="fichaBuscar" class="form-input" placeholder="Ej: 3235587" required>
+                    <button class="action-button" onclick="buscarFicha()">🔍 Buscar</button>
+                </div>
+                <div id="fichaResultado"></div>
+            </div>
+            <div class="info-card" id="tablaSection" style="display:none">
+                <h3 id="tablaSeccionTitulo">Aprendices de la Ficha</h3>
+                <div id="estadisticas" style="display:none;margin-bottom:12px;font-size:14px;color:#1e5c1e"><strong id="estadisticaTexto"></strong></div>
+                <div class="button-group" id="botonesAccion" style="display:none">
+                    <button class="action-button" onclick="seleccionarTodos()">✓ Seleccionar Todos</button>
+                    <button class="action-button orange" onclick="deseleccionarTodos()">✗ Deseleccionar</button>
+                    <button class="action-button red" onclick="eliminarSeleccionados()" id="btnEliminar">🗑️ Eliminar Seleccionados</button>
+                </div>
+                <div class="table-wrapper">
+                    <table class="aprendices-table" id="tablaPrendices" style="display:none">
+                        <thead><tr>
+                            <th style="width:44px"><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"></th>
+                            <th>Nombre</th><th>Cédula</th><th>Programa</th><th style="text-align:center">Editar</th>
+                        </tr></thead>
+                        <tbody id="tbody"></tbody>
+                    </table>
+                </div>
+                <div id="mensajeVacio" style="text-align:center;padding:40px;color:#666;display:none"><p style="font-size:16px">📭 No se encontraron aprendices en esta ficha</p></div>
+            </div>
+            <div class="info-card">
+                <div class="ef-fichas-header">
+                    <h3>📋 Todas las Fichas Registradas</h3>
+                    <button class="action-button" onclick="efCargarFichas()" style="margin:0;padding:8px 16px;font-size:13px;min-height:38px">🔄 Actualizar</button>
+                </div>
+                <div id="efFichasContenido"><div style="text-align:center;padding:30px;color:#666"><div class="spinner"></div><p style="margin-top:10px">Cargando fichas...</p></div></div>
+            </div>
+        </div>
+
+        <!-- MODAL EDITAR APRENDIZ -->
+        <div id="modalEditarAprendiz" class="mea-overlay" onclick="meaCerrar(event)">
+            <div class="mea-box">
+                <button class="mc-close" onclick="meaCerrar(null)">✕</button>
+                <h3 style="color:#1e5c1e;margin-bottom:4px">✏️ Editar Aprendiz</h3>
+                <p style="font-size:12px;color:#888;margin-bottom:16px" id="meaSubtitulo">CC: —</p>
+                <input type="hidden" id="meaCedula">
+                <div class="mea-grid">
+                    <div class="form-group mea-full"><label class="form-label">Nombre Completo:</label><input type="text" id="meaNombre" class="form-input" placeholder="NOMBRE APELLIDO APELLIDO" style="text-transform:uppercase"></div>
+                    <div class="form-group"><label class="form-label">Tipo Documento:</label><select id="meaTipoDoc" class="form-input"><option value="CC">CC — Cédula de Ciudadanía</option><option value="TI">TI — Tarjeta de Identidad</option><option value="CE">CE — Cédula Extranjería</option><option value="PA">PA — Pasaporte</option></select></div>
+                    <div class="form-group"><label class="form-label">Tipo de Sangre:</label><select id="meaTipoSangre" class="form-input"><option value="O+">O+</option><option value="O-">O-</option><option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option><option value="AB+">AB+</option><option value="AB-">AB-</option><option value="N">N (No sabe)</option></select></div>
+                    <div class="form-group"><label class="form-label">NIS:</label><input type="text" id="meaNis" class="form-input" placeholder="Ej: 12345678901"></div>
+                    <div class="form-group"><label class="form-label">Código de Ficha:</label><input type="text" id="meaFicha" class="form-input" placeholder="Ej: 3235587"></div>
+                    <div class="form-group mea-full"><label class="form-label">Nombre del Programa:</label><input type="text" id="meaPrograma" class="form-input" placeholder="Nombre del programa formativo"></div>
+                    <div class="form-group"><label class="form-label">Nivel de Formación:</label><select id="meaNivel" class="form-input"><option value="Técnico">Técnico</option><option value="Tecnólogo">Tecnólogo</option><option value="Auxiliar">Auxiliar</option><option value="Operario">Operario</option><option value="Especialización">Especialización Tecnológica</option></select></div>
+                    <div class="form-group"><label class="form-label">Fecha Vencimiento:</label><input type="date" id="meaFechaVenc" class="form-input"></div>
+                </div>
+                <div style="display:flex;gap:10px;margin-top:18px">
+                    <button class="action-button" onclick="meaGuardar()" style="flex:1;margin:0;justify-content:center">💾 Guardar Cambios</button>
+                    <button class="action-button" onclick="meaCerrar(null)" style="flex:1;margin:0;justify-content:center;background:linear-gradient(135deg,#6C757D,#495057)">✕ Cancelar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- IMPRIMIR CARNETS -->
+        <div id="imprimir-carnets" class="content-section" style="padding:0">
+            <div class="imp-topbar">
+                <div class="imp-topbar-left">
+                    <span style="font-size:28px">🖨️</span>
+                    <div><div class="imp-topbar-title">Imprimir Carnets</div><div class="imp-topbar-sub">Carnets generados, agrupados por ficha</div></div>
+                </div>
+                <button class="action-button" onclick="impCargar()" style="margin:0;padding:8px 14px;min-height:36px;font-size:12px">🔄 Actualizar</button>
+            </div>
+            <div class="imp-stats-row" id="impStatsRow" style="display:none">
+                <div class="imp-stat-box total"><div style="font-size:22px">🎴</div><div class="imp-stat-num total" id="impStatTotal">0</div><div class="imp-stat-label">Carnets Generados</div></div>
+                <div class="imp-stat-box fichas"><div style="font-size:22px">📋</div><div class="imp-stat-num fichas" id="impStatFichas">0</div><div class="imp-stat-label">Fichas</div></div>
+                <div class="imp-stat-box selecc"><div style="font-size:22px">✅</div><div class="imp-stat-num selecc" id="impStatSelecc">0</div><div class="imp-stat-label">Seleccionados</div></div>
+            </div>
+            <div class="imp-sel-bar" id="impSelBar" style="display:none">
+                <div class="imp-sel-left">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#1e5c1e;font-weight:600">
+                        <input type="checkbox" id="impCheckTodos" class="gc-check" onchange="impToggleTodos(this)">
+                        Seleccionar todos
+                    </label>
+                    <span style="font-size:13px;color:#1e5c1e;font-weight:600">Seleccionados:</span>
+                    <div class="imp-sel-count" id="impSelCount">0</div>
+                </div>
+                <button class="imp-btn-print" id="impBtnImprimir" onclick="impImprimir()" disabled>🖨️ Imprimir Seleccionados</button>
+            </div>
+            <div id="impGrupos" class="imp-grupos"></div>
+            <div id="impLoading" style="text-align:center;padding:50px;color:#666"><div class="spinner"></div><p style="margin-top:14px">Cargando carnets generados...</p></div>
+            <div id="impVacio" style="display:none;text-align:center;padding:50px;color:#999"><p style="font-size:40px">🖨️</p><p style="font-size:16px;font-weight:700;margin-bottom:8px">No hay carnets generados aún</p><p style="font-size:13px">Ve a <strong>Generar y Gestionar Carnets</strong> y genera los carnets primero.</p></div>
+        </div>
+
+    </main>
+</div>
+
+<!-- Modal confirmación eliminar foto -->
+<div id="acConfOverlay" class="acconf-overlay">
+    <div class="acconf-box">
+        <div class="acconf-icon">⚠️</div>
+        <div class="acconf-titulo">Eliminar Foto del Aprendiz</div>
+        <div class="acconf-body">
+            <div class="acconf-nombre" id="acConfNombre"></div>
+            <div>Vas a eliminar la foto de este aprendiz del sistema.</div>
+            <div class="acconf-aviso">⚠️ Al eliminar la foto, este aprendiz <strong>dejará de aparecer</strong> en el <strong>Archivo de Carnets</strong>, ya que esta sección solo muestra aprendices con foto cargada. Esta acción es irreversible.</div>
+        </div>
+        <div class="acconf-btns">
+            <button class="acconf-btn-cancel" onclick="acConfCerrar()">✕ Cancelar</button>
+            <button class="acconf-btn-delete" id="acConfBtnEliminar">🗑️ Sí, eliminar foto</button>
+        </div>
+    </div>
+</div>
+
+<!-- Loading -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-content">
+        <div class="spinner"></div>
+        <p style="margin-top:15px;color:#1e5c1e;font-weight:600">Procesando...</p>
+    </div>
+</div>
+
+<script>
+let currentSection = 'dashboard';
+let aprendicesSeleccionados = new Set();
+
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('active');
+    document.getElementById('sidebarOverlay').classList.toggle('active');
+}
+
+function showSection(sectionId) {
+    document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById(sectionId);
+    if (target) target.classList.add('active');
+    document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+    const activeItem = document.querySelector('[onclick="showSection(\'' + sectionId + '\')"]');
+    if (activeItem) activeItem.classList.add('active');
+    if (window.innerWidth <= 768) toggleSidebar();
+    currentSection = sectionId;
+    if (sectionId === 'archivo-carnets') cargarArchivoCarnets();
+    if (sectionId === 'eliminar-aprendices') efCargarFichas();
+    if (sectionId === 'dashboard') dbCargarMetricas();
+    if (sectionId === 'gestionar-carnets') gcListaCargar();
+    if (sectionId === 'imprimir-carnets') impCargar();
+}
+
+/* ══ AUTOCOMPLETE FICHAS ══ */
+let _fichas = [], _fichaIdx = -1;
+
+async function fichaCargar() {
+    if (_fichas.length) return;
+    try {
+        const r = await fetch('/api/lista_aprendices_filtrada?todos=true');
+        const d = await r.json();
+        if (!d.success) return;
+        const map = {};
+        (d.aprendices || []).forEach(a => {
+            const f = a.codigo_ficha || '';
+            if (!f) return;
+            if (!map[f]) map[f] = { ficha: f, programa: a.nombre_programa || '', n: 0 };
+            map[f].n++;
+        });
+        _fichas = Object.values(map).sort((a, b) => String(a.ficha).localeCompare(String(b.ficha)));
+    } catch(e) {}
+}
+
+function fichaAbrir() {
+    fichaCargar().then(() => fichaFiltrar(document.getElementById('filtroFicha').value));
+}
+
+function fichaFiltrar(q) {
+    const dd = document.getElementById('fichaDropdown');
+    const lista = (q || '').trim()
+        ? _fichas.filter(f => String(f.ficha).includes(q) || f.programa.toLowerCase().includes(q.toLowerCase()))
+        : _fichas;
+    _fichaIdx = -1;
+    if (!lista.length) {
+        dd.innerHTML = '<div style="padding:12px;text-align:center;color:#aaa;font-size:13px">Sin resultados</div>';
+    } else {
+        dd.innerHTML = '<div style="padding:6px 12px;font-size:10px;font-weight:700;color:#888;text-transform:uppercase;border-bottom:1px solid #f0f0f0">' + lista.length + ' ficha(s)</div>' +
+            lista.map((f, i) =>
+                '<div class="fopt" data-i="' + i + '" data-v="' + f.ficha + '"' +
+                ' onmousedown="fichaElegir(\'' + f.ficha + '\')"' +
+                ' style="padding:9px 14px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #f8f8f8">' +
+                '<span style="font-weight:800;color:#1e5c1e;min-width:70px">' + f.ficha + '</span>' +
+                '<span style="color:#666;font-size:11px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (f.programa || 'Sin programa') + '</span>' +
+                '<span style="background:#e8f5e9;color:#1e5c1e;border-radius:10px;padding:2px 7px;font-size:10px;font-weight:700">' + f.n + '</span>' +
+                '</div>'
+            ).join('');
+    }
+    dd.style.display = 'block';
+}
+
+function fichaElegir(v) {
+    document.getElementById('filtroFicha').value = v;
+    document.getElementById('fichaDropdown').style.display = 'none';
+    _fichaIdx = -1;
+}
+
+function fichaTecla(e) {
+    const dd = document.getElementById('fichaDropdown');
+    if (dd.style.display === 'none') return;
+    const opts = dd.querySelectorAll('.fopt');
+    if (e.key === 'ArrowDown') { e.preventDefault(); _fichaIdx = Math.min(_fichaIdx + 1, opts.length - 1); fichaResaltar(opts); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); _fichaIdx = Math.max(_fichaIdx - 1, 0); fichaResaltar(opts); }
+    else if (e.key === 'Enter' && _fichaIdx >= 0) { e.preventDefault(); fichaElegir(opts[_fichaIdx].dataset.v); }
+    else if (e.key === 'Escape') { dd.style.display = 'none'; }
+}
+
+function fichaResaltar(opts) {
+    opts.forEach((o, i) => o.style.background = i === _fichaIdx ? '#f0fff0' : '');
+    if (_fichaIdx >= 0) opts[_fichaIdx].scrollIntoView({ block: 'nearest' });
+}
+
+document.addEventListener('click', function(e) {
+    const w = document.getElementById('fichaWrap');
+    if (w && !w.contains(e.target)) {
+        const dd = document.getElementById('fichaDropdown');
+        if (dd) dd.style.display = 'none';
+    }
+});
+
+/* ══ IMPRIMIR CARNETS ══ */
+let impSeleccionados = new Set();
+let impDatos = [];
+
+async function impCargar() {
+    document.getElementById('impLoading').style.display = 'block';
+    document.getElementById('impGrupos').innerHTML = '';
+    document.getElementById('impVacio').style.display = 'none';
+    document.getElementById('impStatsRow').style.display = 'none';
+    document.getElementById('impSelBar').style.display = 'none';
+    impSeleccionados.clear();
+
+    try {
+        const rc = await fetch('/api/carnets_generados?_=' + Date.now(), { cache: 'no-store' });
+        const dc = await rc.json();
+
+        if (!dc.success || !dc.cedulas || !dc.cedulas.length) {
+            document.getElementById('impLoading').style.display = 'none';
+            document.getElementById('impVacio').style.display = 'block';
+            return;
+        }
+
+        const cedualsConCarnet = new Set(dc.cedulas);
+
+        const ra = await fetch('/api/lista_aprendices_filtrada?todos=true&_=' + Date.now(), { cache: 'no-store' });
+        const da = await ra.json();
+        if (!da.success) throw new Error('Sin datos de aprendices');
+
+        // Cache:no-store ya aplicado en gcListaCargar; aquí filtramos los datos frescos
+        impDatos = da.aprendices.filter(function(a) { return cedualsConCarnet.has(a.cedula) && a.foto; });
+
+        if (!impDatos.length) {
+            document.getElementById('impLoading').style.display = 'none';
+            document.getElementById('impVacio').style.display = 'block';
+            return;
+        }
+
+        const menuBtn = document.getElementById('menuImprimir');
+        if (menuBtn) { menuBtn.style.opacity = '1'; menuBtn.style.pointerEvents = 'auto'; menuBtn.removeAttribute('title'); }
+
+        const grupos = {};
+        for (const a of impDatos) {
+            const ficha = a.codigo_ficha || 'Sin Ficha';
+            if (!grupos[ficha]) grupos[ficha] = { ficha, programa: a.nombre_programa, items: [] };
+            grupos[ficha].items.push(a);
+        }
+
+        const totalCarnets = impDatos.length;
+        const totalFichas   = Object.keys(grupos).length;
+        document.getElementById('impStatTotal').textContent  = totalCarnets;
+        document.getElementById('impStatFichas').textContent = totalFichas;
+        document.getElementById('impStatSelecc').textContent = 0;
+        document.getElementById('impStatsRow').style.display = 'grid';
+        document.getElementById('impSelBar').style.display   = 'flex';
+
+        const container = document.getElementById('impGrupos');
+        container.innerHTML = '';
+
+        Object.values(grupos).sort((a,b) => a.ficha.localeCompare(b.ficha)).forEach(g => {
+            const div = document.createElement('div');
+            div.className = 'imp-grupo-card';
+            div.innerHTML = '<div class="imp-grupo-header" onclick="impToggleGrupo(this)">' +
+                '<div><div class="imp-grupo-titulo">📋 Ficha ' + g.ficha + '</div>' +
+                '<div class="imp-grupo-sub">' + (g.programa || 'Programa N/A') + '</div></div>' +
+                '<div class="imp-grupo-header-right">' +
+                '<label class="imp-grupo-check-all" onclick="event.stopPropagation()">' +
+                '<input type="checkbox" class="gc-check impGrupoCheck" data-ficha="' + g.ficha + '" onchange="impToggleGrupoCheck(this,\'' + g.ficha + '\')">' +
+                'Sel. todos</label>' +
+                '<span class="imp-grupo-badge">' + g.items.length + ' carnet' + (g.items.length > 1 ? 's' : '') + '</span>' +
+                '<span id="impToggleIcon-' + g.ficha + '" style="font-size:16px">▼</span>' +
+                '</div></div>' +
+                '<div id="impGrupoBody-' + g.ficha + '">' +
+                '<table class="imp-tabla"><thead><tr>' +
+                '<th style="width:36px"></th><th style="width:46px">Foto</th>' +
+                '<th>Nombre</th><th>Cédula</th><th style="text-align:center">Ver</th>' +
+                '</tr></thead><tbody>' +
+                g.items.map(a =>
+                    '<tr id="impfila-' + a.cedula + '">' +
+                    '<td style="text-align:center"><input type="checkbox" class="gc-check impCheck" data-ficha="' + g.ficha + '" data-cedula="' + a.cedula + '" onchange="impToggleAprendiz(\'' + a.cedula + '\', this.checked, \'' + g.ficha + '\')"></td>' +
+                    '<td>' + (a.foto ? '<img src="/static/fotos/' + a.foto + '" class="imp-thumb" onerror="this.outerHTML=\'<div style=width:32px;height:40px;background:#eee;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:16px>👤</div>\'">' : '<div style="width:32px;height:40px;background:#eee;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:16px">👤</div>') + '</td>' +
+                    '<td style="font-weight:700;color:#1e5c1e">' + (a.nombre || 'N/A') + '</td>' +
+                    '<td style="color:#555">' + (a.cedula || 'N/A') + '</td>' +
+                    '<td style="text-align:center"><button class="imp-btn-ver" onclick="mcAbrir(\'' + a.cedula + '\',\'' + (a.nombre || '').replace(/'/g, "\\'") + '\')">👁️ Ver</button></td>' +
+                    '</tr>'
+                ).join('') +
+                '</tbody></table></div>';
+            container.appendChild(div);
+        });
+
+        document.getElementById('impLoading').style.display = 'none';
+
+    } catch(err) {
+        document.getElementById('impLoading').style.display = 'none';
+        document.getElementById('impVacio').style.display = 'block';
+        document.getElementById('impVacio').innerHTML = '<p style="font-size:28px">⚠️</p><p>Error: ' + err.message + '</p>';
+    }
+}
+
+function impToggleGrupo(header) {
+    const ficha = header.querySelector('.impGrupoCheck').dataset.ficha;
+    const body  = document.getElementById('impGrupoBody-' + ficha);
+    const icon  = document.getElementById('impToggleIcon-' + ficha);
+    const abierto = body.style.display !== 'none';
+    body.style.display = abierto ? 'none' : '';
+    icon.textContent   = abierto ? '▶' : '▼';
+}
+
+function impToggleTodos(cb) {
+    document.querySelectorAll('.impCheck').forEach(c => {
+        c.checked = cb.checked;
+        cb.checked ? impSeleccionados.add(c.dataset.cedula) : impSeleccionados.delete(c.dataset.cedula);
+    });
+    document.querySelectorAll('.impGrupoCheck').forEach(c => c.checked = cb.checked);
+    impActualizarContador();
+}
+
+function impToggleGrupoCheck(cb, ficha) {
+    document.querySelectorAll('.impCheck[data-ficha="' + ficha + '"]').forEach(c => {
+        c.checked = cb.checked;
+        cb.checked ? impSeleccionados.add(c.dataset.cedula) : impSeleccionados.delete(c.dataset.cedula);
+    });
+    impActualizarContador();
+    const total = document.querySelectorAll('.impCheck').length;
+    document.getElementById('impCheckTodos').checked = impSeleccionados.size === total;
+}
+
+function impToggleAprendiz(cedula, checked, ficha) {
+    checked ? impSeleccionados.add(cedula) : impSeleccionados.delete(cedula);
+    impActualizarContador();
+    const checksGrupo = document.querySelectorAll('.impCheck[data-ficha="' + ficha + '"]');
+    const todosMarcados = [...checksGrupo].every(c => c.checked);
+    const grupoCheck = document.querySelector('.impGrupoCheck[data-ficha="' + ficha + '"]');
+    if (grupoCheck) grupoCheck.checked = todosMarcados;
+    const total = document.querySelectorAll('.impCheck').length;
+    document.getElementById('impCheckTodos').checked = impSeleccionados.size === total;
+}
+
+function impActualizarContador() {
+    const n = impSeleccionados.size;
+    document.getElementById('impSelCount').textContent = n;
+    document.getElementById('impStatSelecc').textContent = n;
+    document.getElementById('impBtnImprimir').disabled = n === 0;
+}
+
+async function impImprimir() {
+    if (!impSeleccionados.size) return;
+    const cedulas = [...impSeleccionados];
+    mostrarLoading(true);
+
+    const rutas = [];
+    const ts = Date.now(); // timestamp global para esta sesión de impresión
+
+    for (var ii = 0; ii < cedulas.length; ii++) {
+        const cedula = cedulas[ii];
+        const ap = impDatos.find(function(a) { return a.cedula === cedula; });
+        if (!ap) continue;
+        const nombre = ap.nombre || '';
+
+        // ── Paso 1: regenerar el carnet para asegurar foto actual ──
+        // Esto garantiza que lo que se imprime tiene la foto vigente en disco.
+        try {
+            const fdR = new FormData();
+            fdR.append('cedula', cedula);
+            await fetch('/generar_carnet', { method: 'POST', body: fdR });
+        } catch(e) { console.warn('[impImprimir] Regeneración fallida para ' + cedula); }
+
+        // ── Paso 2: buscar el archivo con cache:no-store para no usar 404 cacheados ──
+        const posibles = [
+            '/static/carnets/' + nombre.replace(/ /g, '_') + '_completo.png',
+            '/static/carnets/carnet_combinado_' + cedula + '.png',
+            '/static/carnets/carnet_' + cedula + '.png'
+        ];
+        let rutaOk = null;
+        for (var pi = 0; pi < posibles.length; pi++) {
+            try {
+                const chk = await fetch(posibles[pi] + '?t=' + ts, {
+                    method: 'HEAD',
+                    cache: 'no-store'
+                });
+                if (chk.ok) { rutaOk = posibles[pi]; break; }
+            } catch(e) {}
+        }
+        if (rutaOk) rutas.push({ cedula: cedula, nombre: nombre, ruta: rutaOk, ts: ts });
+    }
+
+    mostrarLoading(false);
+
+    if (!rutas.length) {
+        mostrarAlerta('No se encontraron archivos de carnet para imprimir. Verifica que los carnets estén generados.', 'error');
+        return;
+    }
+
+    // ── Convertir cada imagen a base64 para embeber en el HTML ──
+    // Esto elimina el problema de URLs con tildes/ñ que corrompen los nombres
+    // de archivo cuando el Blob se abre en una nueva ventana del navegador.
+    mostrarLoading(true);
+    var imagenesB64 = [];
+    for (var bi = 0; bi < rutas.length; bi++) {
+        var r = rutas[bi];
+        try {
+            var resp64 = await fetch(r.ruta + '?t=' + (r.ts || Date.now()), { cache: 'no-store' });
+            if (resp64.ok) {
+                var blob64 = await resp64.blob();
+                var b64 = await new Promise(function(res) {
+                    var reader = new FileReader();
+                    reader.onload = function() { res(reader.result); };
+                    reader.readAsDataURL(blob64);
+                });
+                imagenesB64.push({ nombre: r.nombre, b64: b64 });
+            } else {
+                imagenesB64.push({ nombre: r.nombre, b64: null });
+            }
+        } catch(e) {
+            imagenesB64.push({ nombre: r.nombre, b64: null });
+        }
+    }
+    mostrarLoading(false);
+
+    var totalOk  = imagenesB64.filter(function(x) { return x.b64; }).length;
+    var totalErr = imagenesB64.length - totalOk;
+
+    // ── Construir HTML de impresión con charset UTF-8 explícito ──
+    var htmlImp = '<!DOCTYPE html>' +
+        '<html lang="es"><head>' +
+        '<meta charset="UTF-8">' +
+        '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+        '<title>Imprimir Carnets - SENA</title>' +
+        '<style>' +
+        '*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }' +
+        'body { background:#f0f4f0; font-family: Arial, Helvetica, sans-serif; color:#222; }' +
+
+        /* ── BARRA SUPERIOR ── */
+        '.barra-superior {' +
+        '  background: linear-gradient(135deg, #39A935 0%, #1e5c1e 100%);' +
+        '  padding: 18px 30px;' +
+        '  display: flex; align-items: center; justify-content: space-between;' +
+        '  box-shadow: 0 4px 16px rgba(0,0,0,0.18);' +
+        '  position: sticky; top: 0; z-index: 100;' +
+        '}' +
+        '.barra-titulo { display:flex; align-items:center; gap:12px; }' +
+        '.barra-titulo h1 { font-size:20px; font-weight:800; color:white; letter-spacing:0.3px; }' +
+        '.barra-titulo p  { font-size:12px; color:rgba(255,255,255,0.8); margin-top:2px; }' +
+        '.barra-logo { font-size:28px; }' +
+        '.barra-btns { display:flex; gap:12px; align-items:center; }' +
+
+        /* ── BOTÓN IMPRIMIR ── */
+        '.btn-imprimir {' +
+        '  display: inline-flex; align-items: center; gap: 8px;' +
+        '  padding: 11px 28px;' +
+        '  background: white;' +
+        '  color: #1e5c1e;' +
+        '  border: 2px solid rgba(255,255,255,0.6);' +
+        '  border-radius: 10px;' +
+        '  font-size: 15px; font-weight: 800;' +
+        '  cursor: pointer; font-family: inherit;' +
+        '  box-shadow: 0 3px 10px rgba(0,0,0,0.15);' +
+        '  transition: all 0.2s;' +
+        '}' +
+        '.btn-imprimir:hover { background:#e8f5e9; transform:translateY(-1px); }' +
+        '.btn-imprimir svg { width:18px; height:18px; flex-shrink:0; }' +
+
+        /* ── BOTÓN CERRAR ── */
+        '.btn-cerrar {' +
+        '  display: inline-flex; align-items: center; gap: 8px;' +
+        '  padding: 11px 24px;' +
+        '  background: rgba(255,255,255,0.18);' +
+        '  color: white;' +
+        '  border: 2px solid rgba(255,255,255,0.35);' +
+        '  border-radius: 10px;' +
+        '  font-size: 15px; font-weight: 700;' +
+        '  cursor: pointer; font-family: inherit;' +
+        '  transition: all 0.2s;' +
+        '}' +
+        '.btn-cerrar:hover { background:rgba(255,255,255,0.28); }' +
+
+        /* ── CONTENIDO ── */
+        '.contenido { padding: 28px 24px; }' +
+        '.contador {' +
+        '  font-size: 13px; color: #555;' +
+        '  margin-bottom: 20px; text-align:center;' +
+        '  background: white; border-radius:8px; padding:10px 16px;' +
+        '  border-left:4px solid #39A935;' +
+        '  display:inline-block;' +
+        '}' +
+        '.contador-wrap { text-align:center; margin-bottom:20px; }' +
+        '.contador strong { color:#1e5c1e; }' +
+        '.aviso-error {' +
+        '  background:#FFF3CD; border-left:4px solid #FF9800;' +
+        '  border-radius:8px; padding:10px 16px;' +
+        '  font-size:13px; color:#856404;' +
+        '  margin-bottom:16px; text-align:center;' +
+        '}' +
+
+        /* ── GRID DE CARNETS ── */
+        '.carnets-grid {' +
+        '  display: grid;' +
+        '  grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));' +
+        '  gap: 24px;' +
+        '}' +
+        '.carnet-item {' +
+        '  background: white;' +
+        '  border-radius: 12px;' +
+        '  overflow: hidden;' +
+        '  box-shadow: 0 3px 12px rgba(0,0,0,0.1);' +
+        '}' +
+        '.carnet-nombre {' +
+        '  padding: 10px 14px 8px;' +
+        '  font-size: 13px; font-weight: 800;' +
+        '  color: #1e5c1e;' +
+        '  border-bottom: 2px solid #e8f5e9;' +
+        '  letter-spacing: 0.2px;' +
+        '}' +
+        '.carnet-img { width:100%; display:block; }' +
+        '.carnet-error {' +
+        '  padding: 30px; text-align:center;' +
+        '  color:#999; font-size:13px;' +
+        '  border: 2px dashed #ddd;' +
+        '  border-radius: 8px; margin:8px;' +
+        '}' +
+
+        /* ── PRINT ── */
+        '@media print {' +
+        '  .barra-superior { display:none !important; }' +
+        '  body { background:white; }' +
+        '  .contenido { padding: 0; }' +
+        '  .carnets-grid { gap:12px; }' +
+        '  .carnet-item { box-shadow:none; page-break-inside:avoid; break-inside:avoid; }' +
+        '  .contador-wrap, .aviso-error { display:none; }' +
+        '}' +
+        '</style></head><body>';
+
+    // Barra superior
+    htmlImp += '<div class="barra-superior">' +
+        '<div class="barra-titulo">' +
+        '<span class="barra-logo">&#127891;</span>' +
+        '<div><h1>Carnets para Imprimir &mdash; SENA</h1>' +
+        '<p>Centro de Biotecnolog&iacute;a Industrial &bull; Valle del Cauca</p></div>' +
+        '</div>' +
+        '<div class="barra-btns">' +
+        // Botón Imprimir — verde con ícono SVG (sin emoji que se corrompe)
+        '<button class="btn-imprimir" onclick="window.print()">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
+        '<polyline points="6 9 6 2 18 2 18 9"/>' +
+        '<path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>' +
+        '<rect x="6" y="14" width="12" height="8"/>' +
+        '</svg>' +
+        'Imprimir ahora</button>' +
+        // Botón Cerrar — gris translúcido
+        '<button class="btn-cerrar" onclick="window.close()">&#10005; Cerrar</button>' +
+        '</div></div>';
+
+    // Contenido
+    htmlImp += '<div class="contenido">';
+    htmlImp += '<div class="contador-wrap"><span class="contador">' +
+        '<strong>' + totalOk + '</strong> de <strong>' + imagenesB64.length + '</strong> carnet' +
+        (imagenesB64.length !== 1 ? 's' : '') + ' listos para imprimir' +
+        (totalErr > 0 ? ' &bull; <span style="color:#E65100">' + totalErr + ' con error</span>' : '') +
+        '</span></div>';
+
+    if (totalErr > 0) {
+        htmlImp += '<div class="aviso-error">&#9888; Algunos carnets no pudieron cargarse. ' +
+            'Vuelve al dashboard, gen&eacute;ralos nuevamente y reintenta la impresi&oacute;n.</div>';
+    }
+
+    htmlImp += '<div class="carnets-grid">';
+    for (var gi = 0; gi < imagenesB64.length; gi++) {
+        var item = imagenesB64[gi];
+        // Escapar nombre para HTML (evitar XSS y caracteres especiales)
+        var nombreEsc = item.nombre
+            .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+            .replace(/"/g,'&quot;');
+        htmlImp += '<div class="carnet-item">' +
+            '<div class="carnet-nombre">' + nombreEsc + '</div>';
+        if (item.b64) {
+            htmlImp += '<img class="carnet-img" src="' + item.b64 + '" alt="Carnet de ' + nombreEsc + '">';
+        } else {
+            htmlImp += '<div class="carnet-error">' +
+                '&#128444; No se pudo cargar la imagen.<br>' +
+                'Genera el carnet nuevamente desde el dashboard.' +
+                '</div>';
+        }
+        htmlImp += '</div>';
+    }
+    htmlImp += '</div></div></body></html>';
+
+    // ── Crear Blob con charset UTF-8 explícito ──
+    var blob = new Blob([htmlImp], { type: 'text/html; charset=utf-8' });
+    var url  = URL.createObjectURL(blob);
+    var win  = window.open(url, '_blank', 'width=1200,height=850');
+    setTimeout(function() { URL.revokeObjectURL(url); }, 30000);
+}
+
+/* ══ DASHBOARD ══ */
+let dbIntervalId = null;
+
+function dbAnimar(id, valor) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const inicio = parseInt(el.textContent) || 0;
+    const fin    = parseInt(valor) || 0;
+    if (inicio === fin) return;
+    const dur = 600, paso = 16, pasos = Math.ceil(dur / paso);
+    let i = 0;
+    const timer = setInterval(function() {
+        i++;
+        const p = 1 - Math.pow(1 - i / pasos, 3);
+        el.textContent = Math.round(inicio + (fin - inicio) * p);
+        if (i >= pasos) { clearInterval(timer); el.textContent = fin; }
+    }, paso);
+}
+
+async function dbCargarMetricas() {
+    const btn = document.getElementById('dbRefreshBtn');
+    if (btn) btn.classList.add('spinning');
+    try {
+        const resp = await fetch('/api/metricas_dashboard');
+        const d    = await resp.json();
+        if (!d.success) throw new Error(d.message);
+        dbAnimar('dbTotal',   d.total_aprendices);
+        dbAnimar('dbHoy',     d.registrados_hoy);
+        dbAnimar('dbSemana',  d.registrados_semana);
+        dbAnimar('dbConFoto', d.con_foto);
+        const pct = d.total_aprendices > 0 ? Math.round((d.con_foto / d.total_aprendices) * 100) : 0;
+        const bar = document.getElementById('dbFotoBar');
+        const txt = document.getElementById('dbFotoPct');
+        if (bar) bar.style.width = pct + '%';
+        if (txt) txt.textContent = pct + '% del total (' + d.sin_foto + ' sin foto)';
+        dbAnimar('dbCarnetTotal',    d.carnets_total);
+        dbAnimar('dbCarnetHoy',      d.carnets_hoy);
+        dbAnimar('dbCarnetSemana',   d.carnets_semana);
+        dbAnimar('dbCarnetConFoto',  d.carnets_con_foto);
+        dbAnimar('dbCarnetSinFoto',  d.carnets_sin_foto);
+        dbAnimar('dbCarnetPendiente',d.carnets_pendientes);
+        const ts = document.getElementById('dbTimestamp');
+        if (ts) { const now = new Date(); ts.textContent = 'Última actualización: ' + now.toLocaleTimeString('es-CO'); }
+    } catch(err) { console.warn('Error cargando métricas:', err); }
+    finally { if (btn) btn.classList.remove('spinning'); }
+}
+
+function dbIniciarAutoRefresh() {
+    if (dbIntervalId) clearInterval(dbIntervalId);
+    dbIntervalId = setInterval(function() {
+        if (document.getElementById('dashboard').classList.contains('active')) dbCargarMetricas();
+    }, 30000);
+}
+
+/* ══ LISTA APRENDICES ══ */
+async function cargarListaAprendices() {
+    const filtroFicha   = document.getElementById('filtroFicha').value.trim();
+    const filtroCedula  = document.getElementById('filtroCedula').value.trim();
+    const filtroFoto    = document.getElementById('filtroFoto').value;
+    const filtroMostrar = document.getElementById('filtroMostrar').value;
+    const wrapper       = document.getElementById('tablaWrapperAprendices');
+    const tbody         = document.getElementById('tbodyListaAprendices');
+    const contenedor    = document.getElementById('contenedorTablaAprendices');
+    const mensajeVacio  = document.getElementById('mensajeSinAprendices');
+    const estadisticas  = document.getElementById('estadisticasLista');
+
+    if (!filtroMostrar && !filtroFicha && !filtroCedula) {
+        mostrarAlerta('⚠️ Ingresa un criterio de búsqueda o selecciona "Todos los Aprendices"', 'warning');
+        return;
+    }
+
+    mostrarLoading(true);
+    try {
+        let url = '/api/lista_aprendices_filtrada';
+        const params = new URLSearchParams();
+        if (filtroMostrar === 'todos') { params.append('todos', 'true'); }
+        else { if (filtroFicha) params.append('ficha', filtroFicha); if (filtroCedula) params.append('cedula', filtroCedula); }
+        if (filtroFoto) params.append('foto', filtroFoto);
+        if (params.toString()) url += '?' + params.toString();
+
+        const response = await fetch(url);
+        const data = await response.json();
+        mostrarLoading(false);
+
+        if (data.success && data.aprendices && data.aprendices.length > 0) {
+            tbody.innerHTML = '';
+            const cardsContainer = document.getElementById('contenedorCardsAprendices');
+            cardsContainer.innerHTML = '';
+
+            data.aprendices.forEach(function(aprendiz) {
+                const tr = document.createElement('tr');
+                const fotoCelda = aprendiz.foto
+                    ? '<img src="/static/fotos/' + aprendiz.foto + '" alt="Foto" class="foto-thumbnail">'
+                    : '<div class="foto-placeholder">📷</div>';
+                tr.innerHTML = '<td style="text-align:center">' + fotoCelda + '</td>' +
+                    '<td><strong>' + aprendiz.nombre + '</strong></td>' +
+                    '<td>' + aprendiz.cedula + '</td>' +
+                    '<td>' + (aprendiz.nombre_programa || 'N/A') + '</td>' +
+                    '<td style="color:#666">' + (aprendiz.codigo_ficha || 'N/A') + '</td>' +
+                    '<td style="text-align:center"><button class="action-btn-pequeño" onclick="window.location.href=\'/ver_carnet_archivo/' + aprendiz.cedula + '\'">🎴 Ver Carnet</button></td>';
+                tbody.appendChild(tr);
+
+                const card = document.createElement('div');
+                card.className = 'lista-card';
+                const fotoCardHtml = aprendiz.foto
+                    ? '<img src="/static/fotos/' + aprendiz.foto + '" alt="Foto" class="foto-thumbnail">'
+                    : '<div class="foto-placeholder">👤</div>';
+                card.innerHTML = '<div class="lista-card-top">' + fotoCardHtml +
+                    '<div><div class="lista-card-nombre">' + aprendiz.nombre + '</div>' +
+                    '<div class="lista-card-cedula">CC/TI: ' + aprendiz.cedula + '</div></div></div>' +
+                    '<div class="lista-card-datos">' +
+                    '<div class="lista-card-dato"><span>Programa:</span><br>' + (aprendiz.nombre_programa || 'N/A') + '</div>' +
+                    '<div class="lista-card-dato"><span>Ficha:</span><br>' + (aprendiz.codigo_ficha || 'N/A') + '</div></div>' +
+                    '<button class="lista-card-btn" onclick="window.location.href=\'/ver_carnet_archivo/' + aprendiz.cedula + '\'">🎴 Ver Carnet</button>';
+                cardsContainer.appendChild(card);
+            });
+
+            wrapper.style.display    = 'block';
+            contenedor.style.display = 'none';
+            mensajeVacio.style.display = 'none';
+
+            let desc = filtroMostrar === 'todos'
+                ? 'Mostrando: Todos los aprendices'
+                : [filtroFicha ? 'Ficha: <strong>' + filtroFicha + '</strong>' : '',
+                   filtroCedula ? 'CC/TI: <strong>' + filtroCedula + '</strong>' : '']
+                  .filter(Boolean).join(' | ');
+
+            estadisticas.innerHTML = '✅ Total encontrado: <strong>' + data.aprendices.length + '</strong> aprendiz(ces) &nbsp;|&nbsp; ' + desc +
+                (filtroFoto === 'con_foto' ? ' | Foto: <strong>Con Foto</strong>' : filtroFoto === 'sin_foto' ? ' | Foto: <strong>Sin Foto</strong>' : '');
+            estadisticas.style.display = 'block';
+        } else {
+            wrapper.style.display    = 'none';
+            contenedor.style.display = 'none';
+            mensajeVacio.style.display = 'block';
+            estadisticas.style.display = 'none';
+            mostrarAlerta('❌ No se encontraron aprendices con los criterios seleccionados', 'warning');
+        }
+    } catch (error) {
+        mostrarLoading(false);
+        mostrarAlerta('❌ Error al cargar la lista: ' + error.message, 'error');
+        document.getElementById('tablaWrapperAprendices').style.display = 'none';
+        document.getElementById('mensajeSinAprendices').style.display = 'block';
+    }
+}
+
+/* ══ CARGAR FOTO ══ */
+document.getElementById('formBuscarAprendizFoto').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const cedula = document.getElementById('cedulaBuscarFoto').value.trim();
+    const infoDiv = document.getElementById('infoAprendizFoto');
+    if (!cedula) { mostrarAlerta('Por favor ingresa la cédula', 'error'); return; }
+    mostrarLoading(true);
+    try {
+        const response = await fetch('/api/buscar_aprendiz/' + cedula);
+        const data = await response.json();
+        mostrarLoading(false);
+        if (data.success && data.data) { mostrarInfoAprendizFoto(data.data); }
+        else { infoDiv.innerHTML = '<div class="alert alert-error">❌ No se encontró aprendiz con cédula: ' + cedula + '</div>'; infoDiv.style.display = 'block'; }
+    } catch (error) {
+        mostrarLoading(false);
+        infoDiv.innerHTML = '<div class="alert alert-error">❌ Error al buscar: ' + error.message + '</div>';
+        infoDiv.style.display = 'block';
+    }
+});
+
+function mostrarInfoAprendizFoto(aprendiz) {
+    const infoDiv = document.getElementById('infoAprendizFoto');
+    const tieneFoto = !!aprendiz.foto;
+    const campos = [
+        ['Nombre', aprendiz.nombre], ['Cédula', aprendiz.cedula],
+        ['Programa', aprendiz.nombre_programa || 'N/A'], ['Nivel', aprendiz.nivel_formacion || 'N/A'],
+        ['Ficha', aprendiz.codigo_ficha || 'N/A'], ['Centro', aprendiz.centro || 'N/A'],
+        ['NIS', aprendiz.nis || 'N/A'], ['Tipo Sangre', aprendiz.tipo_sangre || 'N/A'],
+        ['Estado Foto', tieneFoto ? '✅ Cargada' : '❌ Sin cargar']
+    ];
+    let html = '<div class="info-display"><h4 style="color:#1e5c1e;margin-bottom:15px">✅ Información del Aprendiz</h4>' +
+        '<div class="info-display-row">' +
+        campos.map(function(c) { return '<div class="info-display-item"><div class="info-display-label">' + c[0] + '</div><div class="info-display-value">' + c[1] + '</div></div>'; }).join('') +
+        '</div></div>' +
+        (tieneFoto
+            ? '<div class="info-card" style="background:linear-gradient(135deg,#D4EDDA,#C3E6CB);border-left:5px solid #28A745"><h3 style="color:#155724">✅ Foto ya Cargada</h3><p style="color:#155724;margin:10px 0">Si deseas actualizar la foto, carga una nueva a continuación.</p></div>'
+            : '<div class="info-card" style="background:linear-gradient(135deg,#FFF3CD,#FFE69C);border-left:5px solid #FF9800"><h3 style="color:#856404">❌ Sin Foto Cargada</h3><p style="color:#856404;margin:10px 0">Por favor, carga una foto para este aprendiz.</p></div>') +
+        '<div class="info-card"><h3>📸 ' + (tieneFoto ? 'Actualizar' : 'Cargar') + ' Foto</h3>' +
+        '<form id="formCargarFotoAprendiz" style="margin-top:20px">' +
+        '<div class="form-group"><label class="form-label">Selecciona la Foto:</label>' +
+        '<div class="file-input-wrapper"><input type="file" id="fotoCargarAdmin" accept=".jpg,.jpeg,.png,.gif" required>' +
+        '<label for="fotoCargarAdmin" class="file-input-label"><span>📁 Haz clic o arrastra la foto aquí</span></label></div>' +
+        '<div class="file-name" id="nombreFotoCargarAdmin"></div></div>' +
+        '<button type="button" class="action-button" onclick="cargarFotoAprendiz(\'' + aprendiz.cedula + '\')" style="width:100%;justify-content:center">📤 ' + (tieneFoto ? 'Actualizar' : 'Subir') + ' Foto</button>' +
+        '</form><div id="resultadoCargarFoto" style="margin-top:15px"></div></div>';
+    infoDiv.innerHTML = html;
+    infoDiv.style.display = 'block';
+    document.getElementById('fotoCargarAdmin').addEventListener('change', function() {
+        const n = document.getElementById('nombreFotoCargarAdmin');
+        if (this.files.length) { n.textContent = '✓ ' + this.files[0].name + ' (' + (this.files[0].size/1024/1024).toFixed(2) + ' MB)'; n.classList.add('show'); }
+    });
+}
+
+async function cargarFotoAprendiz(cedula) {
+    const foto = document.getElementById('fotoCargarAdmin').files[0];
+    const resultDiv = document.getElementById('resultadoCargarFoto');
+    if (!foto) { resultDiv.innerHTML = '<div class="alert alert-error">❌ Por favor selecciona una foto</div>'; return; }
+    if (foto.size > 5*1024*1024) { resultDiv.innerHTML = '<div class="alert alert-error">❌ El archivo no debe exceder 5 MB</div>'; return; }
+    mostrarLoading(true);
+    try {
+        const fd = new FormData(); fd.append('cedula', cedula); fd.append('foto', foto);
+        const result = await (await fetch('/actualizar_foto_rapido', { method: 'POST', body: fd })).json();
+        mostrarLoading(false);
+        if (result.success) {
+            resultDiv.innerHTML = '<div class="success-message"><h4>✅ ¡Foto cargada exitosamente!</h4><p>La foto del aprendiz ha sido actualizada correctamente.</p>' +
+                '<p style="margin-top:10px;font-size:13px;color:#155724">💡 Ahora puedes ir a <strong>Generar y Gestionar Carnets</strong> para generar el carnet de este aprendiz.</p></div>';
+            document.getElementById('fotoCargarAdmin').value = '';
+            document.getElementById('nombreFotoCargarAdmin').classList.remove('show');
+
+            // ── Sincronización garantizada: actualizar gcListaTodos en memoria ──
+            // Así, al entrar a "Gestionar Carnets", el aprendiz ya aparece con foto sin recargar desde el servidor.
+            const apInMemoria = gcListaTodos.find(function(a) { return a.cedula === cedula; });
+            if (apInMemoria) {
+                // Si ya estaba en la lista, marcar que tiene foto (nombre genérico; se reemplaza al recargar)
+                if (!apInMemoria.foto) apInMemoria.foto = cedula + '_foto.jpg';
+            }
+            // Forzar recarga completa de gcListaTodos desde el servidor en background
+            // para que el dato de foto sea el nombre real retornado por el backend.
+            _gcSincronizarFotoEnGestion(cedula);
+        } else {
+            resultDiv.innerHTML = '<div class="alert alert-error"><strong>❌ Error:</strong> ' + result.message + '</div>';
+        }
+    } catch (error) {
+        mostrarLoading(false);
+        resultDiv.innerHTML = '<div class="alert alert-error"><strong>❌ Error:</strong> ' + error.message + '</div>';
+    }
+}
+
+/* ══════════════════════════════════════════════════
+   SINCRONIZACIÓN FOTO → GESTIONAR CARNETS
+   Garantiza que tras subir una foto el módulo de carnets
+   refleje el cambio al 100%, sin importar qué sección esté activa.
+══════════════════════════════════════════════════ */
+async function _gcSincronizarFotoEnGestion(cedula) {
+    try {
+        // 1. Recargar datos frescos de ese aprendiz específico desde el servidor
+        const resp = await fetch('/api/buscar_aprendiz/' + cedula);
+        const data = await resp.json();
+        if (!data.success || !data.data) return;
+
+        const apFresco = data.data;
+
+        // 2. Actualizar el registro en gcListaTodos con el nombre de foto real
+        const idx = gcListaTodos.findIndex(function(a) { return a.cedula === cedula; });
+        if (idx !== -1) {
+            gcListaTodos[idx].foto = apFresco.foto || gcListaTodos[idx].foto;
+        } else {
+            // Si por alguna razón no estaba en la lista (carga tardía), añadirlo
+            gcListaTodos.push({
+                cedula:          apFresco.cedula,
+                nombre:          apFresco.nombre,
+                foto:            apFresco.foto,
+                codigo_ficha:    apFresco.codigo_ficha,
+                nombre_programa: apFresco.nombre_programa,
+                nivel_formacion: apFresco.nivel_formacion,
+                tipo_sangre:     apFresco.tipo_sangre,
+                nis:             apFresco.nis
+            });
+        }
+
+        // 3. Si el módulo "Gestionar Carnets" está activo en este momento, re-renderizar la página actual
+        //    para que el botón "Generar" aparezca de inmediato sin que el usuario tenga que hacer clic en "Actualizar".
+        if (document.getElementById('gestionar-carnets').classList.contains('active')) {
+            gcListaAplicarFiltro(document.getElementById('gcListaBuscar').value.toLowerCase().trim());
+        }
+
+        // 4. Actualizar stats en tiempo real (recalcula con los datos nuevos en memoria)
+        gcActualizarStatsCarnet();
+        const total   = gcListaTodos.length;
+        const conFoto = gcListaTodos.filter(function(a) { return a.foto; }).length;
+        const sinFoto = total - conFoto;
+        const elCon   = document.getElementById('gcStatConFoto');
+        const elSin   = document.getElementById('gcStatSinFoto');
+        if (elCon) elCon.textContent = conFoto;
+        if (elSin) elSin.textContent = sinFoto;
+
+    } catch(e) {
+        // Fallo silencioso — no romper el flujo principal
+        console.warn('[gcSync] Error sincronizando foto:', e);
+    }
+}
+
+/* ══ ELIMINAR APRENDICES ══ */
+async function buscarFicha() {
+    const ficha = document.getElementById('fichaBuscar').value.trim();
+    if (!ficha) { mostrarAlerta('Por favor ingresa un número de ficha', 'error'); return; }
+    mostrarLoading(true);
+    try {
+        const data = await (await fetch('/buscar_ficha/' + ficha)).json();
+        mostrarLoading(false);
+        if (data.success && data.aprendices.length > 0) {
+            mostrarAprendices(data.aprendices, ficha);
+            document.getElementById('fichaResultado').innerHTML = '<div class="alert alert-success">✅ <strong>' + data.aprendices.length + '</strong> aprendices en la ficha <strong>' + ficha + '</strong></div>';
+        } else {
+            document.getElementById('fichaResultado').innerHTML = '<div class="alert alert-error">❌ No se encontraron aprendices en la ficha ' + ficha + '</div>';
+            document.getElementById('tablaSection').style.display = 'none';
+        }
+    } catch (error) { mostrarLoading(false); mostrarAlerta('Error al buscar la ficha: ' + error, 'error'); }
+}
+
+function mostrarAprendices(aprendices, ficha) {
+    const tbody        = document.getElementById('tbody');
+    const tabla        = document.getElementById('tablaPrendices');
+    const tablaSection = document.getElementById('tablaSection');
+    const mensajeVacio = document.getElementById('mensajeVacio');
+    const botonesAccion= document.getElementById('botonesAccion');
+    tbody.innerHTML = '';
+    aprendicesSeleccionados.clear();
+    document.getElementById('tablaSeccionTitulo').textContent = 'Aprendices — Ficha ' + ficha;
+    if (!aprendices.length) {
+        tabla.style.display = 'none'; mensajeVacio.style.display = 'block';
+        botonesAccion.style.display = 'none'; tablaSection.style.display = 'block'; return;
+    }
+    aprendices.forEach(function(a) {
+        const tr = document.createElement('tr');
+        tr.id = 'fila-' + a.cedula;
+        tr.innerHTML = '<td><input type="checkbox" value="' + a.cedula + '" onchange="actualizarSeleccion(\'' + a.cedula + '\')"></td>' +
+            '<td id="nombre-' + a.cedula + '"><strong>' + a.nombre + '</strong></td>' +
+            '<td>' + a.cedula + '</td><td>' + a.programa + '</td>' +
+            '<td style="text-align:center"><button class="ef-btn-editar" onclick="meaAbrir(\'' + a.cedula + '\',\'' + a.nombre.replace(/'/g, "\\'") + '\')">✏️ Editar</button></td>';
+        tbody.appendChild(tr);
+    });
+    tabla.style.display  = 'table'; tablaSection.style.display = 'block';
+    botonesAccion.style.display = 'flex'; mensajeVacio.style.display = 'none';
+    actualizarEstadisticas(aprendices.length);
+}
+
+function actualizarSeleccion(cedula) {
+    const cb = document.querySelector('input[value="' + cedula + '"]');
+    cb.checked ? aprendicesSeleccionados.add(cedula) : aprendicesSeleccionados.delete(cedula);
+    const all = document.querySelectorAll('#tablaPrendices tbody input[type="checkbox"]');
+    document.getElementById('selectAll').checked = Array.from(all).every(function(c) { return c.checked; });
+    actualizarEstadisticas();
+}
+
+function toggleSelectAll(checkbox) {
+    document.querySelectorAll('#tablaPrendices tbody input[type="checkbox"]').forEach(function(cb) {
+        cb.checked = checkbox.checked;
+        checkbox.checked ? aprendicesSeleccionados.add(cb.value) : aprendicesSeleccionados.delete(cb.value);
+    });
+    actualizarEstadisticas();
+}
+function seleccionarTodos()   { const s = document.getElementById('selectAll'); s.checked = true;  toggleSelectAll(s); }
+function deseleccionarTodos() { const s = document.getElementById('selectAll'); s.checked = false; toggleSelectAll(s); }
+
+function actualizarEstadisticas(total) {
+    const sel = aprendicesSeleccionados.size;
+    const totalN = total !== undefined ? total : document.querySelectorAll('#tablaPrendices tbody input[type="checkbox"]').length;
+    document.getElementById('estadisticaTexto').innerHTML = 'Total: <strong>' + totalN + '</strong> | Seleccionados: <strong style="color:#39A935">' + sel + '</strong>';
+    document.getElementById('estadisticas').style.display = 'block';
+    document.getElementById('btnEliminar').disabled = sel === 0;
+}
+
+async function eliminarSeleccionados() {
+    if (!aprendicesSeleccionados.size) { mostrarAlerta('Selecciona al menos un aprendiz', 'warning'); return; }
+    const cantApr = aprendicesSeleccionados.size;
+    document.getElementById('acConfNombre').innerHTML = '<span style="font-size:15px;color:#C62828;font-weight:800">' + cantApr + ' aprendiz' + (cantApr > 1 ? 'ces' : '') + ' seleccionado' + (cantApr > 1 ? 's' : '') + '</span><br><span style="font-size:12px;color:#888;font-weight:400">Estos registros serán eliminados permanentemente del sistema</span>';
+    const titulo2 = document.querySelector('.acconf-titulo');
+    if (titulo2) titulo2.textContent = 'Eliminar Aprendices';
+    const aviso2 = document.querySelector('.acconf-aviso');
+    if (aviso2) aviso2.innerHTML = '⚠️ Esta acción es <strong>IRREVERSIBLE</strong>. Se perderán todos los datos de los aprendices seleccionados.';
+    document.getElementById('acConfOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    const btnApr = document.getElementById('acConfBtnEliminar');
+    btnApr.textContent = '🗑️ Sí, eliminar';
+    btnApr.onclick = async function() { acConfCerrar(); await _efEjecutarEliminarAprendices(); };
+}
+
+async function _efEjecutarEliminarAprendices() {
+    if (!aprendicesSeleccionados.size) return;
+    mostrarLoading(true);
+    try {
+        for (const c of aprendicesSeleccionados) await fetch('/eliminar_empleado/' + c, { method: 'POST' });
+        mostrarLoading(false);
+        mostrarAlerta('✅ Se eliminaron ' + aprendicesSeleccionados.size + ' aprendiz(ces) exitosamente', 'success');
+        setTimeout(buscarFicha, 1000);
+    } catch (error) { mostrarLoading(false); mostrarAlerta('Error al eliminar: ' + error, 'error'); }
+}
+
+async function efCargarFichas() {
+    const contenido = document.getElementById('efFichasContenido');
+    contenido.innerHTML = '<div style="text-align:center;padding:24px"><div class="spinner"></div><p style="margin-top:10px;color:#666">Cargando fichas...</p></div>';
+    try {
+        const data = await (await fetch('/api/estadisticas_fichas')).json();
+        if (!data.success || !data.data || !data.data.length) {
+            contenido.innerHTML = '<div style="text-align:center;padding:30px;color:#999">📭 No hay fichas registradas</div>'; return;
+        }
+        const grid = document.createElement('div');
+        grid.className = 'ef-fichas-grid';
+        data.data.forEach(function(f) {
+            const card = document.createElement('div');
+            card.className = 'ef-ficha-card';
+            card.id = 'ef-card-' + f.ficha;
+            card.innerHTML = '<div class="ef-ficha-num">🎫 Ficha ' + f.ficha + '</div>' +
+                '<div class="ef-ficha-stats">' +
+                '<span class="ef-ficha-stat">👥 ' + f.total + ' aprendices</span>' +
+                '<span class="ef-ficha-stat">📸 ' + f.con_foto + ' con foto</span>' +
+                '<span class="ef-ficha-stat" style="background:#FFF3CD;color:#856404">❌ ' + f.sin_foto + ' sin foto</span></div>' +
+                '<div class="ef-ficha-btns">' +
+                '<button class="ef-btn-ver" onclick="efVerFicha(\'' + f.ficha + '\')">👁️ Ver / Editar aprendices</button>' +
+                '<button class="ef-btn-del" onclick="efEliminarFicha(\'' + f.ficha + '\',' + f.total + ')">🗑️ Eliminar ficha</button></div>';
+            grid.appendChild(card);
+        });
+        contenido.innerHTML = '<p style="font-size:13px;color:#1e5c1e;margin-bottom:12px">📋 <strong>' + data.data.length + '</strong> ficha(s) registrada(s) — <strong>' + data.data.reduce(function(s,f){return s+f.total;},0) + '</strong> aprendices en total</p>';
+        contenido.appendChild(grid);
+    } catch(err) { contenido.innerHTML = '<div class="alert alert-error">❌ Error cargando fichas: ' + err.message + '</div>'; }
+}
+
+function efVerFicha(ficha) {
+    document.getElementById('fichaBuscar').value = ficha;
+    buscarFicha();
+    setTimeout(function() { document.getElementById('tablaSection').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 600);
+}
+
+function efEliminarFicha(ficha, total) {
+    document.getElementById('acConfNombre').innerHTML = '<span style="font-size:15px;color:#C62828;font-weight:800">Ficha ' + ficha + '</span><br><span style="font-size:12px;color:#888;font-weight:400">Se eliminarán permanentemente <strong style="color:#C62828">' + total + ' aprendices</strong> asociados a esta ficha</span>';
+    const titulo = document.querySelector('.acconf-titulo');
+    if (titulo) titulo.textContent = 'Eliminar Ficha Completa';
+    const aviso = document.querySelector('.acconf-aviso');
+    if (aviso) aviso.innerHTML = '⚠️ Esta acción es <strong>IRREVERSIBLE</strong>. Se borrarán todos los datos de los aprendices de esta ficha del sistema.';
+    document.getElementById('acConfOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    const btn = document.getElementById('acConfBtnEliminar');
+    btn.textContent = '🗑️ Sí, eliminar ficha';
+    btn.onclick = async function() {
+        acConfCerrar();
+        mostrarLoading(true);
+        try {
+            const resp = await fetch('/eliminar_ficha', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ficha }) });
+            const data = await resp.json();
+            mostrarLoading(false);
+            if (data.success) {
+                mostrarAlerta('✅ Ficha ' + ficha + ' eliminada — ' + data.eliminados + ' aprendices borrados', 'success');
+                const card = document.getElementById('ef-card-' + ficha);
+                if (card) { card.style.transition = 'opacity 0.3s,transform 0.3s'; card.style.opacity = '0'; card.style.transform = 'scale(0.9)'; setTimeout(function() { card.remove(); }, 300); }
+                if (document.getElementById('fichaBuscar').value === ficha) { document.getElementById('tablaSection').style.display = 'none'; document.getElementById('fichaResultado').innerHTML = ''; }
+            } else { mostrarAlerta('❌ ' + (data.message || 'Error al eliminar'), 'error'); }
+        } catch(err) { mostrarLoading(false); mostrarAlerta('❌ Error: ' + err.message, 'error'); }
+    };
+}
+
+async function meaAbrir(cedula, nombre) {
+    document.getElementById('meaCedula').value  = cedula;
+    document.getElementById('meaNombre').value  = nombre;
+    document.getElementById('meaSubtitulo').textContent = 'CC: ' + cedula + ' — cargando datos...';
+    document.getElementById('modalEditarAprendiz').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    try {
+        const resp = await fetch('/api/buscar_aprendiz/' + cedula);
+        const data = await resp.json();
+        if (data.success && data.data) {
+            const a = data.data;
+            document.getElementById('meaNombre').value     = a.nombre || nombre;
+            document.getElementById('meaTipoDoc').value    = a.tipo_documento || 'CC';
+            document.getElementById('meaTipoSangre').value = a.tipo_sangre || 'O+';
+            document.getElementById('meaNis').value        = a.nis || '';
+            document.getElementById('meaFicha').value      = a.codigo_ficha || '';
+            document.getElementById('meaPrograma').value   = a.nombre_programa || '';
+            document.getElementById('meaNivel').value      = a.nivel_formacion || 'Técnico';
+            document.getElementById('meaFechaVenc').value  = a.fecha_vencimiento || '';
+            document.getElementById('meaSubtitulo').textContent = 'CC: ' + cedula;
+        }
+    } catch(e) { document.getElementById('meaSubtitulo').textContent = 'CC: ' + cedula; }
+    setTimeout(function() { document.getElementById('meaNombre').focus(); }, 100);
+}
+
+function meaCerrar(event) {
+    if (event && event.target !== document.getElementById('modalEditarAprendiz')) return;
+    document.getElementById('modalEditarAprendiz').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+async function meaGuardar() {
+    const cedula  = document.getElementById('meaCedula').value;
+    const nombre  = document.getElementById('meaNombre').value.trim().toUpperCase();
+    if (!nombre) { mostrarAlerta('El nombre no puede estar vacío', 'error'); return; }
+    const payload = {
+        cedula, nombre,
+        tipo_documento:  document.getElementById('meaTipoDoc').value,
+        tipo_sangre:     document.getElementById('meaTipoSangre').value,
+        nis:             document.getElementById('meaNis').value.trim(),
+        codigo_ficha:    document.getElementById('meaFicha').value.trim(),
+        nombre_programa: document.getElementById('meaPrograma').value.trim(),
+        nivel_formacion: document.getElementById('meaNivel').value,
+        fecha_vencimiento: document.getElementById('meaFechaVenc').value
+    };
+    mostrarLoading(true);
+    try {
+        const resp = await fetch('/api/editar_aprendiz', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const data = await resp.json();
+        mostrarLoading(false);
+        if (data.success) {
+            const celda = document.getElementById('nombre-' + cedula);
+            if (celda) celda.innerHTML = '<strong>' + nombre + '</strong>';
+            meaCerrar(null);
+            mostrarAlerta('✅ Aprendiz actualizado correctamente en la base de datos', 'success');
+        } else { mostrarAlerta('❌ ' + (data.message || 'Error al actualizar'), 'error'); }
+    } catch(err) { mostrarLoading(false); mostrarAlerta('❌ Error: ' + err.message, 'error'); }
+}
+
+(async function verificarCarnetsAlInicio() {
+    try {
+        const rc = await fetch('/api/carnets_generados');
+        const dc = await rc.json();
+        if (dc.success && dc.cedulas && dc.cedulas.length > 0) {
+            const menuBtn = document.getElementById('menuImprimir');
+            if (menuBtn) { menuBtn.style.opacity = '1'; menuBtn.style.pointerEvents = 'auto'; menuBtn.removeAttribute('title'); }
+        }
+    } catch(e) {}
+})();
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') { meaCerrar(null); acConfCerrar(); gcokCerrar(); }
+});
+
+function mostrarLoading(show) { document.getElementById('loadingOverlay').classList.toggle('active', show); }
+
+function mostrarAlerta(mensaje, tipo) {
+    tipo = tipo || 'info';
+    const a = document.createElement('div');
+    a.className = 'alert alert-' + tipo;
+    a.innerHTML = mensaje;
+    Object.assign(a.style, { position:'fixed', top:'90px', right:'20px', zIndex:'3000', minWidth:'280px', maxWidth:'90vw', boxShadow:'0 10px 30px rgba(0,0,0,0.2)' });
+    document.body.appendChild(a);
+    setTimeout(function() { a.style.transition = 'all 0.3s'; a.style.opacity = '0'; a.style.transform = 'translateX(400px)'; setTimeout(function() { a.remove(); }, 300); }, 4000);
+}
+
+document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('uploadBtn');
+    const resultDiv = document.getElementById('uploadResult');
+    btn.innerHTML = '⏳ Cargando...'; btn.disabled = true;
+    try {
+        const result = await (await fetch('{{ url_for("cargar_plantilla") }}', { method:'POST', body: new FormData(this) })).json();
+        resultDiv.innerHTML = result.success
+            ? '<div class="alert alert-success">✅ ' + result.message + (result.created ? '<br>Creados: ' + result.created : '') + (result.updated ? '<br>Actualizados: ' + result.updated : '') + '</div>'
+            : '<div class="alert alert-error">❌ ' + result.message + '</div>';
+    } catch(e) { resultDiv.innerHTML = '<div class="alert alert-error">❌ No se pudo procesar el archivo</div>'; }
+    finally { btn.innerHTML = '📤 Cargar Archivo'; btn.disabled = false; }
+});
+
+/* ══ ARCHIVO DE CARNETS ══ */
+let acTodosCarnets = [];
+let acModoAgrupacion = 'programa';
+
+async function cargarArchivoCarnets() {
+    const contenido = document.getElementById('acContenido');
+    contenido.innerHTML = '<div class="ac-loading"><div class="spinner"></div><p>Cargando carnets...</p></div>';
+    document.getElementById('acStatsRow').style.display = 'none';
+    try {
+        const response = await fetch('/api/lista_carnets');
+        const data = await response.json();
+        if (data.success && data.carnets && data.carnets.length > 0) { acTodosCarnets = data.carnets; acRenderizar(acTodosCarnets); }
+        else { acMostrarVacio(); }
+    } catch(err) {
+        try {
+            const r2 = await fetch('/api/lista_aprendices_filtrada?todos=true&foto=con_foto');
+            const d2 = await r2.json();
+            if (d2.success && d2.aprendices && d2.aprendices.length > 0) {
+                acTodosCarnets = d2.aprendices.map(function(a) { return { nombre: a.nombre, cedula: a.cedula, codigo_ficha: a.codigo_ficha, nombre_programa: a.nombre_programa, nivel_formacion: a.nivel_formacion, tipo_sangre: a.tipo_sangre, foto: a.foto, nis: a.nis }; });
+                acRenderizar(acTodosCarnets);
+            } else { acMostrarVacio(); }
+        } catch(e) { contenido.innerHTML = '<div class="ac-empty"><div class="ac-empty-icon">❌</div><p>Error al cargar los carnets. Intenta de nuevo.</p></div>'; }
+    }
+}
+
+function acRenderizar(lista) {
+    const fichas    = new Set(lista.map(function(c) { return c.codigo_ficha; })).size;
+    const programas = new Set(lista.map(function(c) { return c.nombre_programa; })).size;
+    document.getElementById('acStatTotal').textContent    = lista.length;
+    document.getElementById('acStatFichas').textContent   = fichas;
+    document.getElementById('acStatProgramas').textContent = programas;
+    document.getElementById('acStatsRow').style.display   = 'flex';
+    const grupos = {};
+    lista.forEach(function(c) {
+        const key = acModoAgrupacion === 'ficha' ? (c.codigo_ficha || 'Sin Ficha') : (c.nombre_programa || 'Sin Programa');
+        if (!grupos[key]) grupos[key] = [];
+        grupos[key].push(c);
+    });
+    const contenido = document.getElementById('acContenido');
+    if (Object.keys(grupos).length === 0) { acMostrarVacio(); return; }
+    contenido.innerHTML = Object.entries(grupos).map(function(entry) {
+        const titulo = entry[0], carnets = entry[1];
+        return '<div class="ac-grupo"><div class="ac-grupo-header" onclick="acToggleGrupo(this)">' +
+            '<span class="ac-grupo-titulo">' + (acModoAgrupacion === 'ficha' ? '🎫' : '📚') + ' ' + titulo + '</span>' +
+            '<div style="display:flex;align-items:center;gap:8px"><span class="ac-grupo-badge">' + carnets.length + '</span><span class="ac-grupo-toggle open">▲</span></div></div>' +
+            '<div class="ac-carnets-grid">' + carnets.map(function(c) { return acRenderCard(c); }).join('') + '</div></div>';
+    }).join('');
+}
+
+function acRenderCard(c) {
+    const fotoHtml = c.foto ? '<img src="/static/fotos/' + c.foto + '" alt="" class="ac-carnet-foto">' : '<div class="ac-carnet-sinfoto">👤</div>';
+    const nivel = (c.nivel_formacion || 'N/A').replace('Tecnólogo','Tecnól.').replace('Técnico','Técn.');
+    return '<div class="ac-carnet-card"><div class="ac-carnet-top">' + fotoHtml +
+        '<div><div class="ac-carnet-nombre">' + (c.nombre || 'N/A') + '</div><div class="ac-carnet-cedula">CC ' + (c.cedula || 'N/A') + '</div></div></div>' +
+        '<div class="ac-carnet-datos"><div class="ac-carnet-dato"><b>Ficha:</b>' + (c.codigo_ficha || 'N/A') + '</div>' +
+        '<div class="ac-carnet-dato"><b>Nivel:</b>' + nivel + '</div>' +
+        '<div class="ac-carnet-dato"><b>Sangre:</b>' + (c.tipo_sangre || 'N/A') + '</div>' +
+        '<div class="ac-carnet-dato"><b>NIS:</b>' + (c.nis || 'N/A') + '</div></div>' +
+        '<div class="ac-carnet-btns">' +
+        '<button onclick="mcAbrir(\'' + c.cedula + '\',\'' + c.nombre + '\')" class="ac-btn-ver">👁️ Ver</button>' +
+        '<button onclick="acEliminarFoto(\'' + c.cedula + '\',\'' + c.nombre + '\')" class="ac-btn-delfoto">🗑️ Foto</button></div></div>';
+}
+
+async function acDescargar(cedula, nombre) {
+    const nombreLimpio = nombre.replace(/ /g, '_').replace(/[^a-zA-Z0-9_áéíóúÁÉÍÓÚñÑ]/g, '');
+    const posibles = [nombreLimpio + '_completo.png', 'carnet_combinado_' + cedula + '.png', 'carnet_' + cedula + '.png'];
+    mostrarLoading(true);
+    for (const archivo of posibles) {
+        try {
+            const resp = await fetch('/descargar_carnet/' + archivo, { method: 'HEAD' });
+            if (resp.ok) {
+                mostrarLoading(false);
+                const a = document.createElement('a');
+                a.href = '/descargar_carnet/' + archivo; a.download = archivo;
+                document.body.appendChild(a); a.click(); document.body.removeChild(a); return;
+            }
+        } catch(e) {}
+    }
+    mostrarLoading(false);
+    mostrarAlerta('⚠️ El carnet aún no ha sido generado. Ve a "Generar Carnet" para crearlo primero.', 'warning');
+}
+
+function acToggleGrupo(header) {
+    const grid   = header.nextElementSibling;
+    const toggle = header.querySelector('.ac-grupo-toggle');
+    const abierto = grid.style.display !== 'none';
+    grid.style.display   = abierto ? 'none' : 'grid';
+    toggle.classList.toggle('open', !abierto);
+}
+
+let _acPendCedula = null, _acPendNombre = null;
+
+function acEliminarFoto(cedula, nombre) {
+    _acPendCedula = cedula; _acPendNombre = nombre;
+    document.getElementById('acConfNombre').innerHTML = '👤 <span style="color:#1e5c1e">' + nombre + '</span><br><span style="font-size:11px;color:#888;font-weight:400">CC: ' + cedula + '</span>';
+    document.getElementById('acConfOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    const btn = document.getElementById('acConfBtnEliminar');
+    btn.onclick = function() { acConfEjecutar(); };
+}
+
+function acConfCerrar() {
+    document.getElementById('acConfOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+    _acPendCedula = null; _acPendNombre = null;
+}
+
+async function acConfEjecutar() {
+    const cedula = _acPendCedula;
+    const nombre = _acPendNombre;
+    acConfCerrar();
+    mostrarLoading(true);
+    try {
+        const resp = await fetch('/admin/eliminar_foto_cedula/' + cedula, { method: 'POST' });
+        const data = await resp.json();
+        mostrarLoading(false);
+        if (data.success) {
+            const tarjetas = document.querySelectorAll('.ac-carnet-card');
+            tarjetas.forEach(function(t) {
+                if (t.innerHTML.includes('CC ' + cedula)) {
+                    t.style.transition = 'opacity 0.3s, transform 0.3s'; t.style.opacity = '0'; t.style.transform = 'scale(0.85)';
+                    setTimeout(function() { t.remove(); acActualizarContadores(); const statTotal = document.getElementById('acStatTotal'); if (statTotal) statTotal.textContent = Math.max(0, parseInt(statTotal.textContent) - 1); }, 300);
+                }
+            });
+            acTodosCarnets = acTodosCarnets.filter(function(c) { return c.cedula !== cedula; });
+            mostrarAlerta('✅ Foto de ' + nombre + ' eliminada correctamente.', 'success');
+        } else { mostrarAlerta('❌ ' + (data.message || 'Error al eliminar la foto'), 'error'); }
+    } catch(err) { mostrarLoading(false); mostrarAlerta('❌ Error: ' + err.message, 'error'); }
+}
+
+function acActualizarContadores() {
+    document.querySelectorAll('.ac-grupo').forEach(function(grupo) {
+        const header  = grupo.querySelector('.ac-grupo-header');
+        const badge   = header ? header.querySelector('.ac-grupo-badge') : null;
+        const tarjetas = grupo.querySelectorAll('.ac-carnet-card');
+        if (badge) badge.textContent = tarjetas.length;
+        if (tarjetas.length === 0) { grupo.style.transition = 'opacity 0.3s'; grupo.style.opacity = '0'; setTimeout(function() { grupo.remove(); }, 300); }
+    });
+}
+
+function acFiltrar(q) {
+    const query = q.toLowerCase().trim();
+    const filtrados = query ? acTodosCarnets.filter(function(c) { return (c.nombre||'').toLowerCase().includes(query) || (c.cedula||'').toLowerCase().includes(query); }) : acTodosCarnets;
+    acRenderizar(filtrados);
+}
+
+function acAgrupar(modo) {
+    acModoAgrupacion = modo;
+    document.getElementById('acBtnPrograma').classList.toggle('active', modo === 'programa');
+    document.getElementById('acBtnFicha').classList.toggle('active', modo === 'ficha');
+    acFiltrar(document.getElementById('acBuscarInput').value);
+}
+
+function acMostrarVacio() {
+    document.getElementById('acContenido').innerHTML = '<div class="ac-empty"><div class="ac-empty-icon">📭</div><p>No hay carnets generados aún</p></div>';
+    document.getElementById('acStatsRow').style.display = 'none';
+}
+
+/* ══ GESTIONAR CARNETS ══ */
+let gcListaTodos    = [];
+let gcListaFiltrada = [];
+let gcFiltroActivo  = 'todos';
+let gcPaginaActual  = 1;
+const GC_POR_PAG    = 20;
+let gcSeleccionados = new Set();
+let gcCarnetsPrevios = new Set();
+let gcAprendizActual = null;
+
+async function gcListaCargar() {
+    document.getElementById('gcListaLoading').style.display = 'block';
+    document.getElementById('gcTabla').style.display        = 'none';
+    document.getElementById('gcPaginacion').style.display   = 'none';
+    document.getElementById('gcStatsRow').style.display     = 'none';
+    document.getElementById('gcListaVacio').style.display   = 'none';
+    try {
+        // Cache-buster: evita que el navegador use datos cacheados tras subir foto
+        var cbTs = '&_=' + Date.now();
+        const resp = await fetch('/api/lista_aprendices_filtrada?todos=true' + cbTs);
+        const data = await resp.json();
+        if (!data.success || !data.aprendices) throw new Error('Sin datos');
+        gcListaTodos = data.aprendices;
+        const cedulasBD = new Set(gcListaTodos.map(function(a) { return a.cedula; }));
+        gcCarnetsPrevios = new Set();
+        try {
+            const rc = await fetch('/api/carnets_generados?_=' + Date.now());
+            const dc = await rc.json();
+            if (dc.success && dc.cedulas) { dc.cedulas.forEach(function(c) { if (cedulasBD.has(c)) gcCarnetsPrevios.add(c); }); }
+        } catch(e) { console.warn('No se pudo cargar carnets previos:', e); }
+        // Habilitar menú Imprimir si ya hay carnets generados
+        if (gcCarnetsPrevios.size > 0) _habilitarMenuImprimir();
+        const total      = gcListaTodos.length;
+        const conFoto    = gcListaTodos.filter(function(a) { return a.foto; }).length;
+        const sinFoto    = total - conFoto;
+        const generados  = gcListaTodos.filter(function(a) { return gcCarnetsPrevios.has(a.cedula); }).length;
+        const faltan     = gcListaTodos.filter(function(a) { return a.foto && !gcCarnetsPrevios.has(a.cedula); }).length;
+        document.getElementById('gcStatTotal').textContent    = total;
+        document.getElementById('gcStatConFoto').textContent  = conFoto;
+        document.getElementById('gcStatSinFoto').textContent  = sinFoto;
+        document.getElementById('gcStatGenerados').textContent = generados;
+        document.getElementById('gcStatFaltan').textContent   = faltan;
+        document.getElementById('gcStatsRow').style.display   = 'grid';
+        gcListaAplicarFiltro();
+    } catch(err) {
+        document.getElementById('gcListaLoading').style.display = 'none';
+        document.getElementById('gcListaVacio').style.display   = 'block';
+        document.getElementById('gcListaVacio').innerHTML = '<p style="font-size:28px">⚠️</p><p>Error cargando aprendices: ' + err.message + '</p>';
+    }
+}
+
+function gcListaSetFiltro(filtro) {
+    gcFiltroActivo = filtro; gcPaginaActual = 1;
+    document.getElementById('gcListaBuscar').value = '';
+    ['gcFiltroTodos','gcFiltroCon','gcFiltroSin','gcFiltroGenerados','gcFiltroFaltan'].forEach(function(id) { const el = document.getElementById(id); if (el) el.classList.remove('active'); });
+    const map = { todos:'gcFiltroTodos', con_foto:'gcFiltroCon', sin_foto:'gcFiltroSin', generados:'gcFiltroGenerados', faltan:'gcFiltroFaltan' };
+    const elActivo = document.getElementById(map[filtro]);
+    if (elActivo) elActivo.classList.add('active');
+    gcListaAplicarFiltro();
+}
+
+function gcListaFiltrar(q) { gcPaginaActual = 1; gcListaAplicarFiltro(q.toLowerCase().trim()); }
+
+function gcListaAplicarFiltro(query) {
+    query = query || '';
+    let lista = gcListaTodos;
+    if (gcFiltroActivo === 'con_foto')  lista = lista.filter(function(a) { return a.foto; });
+    if (gcFiltroActivo === 'sin_foto')  lista = lista.filter(function(a) { return !a.foto; });
+    if (gcFiltroActivo === 'generados') lista = lista.filter(function(a) { return gcCarnetsPrevios.has(a.cedula); });
+    if (gcFiltroActivo === 'faltan')    lista = lista.filter(function(a) { return a.foto && !gcCarnetsPrevios.has(a.cedula); });
+    if (query) { lista = lista.filter(function(a) { return (a.nombre||'').toLowerCase().includes(query) || (a.cedula||'').includes(query) || (a.codigo_ficha||'').includes(query) || (a.nombre_programa||'').toLowerCase().includes(query); }); }
+    gcListaFiltrada = lista;
+    gcListaRenderPagina();
+}
+
+function gcListaRenderPagina() {
+    const total   = gcListaFiltrada.length;
+    const paginas = Math.ceil(total / GC_POR_PAG) || 1;
+    if (gcPaginaActual > paginas) gcPaginaActual = paginas;
+    const inicio = (gcPaginaActual - 1) * GC_POR_PAG;
+    const fin    = Math.min(inicio + GC_POR_PAG, total);
+    const pagina = gcListaFiltrada.slice(inicio, fin);
+    document.getElementById('gcListaLoading').style.display = 'none';
+    if (!total) {
+        document.getElementById('gcTabla').style.display      = 'none';
+        document.getElementById('gcSelBar').style.display     = 'none';
+        document.getElementById('gcPaginacion').style.display = 'none';
+        document.getElementById('gcListaVacio').style.display = 'block';
+        document.getElementById('gcListaVacio').innerHTML = '<p style="font-size:28px">📭</p><p>No se encontraron aprendices</p>';
+        return;
+    }
+    document.getElementById('gcListaVacio').style.display = 'none';
+    document.getElementById('gcTabla').style.display      = 'table';
+    document.getElementById('gcSelBar').style.display     = 'flex';
+    document.getElementById('gcPaginacion').style.display = 'flex';
+    const tbody = document.getElementById('gcTbody');
+    tbody.innerHTML = '';
+    pagina.forEach(function(a) {
+        const tr = document.createElement('tr');
+        tr.id = 'gcfila-' + a.cedula;
+        const fotoHtml = a.foto ? '<img src="/static/fotos/' + a.foto + '" class="gc-foto-thumb" onerror="this.outerHTML=\'<div class=gc-sinfoto-thumb>👤</div>\'">' : '<div class="gc-sinfoto-thumb">👤</div>';
+        const badgeFoto = a.foto ? '<span class="gc-badge-foto gc-badge-con">✅ Con foto</span>' : '<span class="gc-badge-foto gc-badge-sin">⚠️ Sin foto</span>';
+        const yaGenerado = a.foto && gcCarnetsPrevios.has(a.cedula);
+        let checkHtml = '';
+        if (a.foto && !yaGenerado) {
+            const checked = gcSeleccionados.has(a.cedula) ? 'checked' : '';
+            checkHtml = '<input type="checkbox" class="gc-check" ' + checked + ' onchange="gcToggleSelAprendiz(\'' + a.cedula + '\', this.checked)">';
+        }
+        const badgeCarnet = yaGenerado
+            ? '<span class="gc-badge-foto gc-badge-generado" id="gcbadge-' + a.cedula + '">🎴 Generado</span>'
+            : (a.foto ? '<span class="gc-badge-foto gc-badge-pendiente" id="gcbadge-' + a.cedula + '">⏳ Pendiente</span>' : '<span class="gc-badge-foto gc-badge-sin" id="gcbadge-' + a.cedula + '">📷 Sin foto</span>');
+        let btnAccion = '';
+        if (yaGenerado) { btnAccion = '<button class="gc-btn-gen-ind" style="background:linear-gradient(135deg,#1565C0,#0D47A1)" onclick="gcVerCarnet(\'' + a.cedula + '\',\'' + (a.nombre||'').replace(/'/g,"\\'") + '\')">👁️ Ver carnet</button>'; }
+        else if (a.foto) { btnAccion = '<button class="gc-btn-gen-ind" onclick="gcGenerarUno(\'' + a.cedula + '\',\'' + (a.nombre||'').replace(/'/g,"\\'") + '\')">🆔 Generar</button>'; }
+        else { btnAccion = '<button class="gc-btn-delfoto" disabled>📷 Sin foto</button>'; }
+        tr.innerHTML = '<td style="text-align:center">' + checkHtml + '</td><td>' + fotoHtml + '</td>' +
+            '<td style="font-weight:700;color:#1e5c1e">' + (a.nombre||'N/A') + '</td>' +
+            '<td style="color:#555">' + (a.cedula||'N/A') + '</td>' +
+            '<td style="font-size:11px;color:#666">' + (a.nombre_programa||'N/A') + '</td>' +
+            '<td style="color:#555">' + (a.codigo_ficha||'N/A') + '</td>' +
+            '<td style="text-align:center">' + badgeFoto + '</td>' +
+            '<td style="text-align:center" id="gcaccion-' + a.cedula + '">' + badgeCarnet + '&nbsp;' + btnAccion + '</td>';
+        tbody.appendChild(tr);
+    });
+    document.getElementById('gcPagInfo').textContent = 'Mostrando ' + (inicio+1) + '–' + fin + ' de ' + total + ' aprendices';
+    const pagBtns = document.getElementById('gcPagBtns');
+    pagBtns.innerHTML = '';
+    const btnPrev = document.createElement('button');
+    btnPrev.className = 'gc-pag-btn'; btnPrev.textContent = '←'; btnPrev.disabled = gcPaginaActual === 1;
+    btnPrev.onclick = function() { gcPaginaActual--; gcListaRenderPagina(); };
+    pagBtns.appendChild(btnPrev);
+    const rango = 2;
+    for (let i = Math.max(1, gcPaginaActual - rango); i <= Math.min(paginas, gcPaginaActual + rango); i++) {
+        const b = document.createElement('button');
+        b.className = 'gc-pag-btn' + (i === gcPaginaActual ? ' active' : '');
+        b.textContent = i;
+        b.onclick = (function(p) { return function() { gcPaginaActual = p; gcListaRenderPagina(); }; })(i);
+        pagBtns.appendChild(b);
+    }
+    const btnNext = document.createElement('button');
+    btnNext.className = 'gc-pag-btn'; btnNext.textContent = '→'; btnNext.disabled = gcPaginaActual === paginas;
+    btnNext.onclick = function() { gcPaginaActual++; gcListaRenderPagina(); };
+    pagBtns.appendChild(btnNext);
+}
+
+function gcActualizarStatsCarnet() {
+    const generados = gcListaTodos.filter(function(a) { return gcCarnetsPrevios.has(a.cedula); }).length;
+    const faltan    = gcListaTodos.filter(function(a) { return a.foto && !gcCarnetsPrevios.has(a.cedula); }).length;
+    const elG = document.getElementById('gcStatGenerados');
+    const elF = document.getElementById('gcStatFaltan');
+    if (elG) elG.textContent = generados;
+    if (elF) elF.textContent = faltan;
+}
+
+function gcToggleSelAprendiz(cedula, checked) {
+    checked ? gcSeleccionados.add(cedula) : gcSeleccionados.delete(cedula);
+    gcActualizarContadorSel();
+}
+
+function gcToggleSelTodos(cb) {
+    const checks = document.querySelectorAll('#gcTbody input.gc-check');
+    checks.forEach(function(c) {
+        c.checked = cb.checked;
+        const ced = c.closest('tr').id.replace('gcfila-','');
+        cb.checked ? gcSeleccionados.add(ced) : gcSeleccionados.delete(ced);
+    });
+    gcActualizarContadorSel();
+}
+
+function gcActualizarContadorSel() {
+    const n = gcSeleccionados.size;
+    document.getElementById('gcSelCount').textContent = n;
+    document.getElementById('gcBtnMasivo').disabled = n === 0;
+}
+
+async function gcGenerarUno(cedula, nombre) {
+    mostrarLoading(true);
+    try {
+        const fd = new FormData(); fd.append('cedula', cedula);
+        const resp = await fetch('/generar_carnet', { method: 'POST', body: fd });
+        mostrarLoading(false);
+
+        if (resp.ok) {
+            // ── Verificación en disco: confirmar que el archivo fue creado físicamente ──
+            // Esto elimina la intermitencia causada por respuestas HTTP 200 con error interno.
+            const nombreLimpio = (nombre || cedula).replace(/ /g, '_');
+            const rutasCandidata = [
+                '/static/carnets/' + nombreLimpio + '_completo.png',
+                '/static/carnets/carnet_combinado_' + cedula + '.png',
+                '/static/carnets/carnet_' + cedula + '.png'
+            ];
+            let carnetConfirmado = false;
+            for (var ri = 0; ri < rutasCandidata.length; ri++) {
+                try {
+                    var chk = await fetch(rutasCandidata[ri] + '?t=' + Date.now(), { method: 'HEAD' });
+                    if (chk.ok) { carnetConfirmado = true; break; }
+                } catch(e) {}
+            }
+
+            if (carnetConfirmado) {
+                gcCarnetsPrevios.add(cedula);
+                gcSeleccionados.delete(cedula);
+                gcActualizarContadorSel();
+                gcActualizarStatsCarnet();
+
+                // Actualizar celda de acción en la tabla
+                const celdaAccion = document.getElementById('gcaccion-' + cedula);
+                if (celdaAccion) {
+                    celdaAccion.innerHTML =
+                        '<span class="gc-badge-foto gc-badge-generado">🎴 Generado</span>&nbsp;' +
+                        '<button class="gc-btn-gen-ind" ' +
+                        'style="background:linear-gradient(135deg,#1565C0,#0D47A1)" ' +
+                        'onclick="gcVerCarnet(\'' + cedula + '\',\'' + nombre.replace(/'/g, "\\'") + '\')">' +
+                        '👁️ Ver carnet</button>';
+                }
+                // Quitar checkbox de la fila
+                const fila = document.getElementById('gcfila-' + cedula);
+                if (fila) { const cb = fila.querySelector('input.gc-check'); if(cb) cb.remove(); }
+
+                // ── Habilitar menú Imprimir ──
+                _habilitarMenuImprimir();
+
+                // ── Sincronizar impDatos para que esté disponible en Imprimir sin recargar ──
+                _gcSincronizarEnImprimir(cedula, nombre);
+
+                mostrarAlerta('✅ Carnet generado para ' + nombre, 'success');
+            } else {
+                // El servidor respondió OK pero el archivo no está en disco — reintento único
+                mostrarAlerta('⚠️ Verificando carnet... reintentando.', 'warning');
+                setTimeout(function() { gcGenerarUno(cedula, nombre); }, 1500);
+            }
+        } else {
+            mostrarAlerta('❌ Error al generar el carnet (servidor devolvió ' + resp.status + ')', 'error');
+        }
+    } catch(err) {
+        mostrarLoading(false);
+        mostrarAlerta('❌ Error: ' + err.message, 'error');
+    }
+}
+
+async function gcGenerarMasivo() {
+    if (!gcSeleccionados.size) return;
+    const cedulas = [...gcSeleccionados];
+    const btn = document.getElementById('gcBtnMasivo');
+    btn.disabled = true; btn.innerHTML = '⏳ Generando...';
+    mostrarLoading(true);
+    let generados = 0, errores = 0;
+
+    for (var mi = 0; mi < cedulas.length; mi++) {
+        const cedula = cedulas[mi];
+        try {
+            const fd = new FormData(); fd.append('cedula', cedula);
+            const resp = await fetch('/generar_carnet', { method: 'POST', body: fd });
+
+            if (resp.ok) {
+                // ── Verificar existencia física del archivo ──
+                const filaEl = document.getElementById('gcfila-' + cedula);
+                const nombre = (filaEl
+                    ? (filaEl.querySelector('td:nth-child(3)') || {}).textContent
+                    : cedula) || cedula;
+                const nombreLimpio = nombre.replace(/ /g, '_');
+                const rutas = [
+                    '/static/carnets/' + nombreLimpio + '_completo.png',
+                    '/static/carnets/carnet_combinado_' + cedula + '.png',
+                    '/static/carnets/carnet_' + cedula + '.png'
+                ];
+                let ok = false;
+                for (var ri = 0; ri < rutas.length; ri++) {
+                    try {
+                        var chk = await fetch(rutas[ri] + '?t=' + Date.now(), { method: 'HEAD' });
+                        if (chk.ok) { ok = true; break; }
+                    } catch(e) {}
+                }
+
+                if (ok) {
+                    generados++;
+                    gcCarnetsPrevios.add(cedula);
+                    gcSeleccionados.delete(cedula);
+                    // Actualizar celda
+                    const celdaAccion = document.getElementById('gcaccion-' + cedula);
+                    if (celdaAccion) {
+                        celdaAccion.innerHTML =
+                            '<span class="gc-badge-foto gc-badge-generado">🎴 Generado</span>&nbsp;' +
+                            '<button class="gc-btn-gen-ind" ' +
+                            'style="background:linear-gradient(135deg,#1565C0,#0D47A1)" ' +
+                            'onclick="gcVerCarnet(\'' + cedula + '\',\'' + nombre.replace(/'/g, "\\'") + '\')">' +
+                            '👁️ Ver carnet</button>';
+                    }
+                    const fila2 = document.getElementById('gcfila-' + cedula);
+                    if (fila2) { const cb = fila2.querySelector('input.gc-check'); if(cb) cb.parentElement.innerHTML = ''; }
+                    // Sincronizar en Imprimir
+                    _gcSincronizarEnImprimir(cedula, nombre);
+                } else {
+                    errores++;
+                }
+            } else { errores++; }
+        } catch(e) { errores++; }
+    }
+
+    mostrarLoading(false);
+    btn.disabled = false; btn.innerHTML = '🆔 Generar Carnets Seleccionados';
+    gcActualizarContadorSel(); gcActualizarStatsCarnet();
+    document.getElementById('gcCheckTodos').checked = false;
+    dbCargarMetricas();
+
+    // ── Habilitar menú Imprimir si se generó al menos uno ──
+    if (generados > 0) _habilitarMenuImprimir();
+
+    document.getElementById('gcokTotal').textContent      = cedulas.length;
+    document.getElementById('gcokGenerados').textContent  = generados;
+    document.getElementById('gcokErrores').textContent    = errores;
+    document.getElementById('gcokErrorRow').style.display = errores > 0 ? 'flex' : 'none';
+    document.getElementById('gcokOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+/* ══════════════════════════════════════════════════
+   HELPERS DE SINCRONIZACIÓN POST-GENERACIÓN
+══════════════════════════════════════════════════ */
+
+/**
+ * Habilita el botón "Imprimir Carnets" del sidebar.
+ * Se llama cada vez que se confirma que al menos un carnet existe en disco.
+ */
+function _habilitarMenuImprimir() {
+    var menuBtn = document.getElementById('menuImprimir');
+    if (menuBtn) {
+        menuBtn.style.opacity     = '1';
+        menuBtn.style.pointerEvents = 'auto';
+        menuBtn.removeAttribute('title');
+    }
+}
+
+/**
+ * Sincroniza impDatos en memoria con el aprendiz recién generado,
+ * para que al entrar a "Imprimir Carnets" el carnet aparezca sin recargar.
+ * Si la sección de impresión está activa, vuelve a renderizar el grupo.
+ */
+async function _gcSincronizarEnImprimir(cedula, nombre) {
+    try {
+        // Buscar datos del aprendiz en gcListaTodos (ya están en memoria)
+        var ap = gcListaTodos.find(function(a) { return a.cedula === cedula; });
+        if (!ap) return;
+
+        // Añadir a impDatos si no está ya
+        var yaEnImp = impDatos.find(function(a) { return a.cedula === cedula; });
+        if (!yaEnImp) {
+            impDatos.push({
+                cedula:          ap.cedula,
+                nombre:          ap.nombre || nombre,
+                foto:            ap.foto,
+                codigo_ficha:    ap.codigo_ficha,
+                nombre_programa: ap.nombre_programa
+            });
+        }
+
+        // Si la sección Imprimir está activa, recargar para mostrar el nuevo carnet
+        if (document.getElementById('imprimir-carnets').classList.contains('active')) {
+            impCargar();
+        }
+    } catch(e) {
+        console.warn('[impSync] Error sincronizando en Imprimir:', e);
+    }
+}
+
+function gcokCerrar() { document.getElementById('gcokOverlay').classList.remove('open'); document.body.style.overflow = ''; }
+
+function gcVerCarnet(cedula, nombre) { mcAbrir(cedula, nombre); }
+
+function gcEliminarFoto(cedula, nombre) {
+    _acPendCedula = cedula; _acPendNombre = nombre;
+    document.getElementById('acConfNombre').innerHTML = '👤 <span style="color:#1e5c1e">' + nombre + '</span><br><span style="font-size:11px;color:#888;font-weight:400">CC: ' + cedula + '</span>';
+    const btn = document.getElementById('acConfBtnEliminar');
+    btn.onclick = async function() {
+        acConfCerrar(); mostrarLoading(true);
+        try {
+            const resp = await fetch('/admin/eliminar_foto_cedula/' + cedula, { method: 'POST' });
+            const data = await resp.json();
+            mostrarLoading(false);
+            if (data.success) {
+                const fila = document.getElementById('gcfila-' + cedula);
+                if (fila) { fila.cells[0].innerHTML = '<div class="gc-sinfoto-thumb">👤</div>'; fila.cells[5].innerHTML = '<span class="gc-badge-foto gc-badge-sin">⚠️ Sin foto</span>'; fila.cells[6].innerHTML = '<button class="gc-btn-delfoto" disabled>🚫 Sin foto</button>'; }
+                const cur = parseInt(document.getElementById('gcStatConFoto').textContent) - 1;
+                document.getElementById('gcStatConFoto').textContent = Math.max(0, cur);
+                document.getElementById('gcStatSinFoto').textContent = parseInt(document.getElementById('gcStatSinFoto').textContent) + 1;
+                const ap = gcListaTodos.find(function(a) { return a.cedula === cedula; });
+                if (ap) ap.foto = null;
+                mostrarAlerta('✅ Foto de ' + nombre + ' eliminada correctamente.', 'success');
+            } else { mostrarAlerta('❌ ' + (data.message || 'Error al eliminar'), 'error'); }
+        } catch(err) { mostrarLoading(false); mostrarAlerta('❌ Error: ' + err.message, 'error'); }
+    };
+    document.getElementById('acConfOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+/* ══ MODAL VER CARNET ══ */
+async function mcAbrir(cedula, nombre) {
+    const overlay = document.getElementById('modalCarnet');
+    document.getElementById('mcNombre').textContent = '🆔 ' + nombre;
+    const d = document.getElementById('mcDelanteraWrap');
+    const t = document.getElementById('mcTraseraWrap');
+    d.innerHTML = '<div class="mc-spinner"><div class="spinner"></div><p style="margin-top:8px;font-size:12px;color:#666">Actualizando carnet...</p></div>';
+    t.innerHTML = '<div class="mc-spinner"><div class="spinner"></div></div>';
+    document.getElementById('mcBtnDescargar').href = '#';
+    document.getElementById('mcBtnDescargar').style.opacity = '0.5';
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    // ── SIEMPRE regenerar el carnet al abrir el modal ──
+    // Esto garantiza que la foto mostrada sea SIEMPRE la actual en disco,
+    // eliminando por completo el problema de caché de foto vieja.
+    try {
+        const fd = new FormData();
+        fd.append('cedula', cedula);
+        await fetch('/generar_carnet', { method: 'POST', body: fd });
+    } catch(e) {
+        // Si falla la regeneración, continuar igual e intentar mostrar lo que haya
+        console.warn('[mcAbrir] Regeneración falló, usando carnet existente:', e);
+    }
+
+    // Buscar el archivo con cache-buster para evitar respuesta 404 cacheada
+    const ts = '?t=' + Date.now();
+    const posiblesRutas = [
+        '/static/carnets/' + nombre.replace(/ /g, '_') + '_completo.png',
+        '/static/carnets/carnet_combinado_' + cedula + '.png',
+        '/static/carnets/carnet_' + cedula + '.png'
+    ];
+    let rutaCarnet = null;
+    for (var ri = 0; ri < posiblesRutas.length; ri++) {
+        try {
+            var chk = await fetch(posiblesRutas[ri] + ts, { method: 'HEAD', cache: 'no-store' });
+            if (chk.ok) { rutaCarnet = posiblesRutas[ri]; break; }
+        } catch(e) {}
+    }
+    if (rutaCarnet) {
+        mcMostrarCarnetExistente(rutaCarnet, cedula, d, t);
+    } else {
+        d.innerHTML = '<div class="mc-error">⚠️ No se pudo generar el carnet.<br>Verifica que el aprendiz tenga foto cargada.</div>';
+        t.innerHTML = '';
+    }
+}
+
+function mcMostrarCarnetExistente(rutaCarnet, cedula, wrapD, wrapT) {
+    // ── Cargar imagen vía fetch+blob para evitar problemas CORS/canvas tainted ──
+    // Esto garantiza que la imagen del canvas siempre corresponde al archivo
+    // correcto en disco, sin interferencia del caché del navegador.
+    const urlFresca = rutaCarnet + '?t=' + Date.now();
+    fetch(urlFresca, { cache: 'no-store' })
+        .then(function(r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.blob();
+        })
+        .then(function(blob) {
+            const blobUrl = URL.createObjectURL(blob);
+            const img = new Image();
+            img.onload = function() {
+                const w = img.naturalWidth, h = img.naturalHeight;
+                const mitad = Math.floor(w / 2);
+
+                // Cara delantera (mitad izquierda del PNG combinado)
+                const canvasD = document.createElement('canvas');
+                canvasD.width = mitad; canvasD.height = h;
+                canvasD.getContext('2d').drawImage(img, 0, 0, mitad, h, 0, 0, mitad, h);
+                const imgD = document.createElement('img');
+                imgD.src = canvasD.toDataURL('image/png');
+                imgD.style.cssText = 'width:100%;border-radius:8px';
+                wrapD.innerHTML = ''; wrapD.appendChild(imgD);
+
+                // Cara trasera (mitad derecha del PNG combinado)
+                const canvasT = document.createElement('canvas');
+                canvasT.width = w - mitad; canvasT.height = h;
+                canvasT.getContext('2d').drawImage(img, mitad, 0, w - mitad, h, 0, 0, w - mitad, h);
+                const imgT = document.createElement('img');
+                imgT.src = canvasT.toDataURL('image/png');
+                imgT.style.cssText = 'width:100%;border-radius:8px';
+                wrapT.innerHTML = ''; wrapT.appendChild(imgT);
+
+                URL.revokeObjectURL(blobUrl); // liberar memoria
+                const nombreArchivo = rutaCarnet.split('/').pop();
+                const btnDl = document.getElementById('mcBtnDescargar');
+                btnDl.href = '/descargar_carnet/' + nombreArchivo;
+                btnDl.style.opacity = '1';
+            };
+            img.onerror = function() {
+                URL.revokeObjectURL(blobUrl);
+                // Fallback: mostrar imagen directamente si el canvas falla
+                wrapD.innerHTML = '<img src="' + urlFresca + '" style="width:100%;border-radius:8px" alt="Carnet">';
+                wrapT.innerHTML = '<div class="mc-error" style="font-size:11px;color:#39A935">✅ Vista completa arriba</div>';
+                const nombreArchivo = rutaCarnet.split('/').pop();
+                const btnDl = document.getElementById('mcBtnDescargar');
+                btnDl.href = '/descargar_carnet/' + nombreArchivo;
+                btnDl.style.opacity = '1';
+            };
+            img.src = blobUrl;
+        })
+        .catch(function(err) {
+            // Si fetch falla, usar img directamente como último recurso
+            wrapD.innerHTML = '<img src="' + urlFresca + '" style="width:100%;border-radius:8px" alt="Carnet">';
+            wrapT.innerHTML = '<div class="mc-error">⚠️ ' + err.message + '</div>';
+            const nombreArchivo = rutaCarnet.split('/').pop();
+            const btnDl = document.getElementById('mcBtnDescargar');
+            btnDl.href = '/descargar_carnet/' + nombreArchivo;
+            btnDl.style.opacity = '1';
+        });
+}
+
+function mcCerrar(event) {
+    if (event && event.target !== document.getElementById('modalCarnet')) return;
+    document.getElementById('modalCarnet').classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') mcCerrar(null); });
+
+window.addEventListener('resize', function() {
+    if (window.innerWidth > 768) {
+        document.getElementById('sidebar').classList.remove('active');
+        document.getElementById('sidebarOverlay').classList.remove('active');
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() { showSection('dashboard'); dbCargarMetricas(); dbIniciarAutoRefresh(); });
+</script>
+
+<!-- ══ MODAL VER CARNET ══ -->
+<div id="modalCarnet" class="mc-overlay" onclick="mcCerrar(event)">
+    <div class="mc-box">
+        <button class="mc-close" onclick="mcCerrar(null)" title="Cerrar">✕</button>
+        <div class="mc-nombre" id="mcNombre">Cargando...</div>
+        <div class="mc-caras">
+            <div class="mc-cara">
+                <div class="mc-cara-label">🪪 Parte delantera</div>
+                <div class="mc-img-wrap" id="mcDelanteraWrap"><div class="mc-spinner"><div class="spinner"></div></div></div>
+            </div>
+            <div class="mc-cara">
+                <div class="mc-cara-label">🔄 Parte trasera</div>
+                <div class="mc-img-wrap" id="mcTraseraWrap"><div class="mc-spinner"><div class="spinner"></div></div></div>
+            </div>
+        </div>
+        <div class="mc-btns">
+            <a id="mcBtnDescargar" href="#" class="action-button" style="text-decoration:none;margin:0;flex:1;justify-content:center">⬇️ Descargar carnet</a>
+            <button class="action-button" style="background:linear-gradient(135deg,#6C757D,#495057);margin:0;flex:1;justify-content:center" onclick="mcCerrar(null)">✕ Cerrar</button>
+        </div>
+    </div>
+</div>
+</body>
+</html>

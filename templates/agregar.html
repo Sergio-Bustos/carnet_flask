@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agregar Empleado - SENA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e8f5e8 0%, #d4f1d4 100%);
+            min-height: 100vh;
+            padding: 15px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .header h2 {
+            font-size: clamp(20px, 5vw, 24px);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        
+        .header p {
+            font-size: clamp(13px, 3vw, 16px);
+            opacity: 0.9;
+        }
+        
+        .alert {
+            padding: 14px 18px;
+            margin: 15px;
+            border-radius: 10px;
+            font-size: clamp(12px, 3vw, 14px);
+            font-weight: 500;
+            animation: slideDown 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .form-container {
+            padding: 20px 15px;
+        }
+        
+        .btn-back {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            font-size: clamp(13px, 3vw, 15px);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+        }
+        
+        .btn-back:hover {
+            background: linear-gradient(135deg, #218838 0%, #1ea085 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(40, 167, 69, 0.3);
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: clamp(13px, 3vw, 14px);
+        }
+        
+        .required {
+            color: #dc3545;
+        }
+        
+        input, select, textarea {
+            padding: 12px 14px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: clamp(13px, 3vw, 14px);
+            transition: all 0.3s ease;
+            font-family: inherit;
+            background: white;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #28a745;
+            box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+        }
+        
+        input:hover:not(:disabled), select:hover:not(:disabled) {
+            border-color: #20c997;
+        }
+        
+        input[readonly] {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2328a745' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 35px;
+        }
+        
+        .photo-upload {
+            border: 2px dashed #28a745;
+            border-radius: 12px;
+            padding: 25px 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+            position: relative;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .photo-upload:hover {
+            background: #e8f5e8;
+            border-color: #20c997;
+            transform: scale(1.02);
+        }
+        
+        .photo-upload input {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+        }
+        
+        .photo-text {
+            pointer-events: none;
+            font-weight: 500;
+            font-size: clamp(13px, 3vw, 15px);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            color: white;
+            padding: 16px 25px;
+            font-size: clamp(14px, 3vw, 16px);
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 15px;
+            box-shadow: 0 6px 15px rgba(40, 167, 69, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(40, 167, 69, 0.35);
+        }
+        
+        .btn-primary:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        
+        .btn-primary:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            opacity: 0.7;
+        }
+        
+        .loading {
+            display: none;
+        }
+        
+        .loading.show {
+            display: inline-block;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .success-message {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 14px 18px;
+            border-radius: 10px;
+            margin: 15px;
+            text-align: center;
+            font-weight: 600;
+            font-size: clamp(12px, 3vw, 14px);
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+            display: none;
+            animation: slideDown 0.5s ease;
+        }
+        
+        .success-message.show {
+            display: block;
+        }
+        
+        /* Mejorar campos con error */
+        input.error, select.error {
+            border-color: #dc3545;
+            animation: shake 0.5s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        input.success, select.success {
+            border-color: #28a745;
+        }
+        
+        /* TABLET - 600px+ */
+        @media (min-width: 600px) {
+            body {
+                padding: 25px;
+            }
+            
+            .container {
+                border-radius: 20px;
+            }
+            
+            .header {
+                padding: 25px;
+            }
+            
+            .form-container {
+                padding: 30px 25px;
+            }
+            
+            .form-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
+            }
+            
+            .alert, .success-message {
+                margin: 20px;
+                padding: 15px 20px;
+            }
+            
+            .photo-upload {
+                padding: 30px 20px;
+            }
+        }
+        
+        /* DESKTOP - 900px+ */
+        @media (min-width: 900px) {
+            body {
+                padding: 30px;
+            }
+            
+            .form-container {
+                padding: 35px 30px;
+            }
+            
+            .form-grid {
+                gap: 22px;
+            }
+            
+            input, select {
+                padding: 13px 15px;
+            }
+            
+            .btn-primary {
+                padding: 17px 30px;
+            }
+        }
+        
+        /* MÓVILES MUY PEQUEÑOS */
+        @media (max-width: 360px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                border-radius: 12px;
+            }
+            
+            .header {
+                padding: 15px;
+            }
+            
+            .form-container {
+                padding: 15px 12px;
+            }
+            
+            .form-grid {
+                gap: 15px;
+            }
+            
+            .btn-back {
+                padding: 8px 15px;
+                font-size: 13px;
+            }
+            
+            input, select {
+                padding: 10px 12px;
+            }
+        }
+        
+        /* Touch improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .btn-primary,
+            .btn-back,
+            .photo-upload,
+            input,
+            select {
+                -webkit-tap-highlight-color: rgba(40, 167, 69, 0.1);
+            }
+        }
+        
+        /* Mejoras de accesibilidad */
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>👨‍💼 Agregar Empleado</h2>
+            <p>Registra nuevos empleados en el sistema SENA</p>
+        </div>
+        
+        <!-- Mensaje de éxito dinámico -->
+        <div id="successMessage" class="success-message">
+            ✅ ¡Empleado registrado exitosamente! Los campos se han limpiado automáticamente.
+        </div>
+        
+        <!-- Mostrar mensajes flash del servidor -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'error' if category == 'error' else 'success' }}">
+                        <span>{{ '❌' if category == 'error' else '✅' }}</span>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="form-container">
+            <a href="{{ url_for('dashboard_admin') }}" class="btn-back">
+                <span>🏠</span>
+                <span>Volver al Menú</span>
+            </a>
+            
+            <form action="{{ url_for('agregar') }}" method="POST" enctype="multipart/form-data" id="empleadoForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="nis">NIS <span class="required">*</span></label>
+                        <input type="text" id="nis" name="nis" placeholder="Ingresa el NIS" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="primer_apellido">Primer Apellido <span class="required">*</span></label>
+                        <input type="text" id="primer_apellido" name="primer_apellido" placeholder="Ingresa el primer apellido" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="segundo_apellido">Segundo Apellido</label>
+                        <input type="text" id="segundo_apellido" name="segundo_apellido" placeholder="Ingresa el segundo apellido">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="nombres">Nombres <span class="required">*</span></label>
+                        <input type="text" id="nombres" name="nombres" placeholder="Ingresa los nombres" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tipo_documento">Tipo de Documento <span class="required">*</span></label>
+                        <select id="tipo_documento" name="tipo_documento" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="CC">Cédula de Ciudadanía</option>
+                            <option value="TI">Tarjeta de Identidad</option>
+                            <option value="CE">Cédula de Extranjería</option>
+                            <option value="PP">Pasaporte</option>
+                            <option value="RC">Registro Civil</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cedula">Número de Documento <span class="required">*</span></label>
+                        <input type="text" id="cedula" name="cedula" placeholder="Número de documento" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tipo_sangre">Tipo de Sangre <span class="required">*</span></label>
+                        <select id="tipo_sangre" name="tipo_sangre" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="nombre_programa">Nombre del Programa <span class="required">*</span></label>
+                        <select id="nombre_programa" name="nombre_programa" required>
+                            <option value="">Selecciona un programa...</option>
+                            <option value="Actividad Física">Actividad Física</option>
+                            <option value="Redes">Redes</option>
+                            <option value="Cosmetología">Cosmetología</option>
+                            <option value="Panadería">Panadería</option>
+                            <option value="Contabilidad">Contabilidad</option>
+                            <option value="Finanzas">Finanzas</option>
+                            <option value="Sistemas">Sistemas</option>
+                            <option value="Recursos Humanos">Recursos Humanos</option>
+                            <option value="Archivo">Archivo</option>
+                            <option value="Alimentos">Alimentos</option>
+                            <option value="Sector Agroempresarial">Sector Agroempresarial</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="nivel_formacion">Nivel de Formación <span class="required">*</span></label>
+                        <select id="nivel_formacion" name="nivel_formacion" required>
+                            <option value="">Selecciona el nivel...</option>
+                            <option value="Técnico">Técnico</option>
+                            <option value="Tecnólogo">Tecnólogo</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="codigo_ficha">Código de Ficha <span class="required">*</span></label>
+                        <select id="codigo_ficha" name="codigo_ficha" required>
+                            <option value="">Selecciona un código...</option>
+                            <option value="3245678">3245678</option>
+                            <option value="546789">546789</option>
+                            <option value="1239870">1239870</option>
+                            <option value="6757890">6757890</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="centro">Centro</label>
+                        <input type="text" id="centro" name="centro" value="Centro de Biotecnología Industrial" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="fecha_creacion">Fecha de Creación</label>
+                        <input type="text" id="fecha_creacion" name="fecha_creacion" value="" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="fecha_vencimiento">Fecha Finalización del Programa <span class="required">*</span></label>
+                        <input type="date" id="fecha_vencimiento" name="fecha_vencimiento" required>
+                    </div>
+                </div>
+                
+                <!-- Campos ocultos para compatibilidad -->
+                <input type="hidden" name="apellidos" id="apellidos_hidden">
+                <input type="hidden" name="cargo" value="APRENDIZ">
+                
+                <div class="form-group full-width">
+                    <label for="foto">Foto del Empleado <span class="required">*</span></label>
+                    <div class="photo-upload" id="photoUpload">
+                        <input type="file" id="foto" name="foto" accept="image/*" required>
+                        <div class="photo-text">📷 Seleccionar foto (JPG, PNG)</div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn-primary" id="btnGuardar">
+                    <span>💾</span>
+                    <span class="btn-text">Guardar Empleado</span>
+                    <span class="loading" id="loading">⏳</span>
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        console.log("✅ Script cargado");
+        
+        // ✅ ESTABLECER FECHA DE CREACIÓN AUTOMÁTICAMENTE
+        document.addEventListener('DOMContentLoaded', function() {
+            const fechaCreacion = document.getElementById('fecha_creacion');
+            const hoy = new Date();
+            const fechaFormateada = hoy.toLocaleDateString('es-CO', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            fechaCreacion.value = fechaFormateada;
+            console.log("✅ Fecha establecida:", fechaFormateada);
+        });
+        
+        // ✅ MANEJAR NIVEL DE FORMACIÓN Y CALCULAR FECHA AUTOMÁTICAMENTE
+        document.getElementById('nivel_formacion').addEventListener('change', function() {
+            const nivelSeleccionado = this.value;
+            const fechaVencimiento = document.getElementById('fecha_vencimiento');
+            
+            if (nivelSeleccionado) {
+                const hoy = new Date();
+                let fechaFinal = new Date(hoy);
+                
+                if (nivelSeleccionado === 'Técnico') {
+                    fechaFinal.setFullYear(hoy.getFullYear() + 1);
+                    console.log("✅ Técnico seleccionado: +1 año");
+                } else if (nivelSeleccionado === 'Tecnólogo') {
+                    fechaFinal.setFullYear(hoy.getFullYear() + 2);
+                    console.log("✅ Tecnólogo seleccionado: +2 años");
+                }
+                
+                const fechaFormateada = fechaFinal.toISOString().split('T')[0];
+                fechaVencimiento.value = fechaFormateada;
+                
+                console.log(`✅ Fecha de finalización: ${fechaFormateada}`);
+            } else {
+                fechaVencimiento.value = '';
+            }
+        });
+        
+        // ✅ COMBINAR APELLIDOS AUTOMÁTICAMENTE
+        function actualizarApellidos() {
+            const primerApellido = document.getElementById('primer_apellido').value;
+            const segundoApellido = document.getElementById('segundo_apellido').value;
+            const apellidosCompletos = (primerApellido + ' ' + segundoApellido).trim();
+            document.getElementById('apellidos_hidden').value = apellidosCompletos;
+        }
+        
+        document.getElementById('primer_apellido').addEventListener('input', actualizarApellidos);
+        document.getElementById('segundo_apellido').addEventListener('input', actualizarApellidos);
+        
+        // ✅ MANEJAR SELECTOR DE FOTO
+        document.getElementById('foto').addEventListener('change', function() {
+            const fileName = this.files[0]?.name || 'Seleccionar foto (JPG, PNG)';
+            const photoText = document.querySelector('.photo-text');
+            photoText.textContent = `📷 ${fileName}`;
+            console.log("✅ Foto seleccionada:", fileName);
+        });
+        
+        // ✅ FUNCIÓN PARA LIMPIAR FORMULARIO
+        function limpiarFormulario() {
+            const form = document.getElementById('empleadoForm');
+            form.reset();
+            
+            const fechaCreacion = document.getElementById('fecha_creacion');
+            const hoy = new Date();
+            const fechaFormateada = hoy.toLocaleDateString('es-CO', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            fechaCreacion.value = fechaFormateada;
+            
+            document.getElementById('centro').value = "Centro de Biotecnología Industrial";
+            document.getElementById('fecha_vencimiento').value = '';
+            document.querySelector('.photo-text').textContent = '📷 Seleccionar foto (JPG, PNG)';
+            
+            document.querySelectorAll('input, select').forEach(field => {
+                field.classList.remove('error', 'success');
+            });
+            
+            console.log("✅ Formulario limpiado");
+        }
+        
+        // ✅ MOSTRAR MENSAJE DE ÉXITO
+        function mostrarMensajeExito() {
+            const successMessage = document.getElementById('successMessage');
+            successMessage.classList.add('show');
+            
+            setTimeout(() => {
+                successMessage.classList.remove('show');
+            }, 5000);
+        }
+        
+        // ✅ ENVÍO DEL FORMULARIO
+        document.getElementById('empleadoForm').addEventListener('submit', function(e) {
+            console.log("🔥 Enviando formulario");
+            
+            actualizarApellidos();
+            
+            const requiredFields = this.querySelectorAll('[required]');
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('error');
+                    field.classList.remove('success');
+                    isValid = false;
+                } else {
+                    field.classList.add('success');
+                    field.classList.remove('error');
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                alert('❌ Por favor, completa todos los campos obligatorios.');
+                return false;
+            }
+            
+            const btnGuardar = document.getElementById('btnGuardar');
+            const loading = document.getElementById('loading');
+            const btnText = btnGuardar.querySelector('.btn-text');
+            
+            btnGuardar.disabled = true;
+            loading.classList.add('show');
+            btnText.textContent = 'Guardando...';
+            
+            console.log("✅ Formulario válido, enviando...");
+            return true;
+        });
+        
+        // ✅ VERIFICAR MENSAJE DE ÉXITO AL CARGAR
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.alert-success');
+            if (alerts.length > 0) {
+                setTimeout(() => {
+                    mostrarMensajeExito();
+                    setTimeout(limpiarFormulario, 500);
+                }, 100);
+            }
+        });
+        
+        // ✅ Validación en tiempo real
+        document.querySelectorAll('input[required], select[required]').forEach(field => {
+            field.addEventListener('blur', function() {
+                if (this.value.trim()) {
+                    this.classList.remove('error');
+                    this.classList.add('success');
+                }
+            });
+        });
+        
+        console.log("✅ Sistema listo");
+    </script>
+</body>
+</html>

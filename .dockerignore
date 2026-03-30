@@ -1,0 +1,23 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.git
+.vscode
+.DS_Store
+*.log
+.gitignore
+README.md
+.dockerignore
+Dockerfile
+docker-compose.yml
+
+# Archivos grandes que se regeneran
+static/carnets/*
+static/qr/*
+
+# Archivos temporales
+*.tmp
+*.swp
+*.swo

@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cargar Foto - SENA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 25px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            max-width: 650px;
+            width: 100%;
+            padding: 30px 20px;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .logo {
+            width: 70px;
+            height: 70px;
+            background: #39A935;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 18px;
+            font-size: clamp(30px, 8vw, 40px);
+        }
+
+        h1 {
+            color: #2E7D32;
+            font-size: clamp(1.4rem, 5vw, 1.625rem);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: clamp(0.9rem, 3vw, 1rem);
+            margin-bottom: 15px;
+        }
+
+        /* Información del aprendiz */
+        .aprendiz-info {
+            background: linear-gradient(135deg, #F5FFF5 0%, #E8F5E9 100%);
+            border-left: 5px solid #39A935;
+            border-radius: 15px;
+            padding: 18px;
+            margin-bottom: 20px;
+        }
+
+        .aprendiz-info h3 {
+            color: #2E7D32;
+            font-size: clamp(1rem, 3vw, 1.125rem);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .aprendiz-info p {
+            color: #555;
+            margin-bottom: 6px;
+            font-size: clamp(0.85rem, 2.5vw, 0.95rem);
+            word-break: break-word;
+        }
+
+        /* Instrucciones importantes */
+        .instructions {
+            background: #E3F2FD;
+            border-left: 5px solid #2196F3;
+            border-radius: 15px;
+            padding: 18px;
+            margin-bottom: 20px;
+        }
+
+        .instructions h3 {
+            color: #1976D2;
+            font-size: clamp(1rem, 3vw, 1.125rem);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .instructions ul {
+            color: #555;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 6px;
+            line-height: 1.6;
+            font-size: clamp(0.85rem, 2.5vw, 0.95rem);
+        }
+
+        /* Proceso de carga */
+        .upload-process {
+            background: #FFF8E1;
+            border-left: 5px solid #FFC107;
+            border-radius: 15px;
+            padding: 18px;
+            margin-bottom: 20px;
+        }
+
+        .upload-process h3 {
+            color: #F57C00;
+            font-size: clamp(1rem, 3vw, 1.125rem);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .process-step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            color: #666;
+            font-size: clamp(0.85rem, 2.5vw, 0.95rem);
+            gap: 10px;
+        }
+
+        .step-number {
+            background: #FFC107;
+            color: white;
+            min-width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(0.7rem, 2vw, 0.75rem);
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        /* Formulario de foto */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            color: #333;
+            font-size: clamp(0.95rem, 3vw, 1rem);
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .file-input-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .file-input {
+            width: 100%;
+            padding: 25px 15px;
+            border: 3px dashed #39A935;
+            border-radius: 15px;
+            background: #F8F9FA;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .file-input:hover {
+            background: #E8F5E9;
+            border-color: #2E7D32;
+            transform: scale(1.02);
+        }
+
+        .file-input input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-input-text {
+            color: #666;
+            font-size: clamp(0.9rem, 3vw, 1rem);
+            pointer-events: none;
+        }
+
+        .file-input-text small {
+            font-size: clamp(0.75rem, 2vw, 0.85rem);
+            color: #999;
+        }
+
+        .file-input-icon {
+            font-size: clamp(2.5rem, 8vw, 3rem);
+            color: #39A935;
+            display: block;
+            margin-bottom: 10px;
+            pointer-events: none;
+        }
+
+        /* Botones */
+        .btn {
+            display: inline-block;
+            padding: 14px 25px;
+            border: none;
+            border-radius: 50px;
+            font-size: clamp(0.9rem, 3vw, 1rem);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+            margin: 8px 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #39A935 0%, #2E7D32 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(57, 169, 53, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(57, 169, 53, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6C757D;
+            color: white;
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: #5A6268;
+            transform: translateY(-2px);
+        }
+
+        .btn-group {
+            text-align: center;
+            margin-top: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Alertas */
+        .alert {
+            padding: 14px 16px;
+            border-radius: 10px;
+            margin-bottom: 18px;
+            animation: slideDown 0.3s ease;
+            font-size: clamp(0.85rem, 2.5vw, 0.95rem);
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-success {
+            background: #E8F5E9;
+            border-left: 4px solid #4CAF50;
+            color: #2E7D32;
+        }
+
+        .alert-error {
+            background: #FFEBEE;
+            border-left: 4px solid #F44336;
+            color: #C62828;
+        }
+
+        .alert-info {
+            background: #E3F2FD;
+            border-left: 4px solid #2196F3;
+            color: #1976D2;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #E0E0E0;
+        }
+
+        .footer p {
+            color: #999;
+            font-size: clamp(0.75rem, 2vw, 0.8rem);
+            line-height: 1.6;
+        }
+
+        /* TABLET - 600px+ */
+        @media (min-width: 600px) {
+            .container {
+                padding: 35px 30px;
+            }
+
+            .logo {
+                width: 80px;
+                height: 80px;
+                margin-bottom: 20px;
+            }
+
+            .header {
+                margin-bottom: 28px;
+            }
+
+            .aprendiz-info,
+            .instructions,
+            .upload-process {
+                padding: 20px;
+                margin-bottom: 25px;
+            }
+
+            .file-input {
+                padding: 30px 20px;
+            }
+
+            .btn-group {
+                flex-direction: row;
+                justify-content: center;
+            }
+
+            .btn {
+                margin: 0 5px;
+            }
+        }
+
+        /* DESKTOP - 900px+ */
+        @media (min-width: 900px) {
+            .container {
+                padding: 40px;
+            }
+        }
+
+        /* MÓVILES MUY PEQUEÑOS */
+        @media (max-width: 360px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 25px 15px;
+                border-radius: 20px;
+            }
+
+            .logo {
+                width: 60px;
+                height: 60px;
+            }
+
+            .aprendiz-info,
+            .instructions,
+            .upload-process {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+
+            .file-input {
+                padding: 20px 12px;
+            }
+
+            .btn {
+                width: 100%;
+                margin: 5px 0;
+            }
+
+            .btn-group {
+                gap: 8px;
+            }
+        }
+
+        /* Touch improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .btn,
+            .file-input {
+                -webkit-tap-highlight-color: rgba(57, 169, 53, 0.1);
+            }
+        }
+
+        /* Loading state para botón */
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">📸</div>
+            <h1>Cargar tu Foto</h1>
+            <p class="subtitle">Sube tu foto para el carnet estudiantil</p>
+        </div>
+
+        <!-- Mensajes Flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'success' if category == 'success' else 'error' if category == 'error' else 'info' }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Información del aprendiz -->
+        <div class="aprendiz-info">
+            <h3>
+                <span>👤</span>
+                <span>Información del Aprendiz</span>
+            </h3>
+            <p><strong>Nombre:</strong> {{ aprendiz.nombre }}</p>
+            <p><strong>Cédula:</strong> {{ aprendiz.cedula }}</p>
+            <p><strong>Programa:</strong> {{ aprendiz.nombre_programa }}</p>
+            <p><strong>Nivel:</strong> {{ aprendiz.nivel_formacion }}</p>
+            <p><strong>Ficha:</strong> {{ aprendiz.codigo_ficha }}</p>
+        </div>
+
+        <!-- Proceso que seguirá -->
+        <div class="upload-process">
+            <h3>
+                <span>⚙️</span>
+                <span>Proceso de tu Carnet</span>
+            </h3>
+            <div class="process-step">
+                <span class="step-number">1</span>
+                <span>Subes tu foto aquí</span>
+            </div>
+            <div class="process-step">
+                <span class="step-number">2</span>
+                <span>El sistema procesa automáticamente tu foto (3x4, fondo blanco)</span>
+            </div>
+            <div class="process-step">
+                <span class="step-number">3</span>
+                <span>Tu foto se guarda en el sistema</span>
+            </div>
+            <div class="process-step">
+                <span class="step-number">4</span>
+                <span><strong>El administrador generará tu carnet</strong></span>
+            </div>
+            <div class="process-step">
+                <span class="step-number">5</span>
+                <span>Te notificaremos cuando tu carnet esté listo</span>
+            </div>
+        </div>
+
+        <!-- Instrucciones -->
+        <div class="instructions">
+            <h3>
+                <span>📋</span>
+                <span>Instrucciones para la Foto</span>
+            </h3>
+            <ul>
+                <li><strong>Formato:</strong> JPG, JPEG o PNG</li>
+                <li><strong>Tamaño:</strong> Máximo 5MB</li>
+                <li><strong>Calidad:</strong> Buena resolución y nitidez</li>
+                <li><strong>Fondo:</strong> Preferiblemente claro (se procesará automáticamente)</li>
+                <li><strong>Posición:</strong> Rostro centrado mirando al frente</li>
+                <li><strong>Ropa:</strong> Formal, sin gorra ni accesorios que oculten el rostro</li>
+            </ul>
+        </div>
+
+        <!-- Formulario -->
+        <form method="POST" enctype="multipart/form-data" id="uploadForm">
+            <div class="form-group">
+                <label class="form-label" for="foto">📷 Selecciona tu Foto</label>
+                <div class="file-input-container">
+                    <div class="file-input" id="fileInputArea">
+                        <input type="file" name="foto" id="foto" accept="image/*" required>
+                        <span class="file-input-icon">📁</span>
+                        <div class="file-input-text" id="fileInputText">
+                            Haz clic aquí para seleccionar tu foto<br>
+                            <small>o arrastra y suelta el archivo</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <span id="btnText">📤 Subir Foto</span>
+                    <span class="spinner" id="spinner" style="display: none;"></span>
+                </button>
+                <a href="{{ url_for('consultar_datos_aprendiz') }}" class="btn btn-secondary">
+                    ⬅️ Volver Atrás
+                </a>
+            </div>
+        </form>
+
+        <div class="footer">
+            <p>
+                Sistema de Carnetización Digital SENA<br>
+                © 2024 - Todos los derechos reservados
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Referencias a elementos
+        const fileInput = document.getElementById('foto');
+        const fileInputText = document.getElementById('fileInputText');
+        const fileInputArea = document.getElementById('fileInputArea');
+        const uploadForm = document.getElementById('uploadForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const spinner = document.getElementById('spinner');
+
+        // Mejorar la experiencia del input de archivo
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                const fileName = file.name;
+                const fileSize = (file.size / 1024 / 1024).toFixed(2); // MB
+                
+                // Validar tamaño
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('❌ El archivo es demasiado grande. Máximo 5MB.');
+                    fileInput.value = '';
+                    return;
+                }
+                
+                // Validar tipo
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                if (!validTypes.includes(file.type)) {
+                    alert('❌ Formato no válido. Solo JPG, JPEG o PNG.');
+                    fileInput.value = '';
+                    return;
+                }
+                
+                fileInputText.innerHTML = `
+                    <strong>✅ Archivo seleccionado:</strong><br>
+                    ${fileName} (${fileSize} MB)<br>
+                    <small>Haz clic en "Subir Foto" para continuar</small>
+                `;
+                
+                fileInputArea.style.borderColor = '#28a745';
+                fileInputArea.style.background = '#d4edda';
+            }
+        });
+
+        // Drag and drop
+        fileInputArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileInputArea.style.borderColor = '#2E7D32';
+            fileInputArea.style.background = '#E8F5E9';
+        });
+
+        fileInputArea.addEventListener('dragleave', () => {
+            fileInputArea.style.borderColor = '#39A935';
+            fileInputArea.style.background = '#F8F9FA';
+        });
+
+        fileInputArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileInputArea.style.borderColor = '#39A935';
+            fileInputArea.style.background = '#F8F9FA';
+            
+            if (e.dataTransfer.files.length > 0) {
+                fileInput.files = e.dataTransfer.files;
+                fileInput.dispatchEvent(new Event('change'));
+            }
+        });
+
+        // Manejar envío del formulario
+        uploadForm.addEventListener('submit', function(e) {
+            if (!fileInput.files || fileInput.files.length === 0) {
+                e.preventDefault();
+                alert('⚠️ Por favor selecciona una foto primero.');
+                return false;
+            }
+            
+            // Mostrar loading
+            submitBtn.disabled = true;
+            btnText.style.display = 'none';
+            spinner.style.display = 'inline-block';
+        });
+
+        // Auto-hide alerts después de 8 segundos
+        setTimeout(() => {
+            document.querySelectorAll('.alert').forEach(alert => {
+                alert.style.transition = 'all 0.5s ease';
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 8000);
+
+        // Prevenir doble envío
+        let formSubmitted = false;
+        uploadForm.addEventListener('submit', function(e) {
+            if (formSubmitted) {
+                e.preventDefault();
+                return false;
+            }
+            formSubmitted = true;
+        });
+    </script>
+</body>
+</html>

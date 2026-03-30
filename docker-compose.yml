@@ -1,0 +1,31 @@
+services:
+  web:
+    build: .
+    container_name: carnetizacion_sena
+    ports:
+      - "0.0.0.0:5001:5000"
+    volumes:
+      # Datos persistentes
+      - ./static/fotos:/app/static/fotos
+      - ./static/qr:/app/static/qr
+      - ./static/carnets:/app/static/carnets
+      - ./static/fotos_backup:/app/static/fotos_backup
+      - ./uploads:/app/uploads
+      - ./instance:/app/instance
+      - ./carnet.db:/app/carnet.db
+      # Código en tiempo real - toma cambios sin reconstruir
+      - ./templates:/app/templates
+      - ./static/css:/app/static/css
+      - ./static/js:/app/static/js
+      - ./app.py:/app/app.py
+    environment:
+      - FLASK_ENV=development
+      - PYTHONUNBUFFERED=1
+      - FLASK_DEBUG=1
+    restart: unless-stopped
+    networks:
+      - sena_network
+
+networks:
+  sena_network:
+    driver: bridge

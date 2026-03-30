@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Aprendiz - SENA</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-header {
+            background: linear-gradient(135deg, #39A935 0%, #1e5c1e 100%);
+            color: white; padding: 20px 30px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000; height: 70px;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .mobile-menu-toggle { display: none; background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 5px; }
+
+        .logo {
+            width: 50px; height: 50px; background: rgba(255,255,255,0.2);
+            border-radius: 15px; display: flex; align-items: center; justify-content: center;
+            font-size: 28px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            animation: logoFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes logoFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+
+        .header-title { font-size: 24px; font-weight: 700; letter-spacing: 1px; }
+        .header-subtitle { font-size: 13px; opacity: 0.9; font-weight: 300; }
+        .header-right { display: flex; align-items: center; gap: 20px; }
+
+        .user-info {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 20px; background: rgba(255,255,255,0.15);
+            border-radius: 30px; backdrop-filter: blur(10px);
+            font-weight: 500; border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .btn-logout {
+            padding: 10px 25px; background: rgba(255,255,255,0.2);
+            color: white; border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 10px; cursor: pointer; transition: all 0.3s ease;
+            text-decoration: none; display: flex; align-items: center; gap: 8px;
+            font-size: 14px; font-weight: 600;
+        }
+        .btn-logout:hover { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
+
+        .main-layout { display: flex; margin-top: 70px; min-height: calc(100vh - 70px); }
+
+        .sidebar {
+            width: 280px; background: white;
+            box-shadow: 5px 0 20px rgba(0,0,0,0.1);
+            position: fixed; left: 0; top: 70px;
+            height: calc(100vh - 70px); overflow-y: auto;
+            transition: all 0.3s ease; z-index: 999;
+        }
+
+        .sidebar::-webkit-scrollbar { width: 8px; }
+        .sidebar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .sidebar::-webkit-scrollbar-thumb { background: #39A935; border-radius: 10px; }
+
+        .sidebar-header {
+            padding: 30px 20px; border-bottom: 2px solid #f0f0f0;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        }
+        .sidebar-title { font-size: 20px; font-weight: 700; color: #1e5c1e; margin-bottom: 5px; }
+        .sidebar-subtitle { font-size: 12px; color: #999; font-weight: 500; }
+        .sidebar-menu { padding: 25px 0; }
+        .menu-section { margin-bottom: 30px; }
+        .menu-section-title {
+            font-size: 11px; font-weight: 700; color: #39A935;
+            text-transform: uppercase; letter-spacing: 1.5px;
+            padding: 0 20px; margin-bottom: 12px;
+        }
+        .menu-item {
+            display: flex; align-items: center; padding: 15px 20px;
+            color: #333; text-decoration: none; transition: all 0.3s ease;
+            cursor: pointer; position: relative; border: none;
+            background: none; width: 100%; text-align: left;
+            font-size: 15px; font-weight: 500;
+        }
+        .menu-item::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+            width: 5px; background: #39A935; transform: scaleY(0); transition: transform 0.3s ease;
+        }
+        .menu-item:hover { background: linear-gradient(90deg, rgba(57,169,53,0.1) 0%, transparent 100%); color: #39A935; padding-left: 25px; }
+        .menu-item.active { background: linear-gradient(90deg, rgba(57,169,53,0.15) 0%, transparent 100%); color: #39A935; font-weight: 700; }
+        .menu-item.active::before { transform: scaleY(1); }
+        .menu-icon { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-size: 22px; border-radius: 12px; transition: all 0.3s ease; background: rgba(57,169,53,0.05); }
+        .menu-item:hover .menu-icon { transform: scale(1.15); background: rgba(57,169,53,0.15); }
+        .menu-item.active .menu-icon { background: rgba(57,169,53,0.2); }
+        .menu-text { flex: 1; font-size: 14px; }
+
+        .content-area {
+            flex: 1; margin-left: 280px; padding: 40px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: calc(100vh - 70px); transition: margin-left 0.3s ease;
+        }
+
+        .content-section { display: none; animation: fadeInUp 0.5s ease; }
+        .content-section.active { display: block; }
+
+        @keyframes fadeInUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+
+        .section-header { margin-bottom: 35px; }
+        .section-title { font-size: 32px; font-weight: 800; color: #1e5c1e; margin-bottom: 10px; }
+        .section-subtitle { color: #666; font-size: 16px; }
+
+        .welcome-alert {
+            background: linear-gradient(135deg, #39A935 0%, #1e5c1e 100%);
+            color: white; border-radius: 15px; padding: 25px 30px;
+            margin-bottom: 40px; display: flex; align-items: center; gap: 20px;
+            box-shadow: 0 10px 30px rgba(57,169,53,0.3);
+            position: relative; overflow: hidden;
+            animation: slideInDown 0.6s ease;
+        }
+        .welcome-alert::before {
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: shimmer 3s infinite;
+        }
+        @keyframes shimmer { 0%{left:-100%} 100%{left:100%} }
+        @keyframes slideInDown { from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:translateY(0)} }
+        .welcome-icon { font-size: 32px; animation: bounce 2s infinite; position: relative; z-index: 1; }
+        @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+        .welcome-text { font-size: 16px; font-weight: 500; position: relative; z-index: 1; }
+
+        .info-card {
+            background: white; border-radius: 20px; padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08); margin-bottom: 25px;
+            border-left: 5px solid #39A935; transition: all 0.3s ease;
+        }
+        .info-card:hover { box-shadow: 0 15px 40px rgba(0,0,0,0.12); }
+        .info-card h3 { color: #1e5c1e; margin-bottom: 20px; font-size: 18px; font-weight: 700; }
+        .info-card p { color: #555; line-height: 1.8; margin-bottom: 10px; font-size: 15px; }
+
+        .form-group { margin-bottom: 25px; }
+        .form-label { display: block; margin-bottom: 10px; font-weight: 700; color: #333; font-size: 14px; }
+        .form-input {
+            width: 100%; padding: 14px 18px;
+            border: 2px solid #e0e0e0; border-radius: 12px;
+            font-size: 14px; transition: all 0.3s ease; background: #f8f9fa;
+        }
+        .form-input:focus { outline: none; border-color: #39A935; background: white; box-shadow: 0 0 0 4px rgba(57,169,53,0.1); }
+
+        .action-button {
+            background: linear-gradient(135deg, #39A935 0%, #2E7D32 100%);
+            color: white; border: none; padding: 14px 28px;
+            border-radius: 12px; font-weight: 700; cursor: pointer;
+            transition: all 0.3s ease; font-size: 14px; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 10px;
+            margin: 8px; box-shadow: 0 5px 15px rgba(57,169,53,0.3);
+            position: relative; overflow: hidden;
+        }
+        .action-button:hover { background: linear-gradient(135deg, #2E7D32 0%, #1e5c1e 100%); transform: translateY(-3px); box-shadow: 0 10px 25px rgba(57,169,53,0.4); }
+        .action-button:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+
+        .alert { padding: 18px; border-radius: 12px; margin-bottom: 25px; border-left: 5px solid; animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from{opacity:0;transform:translateX(-20px)} to{opacity:1;transform:translateX(0)} }
+        .alert-success { background: #d4edda; border-color: #39A935; color: #155724; }
+        .alert-error   { background: #f8d7da; border-color: #f44336; color: #721c24; }
+        .alert-info    { background: #d1ecf1; border-color: #17a2b8; color: #0c5460; }
+        .alert-warning { background: #fff3cd; border-color: #FF9800; color: #856404; }
+
+        .spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to{transform:rotate(360deg)} }
+
+        .info-display { background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%); border: 2px solid #39A935; border-radius: 15px; padding: 25px; margin: 20px 0; }
+        .info-display-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 15px 0; }
+        .info-display-item { padding: 15px; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .info-display-label { font-size: 12px; color: #39A935; font-weight: 700; text-transform: uppercase; margin-bottom: 5px; }
+        .info-display-value { font-size: 16px; color: #1e5c1e; font-weight: 600; word-break: break-word; }
+
+        .loading-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
+        .loading-overlay.active { display: flex; }
+        .loading-content { background: white; padding: 50px; border-radius: 20px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+
+        /* MODAL ADVERTENCIA */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.72); z-index: 9000;
+            justify-content: center; align-items: flex-start;
+            padding: 16px; overflow-y: auto;
+            backdrop-filter: blur(3px); animation: overlayFadeIn 0.25s ease;
+        }
+        @keyframes overlayFadeIn { from{opacity:0} to{opacity:1} }
+        .modal-overlay.active { display: flex; }
+        .modal-aviso { background:white; border-radius:22px; max-width:640px; width:100%; overflow:hidden; box-shadow:0 30px 80px rgba(0,0,0,0.5),0 0 0 1px rgba(255,152,0,0.3); animation:modalSlideUp 0.35s cubic-bezier(0.34,1.56,0.64,1); position:relative; }
+        @keyframes modalSlideUp { from{opacity:0;transform:translateY(40px) scale(0.95)} to{opacity:1;transform:translateY(0) scale(1)} }
+        .modal-stripe { height:7px; background:linear-gradient(90deg,#FF6F00,#FF9800,#FFB300,#FF9800,#FF6F00,#FF9800,#FFB300,#FF9800,#FF6F00); background-size:300% 100%; animation:stripeFlow 2s linear infinite; }
+        @keyframes stripeFlow { 0%{background-position:0% 50%} 100%{background-position:300% 50%} }
+        .modal-body { padding:30px 32px 28px; background:linear-gradient(150deg,#FFF8E1 0%,#FFFDE7 50%,#FFF3E0 100%); }
+        .modal-header { display:flex; align-items:center; gap:16px; margin-bottom:24px; padding-bottom:20px; border-bottom:2px dashed rgba(255,160,0,0.45); }
+        .modal-icon-circle { width:62px; height:62px; flex-shrink:0; background:linear-gradient(135deg,#FF9800,#E65100); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:30px; box-shadow:0 6px 20px rgba(255,152,0,0.5); animation:iconShake 6s ease-in-out infinite; }
+        @keyframes iconShake { 0%,80%,100%{transform:rotate(0deg) scale(1)} 84%{transform:rotate(-10deg) scale(1.06)} 88%{transform:rotate(10deg) scale(1.06)} 92%{transform:rotate(-6deg) scale(1.03)} 96%{transform:rotate(4deg) scale(1.03)} }
+        .modal-header-text { flex:1; }
+        .modal-header-text h2 { font-size:18px; font-weight:900; color:#BF360C; line-height:1.3; margin-bottom:5px; }
+        .modal-header-text p { font-size:12px; color:#E65100; font-weight:600; margin:0; }
+        .modal-badge { flex-shrink:0; background:linear-gradient(135deg,#FF6F00,#FF9800); color:white; font-size:10px; font-weight:900; letter-spacing:1.5px; text-transform:uppercase; padding:6px 14px; border-radius:20px; box-shadow:0 3px 10px rgba(255,111,0,0.45); animation:badgeBlink 2.2s ease-in-out infinite; }
+        @keyframes badgeBlink { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.75;transform:scale(0.97)} }
+        .modal-intro { font-size:13.5px; color:#5D4037; font-weight:600; margin-bottom:20px; padding:10px 14px; background:rgba(255,160,0,0.12); border-radius:10px; border-left:4px solid #FF9800; }
+        .modal-lista { list-style:none; display:grid; grid-template-columns:1fr 1fr; gap:13px; margin-bottom:20px; }
+        .modal-item { display:flex; align-items:flex-start; gap:13px; background:white; border-radius:14px; padding:15px 16px; border:2px solid #FFE082; box-shadow:0 3px 10px rgba(255,152,0,0.1); transition:all 0.25s ease; }
+        .modal-item:hover { border-color:#FF9800; box-shadow:0 6px 20px rgba(255,152,0,0.25); transform:translateY(-2px); }
+        .modal-item-icon { font-size:26px; flex-shrink:0; line-height:1; margin-top:2px; }
+        .modal-item-text strong { display:block; font-size:12.5px; font-weight:900; color:#E65100; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.3px; }
+        .modal-item-text span { font-size:12px; color:#555; line-height:1.5; }
+        .modal-pie { background:linear-gradient(135deg,#FF6F00,#E65100); border-radius:12px; padding:13px 18px; display:flex; align-items:center; gap:12px; color:white; font-size:13px; font-weight:700; box-shadow:0 4px 14px rgba(229,57,0,0.35); margin-bottom:24px; }
+        .modal-pie-icon { font-size:18px; flex-shrink:0; }
+        .modal-actions { display:flex; gap:12px; justify-content:flex-end; }
+        .btn-modal-cancel { padding:13px 26px; background:#6c757d; color:white; border:none; border-radius:12px; font-size:14px; font-weight:700; cursor:pointer; transition:all 0.2s ease; display:flex; align-items:center; gap:8px; }
+        .btn-modal-cancel:hover { background:#5a6268; transform:translateY(-2px); box-shadow:0 5px 15px rgba(0,0,0,0.2); }
+        .btn-modal-confirm { padding:13px 30px; background:linear-gradient(135deg,#39A935,#1e5c1e); color:white; border:none; border-radius:12px; font-size:14px; font-weight:700; cursor:pointer; transition:all 0.2s ease; display:flex; align-items:center; gap:8px; box-shadow:0 5px 15px rgba(57,169,53,0.35); }
+        .btn-modal-confirm:hover { background:linear-gradient(135deg,#2E7D32,#1a4a1a); transform:translateY(-2px); box-shadow:0 8px 22px rgba(57,169,53,0.45); }
+        .btn-modal-close-x { position:absolute; top:18px; right:20px; background:rgba(0,0,0,0.08); border:none; border-radius:50%; width:34px; height:34px; display:flex; align-items:center; justify-content:center; font-size:18px; cursor:pointer; color:#555; transition:all 0.2s ease; z-index:10; }
+        .btn-modal-close-x:hover { background:rgba(0,0,0,0.18); transform:rotate(90deg); }
+
+        /* ══ MENSAJE FOTO YA CARGADA ══ */
+        .foto-ya-cargada-wrap {
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+            border: 3px solid #39A935; border-radius: 20px;
+            padding: 50px 30px; text-align: center;
+            animation: fadeInUp 0.5s ease;
+        }
+        .foto-ya-cargada-icon { font-size: 72px; display: block; margin-bottom: 18px; animation: bounce 2s infinite; }
+        .foto-ya-cargada-wrap h3 { color: #1e5c1e; font-size: 26px; font-weight: 800; margin-bottom: 14px; }
+        .foto-ya-cargada-wrap p { color: #2e7d32; font-size: 15px; line-height: 1.8; margin-bottom: 6px; }
+        .foto-ya-cargada-steps { display: flex; flex-direction: column; gap: 10px; margin: 22px 0; text-align: left; }
+        .foto-ya-cargada-step { display: flex; align-items: center; gap: 12px; background: white; border-radius: 12px; padding: 14px 18px; font-size: 14px; color: #1e5c1e; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .foto-ya-cargada-num { width: 30px; height: 30px; border-radius: 50%; background: #39A935; color: white; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; flex-shrink: 0; }
+        .foto-ya-cargada-badge { display: inline-flex; align-items: center; gap: 8px; background: #39A935; color: white; border-radius: 30px; padding: 13px 28px; font-weight: 700; font-size: 15px; margin-top: 20px; box-shadow: 0 4px 14px rgba(57,169,53,0.4); }
+        .foto-ya-cargada-nota { font-size: 12px; color: #777; margin-top: 14px; font-style: italic; }
+
+        /* RESPONSIVE */
+        .sidebar-overlay { display:none; position:fixed; top:70px; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:998; }
+        .sidebar-overlay.active { display:block; }
+
+        @media (max-width:1024px) { .content-area{padding:30px} .info-display-row{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))} }
+        @media (max-width:768px) {
+            .mobile-menu-toggle{display:block} .sidebar{left:-280px} .sidebar.active{left:0} .content-area{margin-left:0;padding:20px 16px}
+            .header-title{display:none} .user-info{padding:8px 12px} .user-info span{display:none} .btn-logout span:last-child{display:none} .btn-logout{padding:8px 12px}
+            .section-title{font-size:22px} .info-card{padding:20px;border-radius:14px} .welcome-alert{padding:18px 20px;gap:14px;border-radius:12px}
+            .info-display{padding:16px} .info-display-row{grid-template-columns:1fr 1fr;gap:10px} .action-button{padding:12px 20px;font-size:13px;margin:5px}
+            .modal-lista{grid-template-columns:1fr;gap:10px} .modal-badge{display:none} .modal-body{padding:20px 18px} .modal-header{gap:12px} .modal-header-text h2{font-size:15px}
+            .modal-actions{flex-direction:column;gap:10px} .btn-modal-cancel,.btn-modal-confirm{width:100%;justify-content:center;padding:14px}
+        }
+        @media (max-width:480px) {
+            .top-header{padding:12px 14px;height:60px} .logo{width:38px;height:38px;font-size:20px} .header-left{gap:10px}
+            .main-layout{margin-top:60px} .sidebar{top:60px;height:calc(100vh - 60px)} .sidebar-overlay{top:60px}
+            .content-area{padding:14px 12px} .section-title{font-size:20px} .info-card{padding:16px;border-radius:12px;margin-bottom:16px}
+            .welcome-alert{padding:14px 16px;flex-direction:row;gap:12px;margin-bottom:20px} .info-display-row{grid-template-columns:1fr;gap:8px}
+            .action-button{width:100%;justify-content:center;margin:4px 0}
+            .form-input{font-size:16px !important;padding:14px 16px} .loading-content{padding:30px 24px}
+            .foto-ya-cargada-wrap{padding:30px 18px}
+        }
+
+        /* FORMULARIO FOTO */
+        .foto-upload-layout { display:grid; grid-template-columns:200px 1fr; gap:30px; align-items:start; margin-top:20px; }
+        .foto-preview-box { position:relative; width:200px; aspect-ratio:3/4; border-radius:14px; overflow:hidden; border:3px dashed #39A935; background:linear-gradient(135deg,#f0f8f4 0%,#e8f5e9 100%); cursor:pointer; transition:all 0.3s ease; box-shadow:0 6px 20px rgba(57,169,53,0.15); flex-shrink:0; }
+        .foto-preview-box:hover { border-color:#2E7D32; box-shadow:0 10px 30px rgba(57,169,53,0.25); transform:translateY(-2px); }
+        .foto-preview-box.has-image { border-style:solid; border-color:#39A935; }
+        .foto-preview-box.drag-over { border-color:#FF9800; background:#FFF8E1; box-shadow:0 10px 30px rgba(255,152,0,0.3); }
+        .foto-placeholder { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:20px; text-align:center; transition:opacity 0.3s ease; }
+        .foto-placeholder-icon { font-size:42px; opacity:0.6; animation:placeholderBounce 2.5s ease-in-out infinite; }
+        @keyframes placeholderBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+        .foto-placeholder-text { font-size:12px; color:#39A935; font-weight:700; line-height:1.4; text-transform:uppercase; letter-spacing:0.5px; }
+        .foto-placeholder-sub { font-size:11px; color:#888; font-weight:500; margin-top:-4px; }
+        .foto-ratio-tag { position:absolute; bottom:10px; left:50%; transform:translateX(-50%); background:rgba(57,169,53,0.85); color:white; font-size:11px; font-weight:800; letter-spacing:1px; padding:3px 10px; border-radius:20px; }
+        .foto-preview-img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:none; }
+        .foto-preview-img.visible { display:block; }
+        .foto-hover-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.5); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; opacity:0; transition:opacity 0.3s ease; color:white; }
+        .foto-preview-box.has-image:hover .foto-hover-overlay { opacity:1; }
+        .foto-hover-overlay span:first-child { font-size:28px; }
+        .foto-hover-overlay span:last-child { font-size:12px; font-weight:700; text-align:center; }
+        .foto-form-panel { display:flex; flex-direction:column; gap:18px; }
+        .foto-file-info { background:linear-gradient(135deg,#E8F5E9,#C8E6C9); border:2px solid #39A935; border-radius:12px; padding:14px 18px; display:none; align-items:center; gap:12px; }
+        .foto-file-info.show { display:flex; }
+        .foto-file-info-icon { font-size:24px; flex-shrink:0; }
+        .foto-file-info-name { font-size:13px; font-weight:700; color:#1e5c1e; word-break:break-all; }
+        .foto-file-info-size { font-size:12px; color:#555; margin-top:2px; }
+        .btn-remove-foto { background:none; border:none; cursor:pointer; color:#e53935; font-size:18px; margin-left:auto; flex-shrink:0; padding:4px; transition:transform 0.2s; }
+        .btn-remove-foto:hover { transform:scale(1.2); }
+        .foto-guide { background:#f8f9fa; border-radius:12px; padding:14px 16px; border:1px solid #e0e0e0; }
+        .foto-guide-title { font-size:12px; font-weight:800; color:#555; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px; }
+        .foto-guide-items { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+        .foto-guide-item { display:flex; align-items:center; gap:7px; font-size:12px; color:#555; }
+        .foto-guide-item span:first-child { font-size:15px; }
+
+        /* Botón único de selección (sin cámara) */
+        .btn-seleccionar-foto {
+            width: 100%; padding: 16px;
+            background: white; color: #1e5c1e;
+            border: 2px solid #39A935; border-radius: 12px;
+            font-size: 14px; font-weight: 700; cursor: pointer;
+            transition: all 0.2s; display: flex;
+            align-items: center; justify-content: center; gap: 10px;
+        }
+        .btn-seleccionar-foto:hover { background: #e8f5e9; border-color: #2E7D32; transform: translateY(-1px); }
+        .btn-seleccionar-foto span:first-child { font-size: 20px; }
+        .nota-sin-camara { font-size: 11px; color: #e53935; font-weight: 600; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px; }
+
+        /* Caja instrucciones menú nativo */
+        .instrucciones-menu {
+            background: linear-gradient(135deg, #E3F2FD, #BBDEFB);
+            border: 2px solid #1976D2; border-radius: 14px;
+            padding: 14px 16px; margin-top: 4px;
+        }
+        .instrucciones-menu-titulo {
+            font-size: 12px; font-weight: 900; color: #0D47A1;
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .instrucciones-menu-item {
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 9px 12px; border-radius: 10px; margin-bottom: 6px;
+            font-size: 12.5px; font-weight: 600; line-height: 1.4;
+        }
+        .instrucciones-menu-item:last-child { margin-bottom: 0; }
+        .instrucciones-menu-item.ok  { background: white; color: #1e5c1e; border: 1.5px solid #39A935; }
+        .instrucciones-menu-item.ok .menu-icono  { font-size: 18px; flex-shrink: 0; }
+        .instrucciones-menu-item.ok .menu-label  { color: #1e5c1e; }
+        .instrucciones-menu-item.ok .menu-sub    { font-size: 11px; color: #555; font-weight: 500; display: block; margin-top: 2px; }
+        .instrucciones-menu-item.warn { background: #FFF3E0; color: #BF360C; border: 1.5px solid #FF9800; }
+        .instrucciones-menu-item.warn .menu-icono { font-size: 18px; flex-shrink: 0; }
+        .instrucciones-menu-item.warn .menu-label { color: #BF360C; }
+        .instrucciones-menu-item.warn .menu-sub   { font-size: 11px; color: #E65100; font-weight: 600; display: block; margin-top: 2px; }
+
+        /* Modal advertencia cámara */
+        .modal-camara-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.75); z-index: 9800;
+            justify-content: center; align-items: center;
+            padding: 20px; backdrop-filter: blur(4px);
+        }
+        .modal-camara-overlay.active { display: flex; }
+        .modal-camara-box {
+            background: white; border-radius: 22px; max-width: 380px; width: 100%;
+            overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+            animation: modalSlideUp 0.35s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .modal-camara-stripe { height: 8px; background: linear-gradient(90deg,#f44336,#FF9800,#f44336,#FF9800); background-size:300% 100%; animation:stripeFlow 1.5s linear infinite; }
+        .modal-camara-body { padding: 30px 28px 28px; text-align: center; }
+        .modal-camara-icon { font-size: 64px; display: block; margin-bottom: 16px; animation: iconShake 2s ease-in-out infinite; }
+        .modal-camara-body h3 { font-size: 20px; font-weight: 900; color: #B71C1C; margin-bottom: 10px; line-height: 1.3; }
+        .modal-camara-body p { font-size: 14px; color: #555; line-height: 1.7; margin-bottom: 18px; }
+        .modal-camara-alerta {
+            background: linear-gradient(135deg,#FFEBEE,#FFCDD2);
+            border: 2px solid #f44336; border-radius: 12px;
+            padding: 14px 16px; margin-bottom: 22px;
+            font-size: 13px; color: #B71C1C; font-weight: 700;
+            display: flex; align-items: flex-start; gap: 10px; text-align: left;
+        }
+        .modal-camara-alerta span:first-child { font-size: 20px; flex-shrink: 0; }
+        .modal-camara-pasos { background: #f8f9fa; border-radius: 12px; padding: 14px 16px; margin-bottom: 22px; text-align: left; }
+        .modal-camara-pasos-titulo { font-size: 11px; font-weight: 900; color: #555; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+        .modal-camara-paso { display: flex; align-items: flex-start; gap: 10px; font-size: 12.5px; color: #333; font-weight: 600; margin-bottom: 7px; line-height: 1.4; }
+        .modal-camara-paso:last-child { margin-bottom: 0; }
+        .modal-camara-paso-num { width: 22px; height: 22px; border-radius: 50%; background: #39A935; color: white; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; flex-shrink: 0; margin-top: 1px; }
+        .btn-modal-camara-ok { width: 100%; padding: 16px; background: linear-gradient(135deg,#39A935,#1e5c1e); color: white; border: none; border-radius: 14px; font-size: 15px; font-weight: 800; cursor: pointer; transition: all 0.2s; box-shadow: 0 5px 15px rgba(57,169,53,0.35); }
+        .btn-modal-camara-ok:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(57,169,53,0.45); }
+
+        @media (max-width:600px) { .foto-upload-layout{grid-template-columns:1fr;justify-items:center;gap:20px} .foto-preview-box{width:150px} }
+
+        /* MODAL CARNET */
+        .modal-carnet-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.82); z-index: 9500;
+            justify-content: center; align-items: flex-start;
+            padding: 16px; overflow-y: auto;
+            backdrop-filter: blur(6px); animation: overlayFadeIn 0.3s ease;
+        }
+        .modal-carnet-overlay.active { display: flex; }
+        .modal-carnet-container { background: white; border-radius: 24px; max-width: 440px; width: 100%; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.6); animation: modalSlideUp 0.4s cubic-bezier(0.34,1.56,0.64,1); position: relative; margin: auto; }
+        .modal-carnet-header { background: linear-gradient(135deg, #39A935 0%, #1e5c1e 100%); padding: 18px 24px; display: flex; align-items: center; gap: 12px; color: white; }
+        .modal-carnet-header-icon { font-size: 26px; }
+        .modal-carnet-header h3 { font-size: 17px; font-weight: 800; margin-bottom: 2px; }
+        .modal-carnet-header p { font-size: 12px; opacity: 0.85; margin: 0; }
+        .btn-close-carnet-modal { margin-left: auto; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 50%; width: 32px; height: 32px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
+        .btn-close-carnet-modal:hover { background: rgba(255,255,255,0.35); transform: rotate(90deg); }
+        .modal-carnet-body { padding: 24px 24px 20px; background: #eef0f3; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+        .carnet-sena { width: 300px; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 6px 30px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.06); font-family: Arial, sans-serif; animation: carnetReveal 0.5s cubic-bezier(0.34,1.3,0.64,1) 0.1s both; }
+        @keyframes carnetReveal { from{opacity:0;transform:scale(0.9) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
+        .carnet-stripe-top { background: #39A935; height: 5px; }
+        .carnet-zona-top { display: flex; align-items: flex-start; justify-content: space-between; padding: 12px 14px 0; }
+        .carnet-logo-svg-wrap { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+        .carnet-logo-sena-real { width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; }
+        .carnet-logo-sena-real svg { width: 64px; height: 64px; }
+        .carnet-foto-real { width: 82px; height: 100px; border: 1.5px solid #ccc; background: #f0f0f0; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .carnet-foto-real img { width: 100%; height: 100%; object-fit: cover; display: none; }
+        .carnet-foto-real img.visible { display: block; }
+        .carnet-foto-placeholder-real { font-size: 28px; opacity: 0.25; color: #888; }
+        .carnet-zona-datos { padding: 8px 14px 6px; }
+        .carnet-cargo-real { font-size: 10.5px; font-weight: 700; color: #222; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 3px; }
+        .carnet-linea-verde { width: 100%; height: 3px; background: #39A935; margin-bottom: 7px; }
+        .carnet-nombre-real { font-size: 12.5px; font-weight: 700; color: #39A935; text-transform: uppercase; line-height: 1.35; margin-bottom: 8px; }
+        .carnet-fila-cc-qr { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; }
+        .carnet-cc-rh { display: flex; flex-direction: column; gap: 4px; }
+        .carnet-cc-texto { font-size: 11.5px; color: #222; font-weight: 500; font-family: 'Times New Roman', serif; }
+        .carnet-rh-texto { font-size: 11.5px; color: #222; font-weight: 400; font-family: 'Times New Roman', serif; }
+        .carnet-qr-real { width: 68px; height: 68px; background: #f5f5f5; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .carnet-qr-real svg { width: 60px; height: 60px; }
+        .carnet-footer-real { padding: 8px 14px 12px; }
+        .carnet-footer-linea { width: 28px; height: 3px; background: #39A935; margin-bottom: 4px; }
+        .carnet-footer-texto { font-size: 9.5px; color: rgb(74,160,70); font-weight: 600; line-height: 1.6; }
+        .carnet-preview-note { background: linear-gradient(135deg, #FFF8E1, #FFF3CD); border: 2px solid #FFB300; border-radius: 12px; padding: 11px 14px; display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: #856404; font-weight: 600; width: 100%; }
+        .modal-carnet-actions { display: flex; width: 100%; }
+        .btn-carnet-cerrar { flex: 1; padding: 14px; background: linear-gradient(135deg, #39A935, #1e5c1e); color: white; border: none; border-radius: 12px; font-size: 14px; font-weight: 800; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 5px 15px rgba(57,169,53,0.35); }
+        .btn-carnet-cerrar:hover { transform: translateY(-2px); }
+        @media (max-width:480px) { .carnet-sena{width:100%;max-width:280px} .modal-carnet-body{padding:16px 12px;gap:14px} }
+    </style>
+</head>
+<body>
+
+    <!-- MODAL REQUISITOS -->
+    <div class="modal-overlay" id="modalRequisitos">
+        <div class="modal-aviso">
+            <div class="modal-stripe"></div>
+            <button class="btn-modal-close-x" onclick="cerrarModalRequisitos()" title="Cerrar">✕</button>
+            <div class="modal-body">
+                <div class="modal-header">
+                    <div class="modal-icon-circle">⚠️</div>
+                    <div class="modal-header-text">
+                        <h2>Requisitos obligatorios para la fotografía</h2>
+                        <p>Lee con atención antes de subir tu foto — el incumplimiento impedirá la carga</p>
+                    </div>
+                    <span class="modal-badge">Obligatorio</span>
+                </div>
+                <p class="modal-intro">Antes de continuar, asegúrate de que tu fotografía cumpla con las siguientes condiciones:</p>
+                <ul class="modal-lista">
+                    <li class="modal-item"><span class="modal-item-icon">📏</span><div class="modal-item-text"><strong>Tamaño</strong><span>La fotografía debe tener formato <strong>3×4</strong>. Se rechazarán otras proporciones.</span></div></li>
+                    <li class="modal-item" style="border-color:#f44336;background:#fff5f5;"><span class="modal-item-icon">🎨</span><div class="modal-item-text"><strong style="color:#B71C1C">Fondo — ¡OBLIGATORIO!</strong><span>Solo se permite <strong>fondo blanco</strong>. Cualquier otro color de fondo (azul, gris, verde, etc.) hará que el carnet sea <strong>negado y cancelado</strong>.</span></div></li>
+                    <li class="modal-item"><span class="modal-item-icon">📦</span><div class="modal-item-text"><strong>Peso máximo</strong><span>El archivo no debe superar los <strong>5 MB</strong>. Formatos válidos: JPG, JPEG, PNG.</span></div></li>
+                    <li class="modal-item"><span class="modal-item-icon">🚫</span><div class="modal-item-text"><strong>Sin selfies</strong><span>Solo se permiten fotos tipo documento guardadas. <strong>No se permite usar la cámara.</strong></span></div></li>
+                </ul>
+                <div class="modal-pie"><span class="modal-pie-icon">🚫</span><span>Si la fotografía no cumple con estas especificaciones — especialmente el <u>fondo blanco</u> — el sistema no permitirá su carga, el carnet será <strong>negado</strong> y se <strong>cancelará la generación</strong>.</span></div>
+                <div class="modal-actions">
+                    <button class="btn-modal-cancel" onclick="cerrarModalRequisitos()">✕ Cancelar</button>
+                    <button class="btn-modal-confirm" onclick="confirmarYcontinuar()">✅ Entendido, continuar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <header class="top-header">
+        <div class="header-left">
+            <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+            <div class="logo">🎓</div>
+            <div>
+                <div class="header-title">SENA</div>
+                <div class="header-subtitle">Mi Portal de Aprendiz</div>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="user-info">
+                <span>👤 <strong>{{ session.get('usuario', 'aprendiz') }}</strong></span>
+            </div>
+            <form action="{{ url_for('logout') }}" method="POST" style="margin:0">
+                <button type="submit" class="btn-logout"><span>🚪</span><span>Cerrar Sesión</span></button>
+            </form>
+        </div>
+    </header>
+
+    <div class="main-layout">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2 class="sidebar-title">📚 Mi Portal</h2>
+                <p class="sidebar-subtitle">Aprendiz SENA</p>
+            </div>
+            <nav class="sidebar-menu">
+                <div class="menu-section">
+                    <div class="menu-section-title">Principal</div>
+                    <a href="#" class="menu-item active" onclick="showSection('dashboard')">
+                        <div class="menu-icon">📊</div><span class="menu-text">Mi Dashboard</span>
+                    </a>
+                </div>
+                <div class="menu-section">
+                    <div class="menu-section-title">Mis Datos</div>
+                    <a href="#" class="menu-item" onclick="abrirSeccionConsulta()">
+                        <div class="menu-icon">🔍</div><span class="menu-text">Consultar CC o TI</span>
+                    </a>
+                </div>
+                <div class="menu-section">
+                    <div class="menu-section-title">Ayuda</div>
+                    <a href="#" class="menu-item" onclick="showSection('preguntas-frecuentes')">
+                        <div class="menu-icon">❓</div><span class="menu-text">Preguntas Frecuentes</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+        <main class="content-area">
+            <div id="dashboard" class="content-section active">
+                <div class="welcome-alert">
+                    <span class="welcome-icon">🎓</span>
+                    <span class="welcome-text">¡Bienvenido, aprendiz SENA! Aquí puedes consultar tu información y cargar tu foto para generar tu carnet digital.</span>
+                </div>
+                <div class="info-card">
+                    <h3>⚡ Accesos Rápidos</h3>
+                    <p style="color:#666;margin-bottom:20px">Accede rápidamente a las funciones principales del sistema.</p>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px">
+                        <button class="action-button" onclick="abrirSeccionConsulta()">🔍 Consultar CC o TI</button>
+                        <button class="action-button" onclick="showSection('preguntas-frecuentes')">❓ Ayuda</button>
+                    </div>
+                </div>
+                <div class="info-card" style="background:linear-gradient(135deg,#E8F5E9 0%,#C8E6C9 100%);border-left-color:#39A935">
+                    <h3 style="color:#1e5c1e">📋 Pasos para tu Carnet Digital</h3>
+                    <ol style="margin:15px 0;color:#1e5c1e;line-height:1.8;padding-left:25px">
+                        <li><strong>Consulta tu CC o TI</strong> - Ingresa tu número de documento</li>
+                        <li><strong>Carga tu foto</strong> - Foto tipo documento 3x4, <strong>fondo blanco únicamente</strong> — otro fondo cancela el carnet</li>
+                        <li><strong>Espera confirmación</strong> - El área admin procesará tu solicitud</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div id="consultar-datos" class="content-section">
+                <div class="section-header">
+                    <h1 class="section-title">🔍 Consultar CC o TI</h1>
+                    <p class="section-subtitle">Ingresa tu número de documento para ver tu información y cargar tu foto</p>
+                </div>
+                <div class="info-card">
+                    <h3>Búsqueda por Número de Documento</h3>
+                    <form id="formularioConsulta" method="POST" style="margin-top:20px">
+                        <div class="form-group">
+                            <label class="form-label" for="cedula">Número de Cédula (CC) o Tarjeta de Identidad (TI):</label>
+                            <input type="text" name="cedula" id="cedula" class="form-input" placeholder="Ej: 1006342488" autocomplete="off" required>
+                        </div>
+                        <button type="submit" class="action-button" id="btnConsultar">🔍 Buscar Aprendiz</button>
+                    </form>
+                    <div id="resultadoConsulta" style="margin-top:30px"></div>
+                </div>
+            </div>
+
+            <div id="preguntas-frecuentes" class="content-section">
+                <div class="section-header">
+                    <h1 class="section-title">❓ Preguntas Frecuentes</h1>
+                    <p class="section-subtitle">Resuelve tus dudas sobre el proceso de carnetización</p>
+                </div>
+                <div class="info-card"><h3>¿Cómo consulto mi información?</h3><p>Ve a la sección "Consultar CC o TI" e ingresa tu número de documento. El sistema mostrará toda tu información registrada.</p></div>
+                <div class="info-card"><h3>¿Qué requisitos tiene la foto?</h3><p>Tu foto debe ser: tipo documento 3x4, <strong>fondo blanco únicamente</strong> — otro fondo cancela el carnet, foto clara y reciente, formato JPG/JPEG/PNG, máximo 5 MB. <strong>No se permite usar la cámara.</strong></p></div>
+                <div class="info-card"><h3>¿Cuánto tarda en procesarse mi solicitud?</h3><p>Una vez que cargues tu foto, el área de administración revisará tu solicitud. El proceso puede tomar de 24 a 48 horas.</p></div>
+                <div class="info-card"><h3>¿Puedo cambiar mi foto?</h3><p>No. Una vez cargada la foto, debes contactar al administrador del sistema para realizar cualquier cambio.</p></div>
+                <div class="info-card"><h3>¿Hay problemas? ¿Qué hago?</h3><p>Si tienes algún problema, contacta al administrador del sistema o al personal de SENA.</p></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL ADVERTENCIA CÁMARA -->
+    <div class="modal-camara-overlay" id="modalCamara">
+        <div class="modal-camara-box">
+            <div class="modal-camara-stripe"></div>
+            <div class="modal-camara-body">
+                <span class="modal-camara-icon">📷❌</span>
+                <h3>¡Esta opción dañará tu carnet!</h3>
+                <p>Elegiste <strong>"Tomar foto"</strong> con la cámara. Las fotos tomadas en el momento <strong>no cumplen los requisitos</strong> y serán rechazadas.</p>
+                <div class="modal-camara-alerta">
+                    <span>⛔</span>
+                    <span>Las selfies y fotos tomadas directamente con la cámara <u>impiden la correcta generación del carnet</u>. El sistema detectará que la foto no es válida.</span>
+                </div>
+                <div class="modal-camara-pasos">
+                    <div class="modal-camara-pasos-titulo">✔ Cómo hacerlo correctamente</div>
+                    <div class="modal-camara-paso"><div class="modal-camara-paso-num">1</div><span>Toca el botón <strong>"Seleccionar foto guardada"</strong></span></div>
+                    <div class="modal-camara-paso"><div class="modal-camara-paso-num">2</div><span>En el menú que aparece, elige <strong>"Fototeca"</strong> o <strong>"Seleccionar archivo"</strong></span></div>
+                    <div class="modal-camara-paso"><div class="modal-camara-paso-num">3</div><span>Busca una foto tipo documento <strong>3×4 ya guardada</strong> en tu celular</span></div>
+                </div>
+                <button class="btn-modal-camara-ok" onclick="cerrarModalCamara()">✅ Entendido, voy a elegir una foto guardada</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CARNET -->
+    <div class="modal-carnet-overlay" id="modalCarnet">
+        <div class="modal-carnet-container">
+            <div class="modal-carnet-header">
+                <span class="modal-carnet-header-icon">🎓</span>
+                <div>
+                    <h3>¡Foto cargada exitosamente!</h3>
+                    <p>Vista previa de tu carnet digital SENA</p>
+                </div>
+                <button class="btn-close-carnet-modal" onclick="cerrarModalCarnet()" title="Cerrar">✕</button>
+            </div>
+            <div class="modal-carnet-body">
+                <div class="carnet-sena" id="carnetPreview">
+                    <div class="carnet-stripe-top"></div>
+                    <div class="carnet-zona-top">
+                        <div class="carnet-logo-svg-wrap">
+                            <div class="carnet-logo-sena-real">
+                                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                    <text x="50" y="28" font-family="Arial" font-size="22" font-weight="900" fill="#39A935" text-anchor="middle">SENA</text>
+                                    <circle cx="50" cy="44" r="8" fill="#39A935"/>
+                                    <line x1="50" y1="52" x2="50" y2="72" stroke="#39A935" stroke-width="5" stroke-linecap="round"/>
+                                    <line x1="34" y1="60" x2="66" y2="60" stroke="#39A935" stroke-width="5" stroke-linecap="round"/>
+                                    <line x1="50" y1="72" x2="38" y2="88" stroke="#39A935" stroke-width="5" stroke-linecap="round"/>
+                                    <line x1="50" y1="72" x2="62" y2="88" stroke="#39A935" stroke-width="5" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="carnet-foto-real">
+                            <img id="carnetFotoImg" src="" alt="Foto aprendiz">
+                            <div class="carnet-foto-placeholder-real" id="carnetFotoPlaceholder">👤</div>
+                        </div>
+                    </div>
+                    <div class="carnet-zona-datos">
+                        <div class="carnet-cargo-real">APRENDIZ</div>
+                        <div class="carnet-linea-verde"></div>
+                        <div class="carnet-nombre-real" id="carnetNombre">—</div>
+                        <div class="carnet-fila-cc-qr">
+                            <div class="carnet-cc-rh">
+                                <div class="carnet-cc-texto" id="carnetCedula">—</div>
+                                <div class="carnet-rh-texto" id="carnetSangre">—</div>
+                            </div>
+                            <div class="carnet-qr-real">
+                                <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="2" y="2" width="20" height="20" fill="none" stroke="#333" stroke-width="2"/>
+                                    <rect x="6" y="6" width="12" height="12" fill="#333"/>
+                                    <rect x="38" y="2" width="20" height="20" fill="none" stroke="#333" stroke-width="2"/>
+                                    <rect x="42" y="6" width="12" height="12" fill="#333"/>
+                                    <rect x="2" y="38" width="20" height="20" fill="none" stroke="#333" stroke-width="2"/>
+                                    <rect x="6" y="42" width="12" height="12" fill="#333"/>
+                                    <rect x="26" y="4" width="4" height="4" fill="#333"/>
+                                    <rect x="26" y="12" width="4" height="4" fill="#333"/>
+                                    <rect x="34" y="26" width="4" height="4" fill="#333"/>
+                                    <rect x="26" y="26" width="4" height="4" fill="#333"/>
+                                    <rect x="34" y="34" width="4" height="4" fill="#333"/>
+                                    <rect x="42" y="34" width="4" height="4" fill="#333"/>
+                                    <rect x="50" y="34" width="4" height="4" fill="#333"/>
+                                    <rect x="42" y="42" width="4" height="4" fill="#333"/>
+                                    <rect x="50" y="50" width="4" height="4" fill="#333"/>
+                                    <rect x="26" y="42" width="4" height="4" fill="#333"/>
+                                    <rect x="34" y="50" width="4" height="4" fill="#333"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="carnet-footer-real">
+                        <div class="carnet-footer-linea"></div>
+                        <div class="carnet-footer-texto">Regional Valle del Cauca<br>Centro de Biotecnología Industrial</div>
+                    </div>
+                </div>
+                <div class="carnet-preview-note">
+                    <span style="font-size:18px">⏳</span>
+                    <span>Este es una <strong>previsualización</strong>. El carnet oficial será generado por el equipo administrativo en 24–48 horas.</span>
+                </div>
+                <div class="modal-carnet-actions">
+                    <button class="btn-carnet-cerrar" onclick="cerrarModalCarnet()">🏠 Volver al Dashboard</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="spinner" style="border-color:rgba(57,169,53,0.2);border-top-color:#39A935;width:50px;height:50px;border-width:4px;margin-bottom:25px"></div>
+            <p style="color:#333;font-weight:600">Procesando foto con IA...</p>
+        </div>
+    </div>
+
+    <script>
+        let currentSection = 'dashboard';
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('sidebarOverlay').classList.toggle('active');
+        }
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            const target = document.getElementById(sectionId);
+            if (target) target.classList.add('active');
+            document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+            const activeItem = document.querySelector('[onclick*="' + sectionId + '"]');
+            if (activeItem) activeItem.classList.add('active');
+            if (window.innerWidth <= 768) toggleSidebar();
+            currentSection = sectionId;
+        }
+
+        function abrirSeccionConsulta() {
+            document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
+            const item = document.querySelector('[onclick="abrirSeccionConsulta()"]');
+            if (item) item.classList.add('active');
+            document.getElementById('modalRequisitos').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function cerrarModalRequisitos() {
+            document.getElementById('modalRequisitos').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function confirmarYcontinuar() {
+            cerrarModalRequisitos();
+            showSection('consultar-datos');
+        }
+
+        function cerrarModalCamara() {
+            document.getElementById('modalCamara').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function cerrarModalCarnet() {
+            document.getElementById('modalCarnet').classList.remove('active');
+            document.body.style.overflow = '';
+            showSection('dashboard');
+            document.getElementById('cedula').value = '';
+            document.getElementById('resultadoConsulta').innerHTML = '';
+            window._aprendizActual = null;
+        }
+
+        document.getElementById('modalRequisitos').addEventListener('click', function(e) {
+            if (e.target === this) cerrarModalRequisitos();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                cerrarModalRequisitos();
+                cerrarModalCamara();
+                if (document.getElementById('modalCarnet').classList.contains('active')) cerrarModalCarnet();
+            }
+        });
+
+        function mostrarLoading(show) {
+            document.getElementById('loadingOverlay').classList.toggle('active', show);
+        }
+
+        function mostrarAlerta(mensaje, tipo) {
+            tipo = tipo || 'info';
+            var alerta = document.createElement('div');
+            alerta.className = 'alert alert-' + tipo;
+            alerta.innerHTML = mensaje;
+            alerta.style.cssText = 'position:fixed;top:90px;right:20px;z-index:3000;min-width:350px;box-shadow:0 10px 30px rgba(0,0,0,0.2)';
+            document.body.appendChild(alerta);
+            setTimeout(function() {
+                alerta.style.transition = 'all 0.3s ease';
+                alerta.style.opacity = '0';
+                alerta.style.transform = 'translateX(400px)';
+                setTimeout(function() { alerta.remove(); }, 300);
+            }, 4000);
+        }
+
+        /* ══ BÚSQUEDA ══ */
+        document.getElementById('formularioConsulta').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var cedula = document.getElementById('cedula').value.trim();
+            var resultDiv = document.getElementById('resultadoConsulta');
+            var btnConsultar = document.getElementById('btnConsultar');
+            if (!cedula) { resultDiv.innerHTML = '<div class="alert alert-error">❌ Por favor ingresa tu número de documento</div>'; return; }
+            btnConsultar.disabled = true;
+            btnConsultar.innerHTML = '<span class="spinner"></span> Buscando...';
+            resultDiv.innerHTML = '';
+            mostrarLoading(true);
+            try {
+                var response = await fetch('/api/buscar_aprendiz/' + cedula);
+                var data = await response.json();
+                mostrarLoading(false);
+                if (data.success && data.data) {
+                    window._aprendizActual = data.data;
+                    mostrarInfoAprendiz(data.data);
+                } else {
+                    resultDiv.innerHTML = '<div class="alert alert-error"><strong>❌ No encontrado:</strong> ' + (data.message || 'Verifica el número de documento') + '</div>';
+                }
+            } catch (error) {
+                mostrarLoading(false);
+                resultDiv.innerHTML = '<div class="alert alert-error"><strong>❌ Error:</strong> ' + error.message + '</div>';
+            } finally {
+                btnConsultar.disabled = false;
+                btnConsultar.innerHTML = '🔍 Buscar Aprendiz';
+            }
+        });
+
+        /* ══ MOSTRAR RESULTADO ══ */
+        function mostrarInfoAprendiz(aprendiz) {
+            var resultDiv = document.getElementById('resultadoConsulta');
+            var tieneFoto = !!aprendiz.foto;
+
+            /* ── Datos del aprendiz — siempre se muestran ── */
+            var html = '<div class="info-display">' +
+                '<h4 style="color:#1e5c1e;margin-bottom:15px">✅ Información del Aprendiz</h4>' +
+                '<div class="info-display-row">';
+            var campos = [
+                ['Nombre', aprendiz.nombre], ['Documento', aprendiz.cedula],
+                ['Programa', aprendiz.nombre_programa || 'N/A'], ['Nivel', aprendiz.nivel_formacion || 'N/A'],
+                ['Código Ficha', aprendiz.codigo_ficha || 'N/A'], ['Centro', aprendiz.centro || 'N/A'],
+                ['NIS', aprendiz.nis || 'N/A'], ['Tipo Sangre', aprendiz.tipo_sangre || 'N/A'],
+                ['Red Tecnológica', aprendiz.red_tecnologica || 'N/A'],
+            ];
+            campos.forEach(function(c) {
+                html += '<div class="info-display-item"><div class="info-display-label">' + c[0] + '</div><div class="info-display-value">' + c[1] + '</div></div>';
+            });
+            html += '</div></div>';
+
+            /* ══ CASO 1: Ya tiene foto → solo el mensaje, SIN formulario ══ */
+            if (tieneFoto) {
+                html +=
+                    '<div class="foto-ya-cargada-wrap">' +
+                        '<span class="foto-ya-cargada-icon">✅</span>' +
+                        '<h3>¡Tu foto ya fue cargada!</h3>' +
+                        '<p>Tu fotografía está registrada y fue enviada al área administrativa.</p>' +
+                        '<div class="foto-ya-cargada-steps">' +
+                            '<div class="foto-ya-cargada-step"><div class="foto-ya-cargada-num">✓</div><span>Foto cargada y procesada correctamente por IA</span></div>' +
+                            '<div class="foto-ya-cargada-step"><div class="foto-ya-cargada-num">✓</div><span>Enviada al área administrativa para revisión</span></div>' +
+                            '<div class="foto-ya-cargada-step"><div class="foto-ya-cargada-num">⏳</div><span>Generación del carnet en proceso (24–48 horas)</span></div>' +
+                        '</div>' +
+                        '<span class="foto-ya-cargada-badge">⏳ Carnet en proceso de generación</span>' +
+                        '<p class="foto-ya-cargada-nota">¿Necesitas cambiar tu foto? Comunícate con el administrador del sistema.</p>' +
+                    '</div>';
+                resultDiv.innerHTML = html;
+                return; /* ← sale aquí, no muestra el formulario */
+            }
+
+            /* ══ CASO 2: Sin foto → datos + formulario de carga (un solo botón, sin cámara) ══ */
+            html += '<div class="info-card">' +
+                '<div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:12px;border-left:5px solid #FF9800;margin-bottom:20px;font-size:14px;background:linear-gradient(135deg,#FFF3CD,#FFE082);color:#856404;">' +
+                '<span style="font-size:20px">⚠️</span><span><strong>Sin foto.</strong> Carga tu foto para generar tu carnet digital.</span></div>' +
+                '<h3 style="margin-bottom:6px">📸 Cargar mi Foto</h3>' +
+                '<p style="color:#888;font-size:13px;margin-bottom:0">Haz clic en el recuadro o usa el botón para seleccionar tu foto desde tu dispositivo.</p>' +
+                '<form id="formularioFotoAprendiz">' +
+                '<input type="hidden" id="cedulaFotoHidden" value="' + aprendiz.cedula + '">' +
+                /* Input SIN capture — no activa la cámara */
+                '<input type="file" id="fotoAprendiz" accept="image/jpeg,image/jpg,image/png" style="display:none">' +
+                '<div class="foto-upload-layout">' +
+                '<div class="foto-preview-box" id="fotoPreviewBox">' +
+                '<img class="foto-preview-img" id="fotoPreviewImg" src="" alt="Vista previa">' +
+                '<div class="foto-placeholder" id="fotoPlaceholder">' +
+                '<span class="foto-placeholder-icon">📷</span><span class="foto-placeholder-text">Clic o arrastra<br>tu foto aquí</span><span class="foto-placeholder-sub">JPG, JPEG, PNG</span></div>' +
+                '<div class="foto-hover-overlay"><span>🔄</span><span>Cambiar<br>foto</span></div>' +
+                '<div class="foto-ratio-tag">3 × 4</div></div>' +
+                '<div class="foto-form-panel">' +
+                '<div class="foto-file-info" id="fotoFileInfo"><span class="foto-file-info-icon">🖼️</span><div style="flex:1;min-width:0"><div class="foto-file-info-name" id="fotoFileName">—</div><div class="foto-file-info-size" id="fotoFileSize">—</div></div><button type="button" class="btn-remove-foto" id="btnRemoveFoto" title="Quitar foto">✕</button></div>' +
+                '<div class="foto-guide"><div class="foto-guide-title">✔ Requisitos de la foto</div><div class="foto-guide-items"><div class="foto-guide-item"><span>📏</span><span>Proporción <strong>3×4</strong></span></div><div class="foto-guide-item"><span>🎨</span><span>Solo fondo <strong>blanco</strong> — sin excepciones</span></div><div class="foto-guide-item"><span>📦</span><span>Máx. <strong>5 MB</strong></span></div><div class="foto-guide-item"><span>🖼️</span><span><strong>JPG, JPEG</strong> o <strong>PNG</strong></span></div></div></div>' +
+                /* BOTÓN PRINCIPAL */
+                '<button type="button" class="btn-seleccionar-foto" id="btnSeleccionarFoto">' +
+                '<span>🖼️</span><span>Seleccionar foto guardada</span>' +
+                '</button>' +
+                /* Instrucciones del menú nativo */
+                '<div class="instrucciones-menu">' +
+                '<div class="instrucciones-menu-titulo"><span>📋</span> Cuando aparezca el menú, elige:</div>' +
+                '<div class="instrucciones-menu-item ok"><span class="menu-icono">🖼️</span><div><span class="menu-label">Fototeca — ✅ CORRECTO</span><span class="menu-sub">Abre tu galería de fotos guardadas. Úsala para buscar tu foto 3×4.</span></div></div>' +
+                '<div class="instrucciones-menu-item ok"><span class="menu-icono">📁</span><div><span class="menu-label">Seleccionar archivo — ✅ CORRECTO</span><span class="menu-sub">Abre el explorador de archivos. Sirve para fotos en otras carpetas.</span></div></div>' +
+                '<div class="instrucciones-menu-item warn"><span class="menu-icono">🚫</span><div><span class="menu-label">Tomar foto — ❌ NO USAR</span><span class="menu-sub">La foto saldrá dañada y NO se podrá generar tu carnet. Evita esta opción.</span></div></div>' +
+                '</div>' +
+                '<button type="submit" class="action-button" id="btnCargarFotoAprendiz" style="width:100%;justify-content:center;margin:8px 0 0">📤 Subir Foto</button>' +
+                '<div id="resultadoFotoAprendiz"></div>' +
+                '</div></div></form></div>';
+
+            resultDiv.innerHTML = html;
+
+            var inputFoto   = document.getElementById('fotoAprendiz');
+            var previewBox  = document.getElementById('fotoPreviewBox');
+            var previewImg  = document.getElementById('fotoPreviewImg');
+            var placeholder = document.getElementById('fotoPlaceholder');
+            var fileInfo    = document.getElementById('fotoFileInfo');
+            var fileNameEl  = document.getElementById('fotoFileName');
+            var fileSizeEl  = document.getElementById('fotoFileSize');
+            var btnRemove   = document.getElementById('btnRemoveFoto');
+            var btnSelec    = document.getElementById('btnSeleccionarFoto');
+
+            function esFotoDeCamara(file) {
+                /* Detecta si la foto viene de la cámara:
+                   1. Nombre típico de cámara: IMG_xxx, DCIM, DSC, photo_xxx, image_xxx reciente
+                   2. Fecha de modificación = ahora (tomada en el momento) ±90 seg
+                   3. Dimensiones muy altas (cámara genera > 2MP normalmente en selfie mode) — se revisa con Image */
+                var nombre = (file.name || '').toLowerCase();
+                var patronesCamara = /^(img_|dsc|dcim|photo|capture|cam|selfie|snap|pic_|pxl_|signal-|whatsapp image)/i;
+                if (patronesCamara.test(nombre)) return true;
+                /* Si la fecha del archivo es muy reciente (menos de 2 minutos) es probable que sea tomada ahora */
+                var ahora = Date.now();
+                var diff = ahora - file.lastModified;
+                if (diff >= 0 && diff < 120000) return true; /* menos de 2 minutos */
+                return false;
+            }
+
+            function cargarPreview(file) {
+                if (!file) return;
+                if (!file.type.match(/image\/(jpeg|jpg|png)/i)) { alert('Formato no válido. Usa JPG, JPEG o PNG.'); return; }
+                if (file.size > 5 * 1024 * 1024) { alert('La foto no debe superar 5 MB.'); return; }
+
+                /* Verificar si viene de cámara */
+                if (esFotoDeCamara(file)) {
+                    /* Limpiar el input para que no quede esa foto */
+                    inputFoto.value = '';
+                    /* Mostrar modal de advertencia */
+                    document.getElementById('modalCamara').classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                    return;
+                }
+
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewImg.classList.add('visible');
+                    placeholder.style.display = 'none';
+                    previewBox.classList.add('has-image');
+                    fileInfo.classList.add('show');
+                    fileNameEl.textContent = file.name;
+                    fileSizeEl.textContent = (file.size/1024/1024).toFixed(2) + ' MB · ' + (file.type.split('/')[1]||'IMG').toUpperCase();
+                    try { var dt = new DataTransfer(); dt.items.add(file); inputFoto.files = dt.files; } catch(ex) {}
+                };
+                reader.readAsDataURL(file);
+            }
+
+            /* Botón único SIN capture */
+            btnSelec.addEventListener('click', function() {
+                inputFoto.removeAttribute('capture');
+                inputFoto.click();
+            });
+
+            inputFoto.addEventListener('change', function() { if (this.files.length) cargarPreview(this.files[0]); });
+
+            /* Clic en recuadro también abre el explorador SIN cámara */
+            previewBox.addEventListener('click', function() {
+                inputFoto.removeAttribute('capture');
+                inputFoto.click();
+            });
+
+            btnRemove.addEventListener('click', function(e) {
+                e.stopPropagation();
+                inputFoto.value = '';
+                previewImg.src = ''; previewImg.classList.remove('visible');
+                placeholder.style.display = ''; previewBox.classList.remove('has-image');
+                fileInfo.classList.remove('show');
+            });
+
+            ['dragenter','dragover','dragleave','drop'].forEach(function(ev) { previewBox.addEventListener(ev, function(e){e.preventDefault();e.stopPropagation();}); });
+            ['dragenter','dragover'].forEach(function(ev) { previewBox.addEventListener(ev, function(){previewBox.classList.add('drag-over');}); });
+            ['dragleave','drop'].forEach(function(ev) { previewBox.addEventListener(ev, function(){previewBox.classList.remove('drag-over');}); });
+            previewBox.addEventListener('drop', function(e) {
+                var files = e.dataTransfer.files;
+                if (files.length) { var dt = new DataTransfer(); dt.items.add(files[0]); inputFoto.files = dt.files; cargarPreview(files[0]); }
+            });
+
+            document.getElementById('formularioFotoAprendiz').addEventListener('submit', cargarFotoAprendiz);
+        }
+
+        /* ══ SUBIR FOTO ══ */
+        async function cargarFotoAprendiz(e) {
+            e.preventDefault();
+            var cedula = document.getElementById('cedulaFotoHidden').value;
+            var inputFoto = document.getElementById('fotoAprendiz');
+            var foto = (inputFoto && inputFoto.files.length) ? inputFoto.files[0] : null;
+            var resultDiv = document.getElementById('resultadoFotoAprendiz');
+            var btn = document.getElementById('btnCargarFotoAprendiz');
+            if (!foto) { resultDiv.innerHTML = '<div class="alert alert-error">❌ Por favor selecciona una foto</div>'; return; }
+            if (foto.size > 5*1024*1024) { resultDiv.innerHTML = '<div class="alert alert-error">❌ El archivo no debe exceder 5 MB</div>'; return; }
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Procesando con IA...';
+            mostrarLoading(true);
+            try {
+                var fd = new FormData();
+                fd.append('cedula', cedula);
+                fd.append('foto', foto);
+                var response = await fetch('/actualizar_foto_rapido', {method:'POST', body:fd});
+                var result = await response.json();
+                mostrarLoading(false);
+                if (result.success) {
+                    var aprendizData = window._aprendizActual || {};
+                    document.getElementById('carnetNombre').textContent = (aprendizData.nombre || cedula).toUpperCase();
+                    var tipodoc = aprendizData.tipo_documento || 'CC';
+                    document.getElementById('carnetCedula').textContent = tipodoc + '. ' + (aprendizData.cedula || cedula);
+                    document.getElementById('carnetSangre').textContent = 'Rh ' + (aprendizData.tipo_sangre || 'O+');
+                    var fotoSrc = document.getElementById('fotoPreviewImg') ? document.getElementById('fotoPreviewImg').src : '';
+                    var carnetImg = document.getElementById('carnetFotoImg');
+                    var carnetPH  = document.getElementById('carnetFotoPlaceholder');
+                    if (fotoSrc && fotoSrc !== window.location.href) {
+                        carnetImg.src = fotoSrc;
+                        carnetImg.classList.add('visible');
+                        if (carnetPH) carnetPH.style.display = 'none';
+                    }
+                    document.getElementById('modalCarnet').classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                    mostrarAlerta('✅ Foto cargada exitosamente', 'success');
+                } else {
+                    resultDiv.innerHTML = '<div class="alert alert-error"><strong>❌ Error:</strong> ' + result.message + '</div>';
+                    mostrarAlerta('❌ Error al cargar la foto', 'error');
+                }
+            } catch (error) {
+                mostrarLoading(false);
+                resultDiv.innerHTML = '<div class="alert alert-error"><strong>❌ Error:</strong> ' + error.message + '</div>';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '📤 Subir Foto';
+            }
+        }
+
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                document.getElementById('sidebar').classList.remove('active');
+                document.getElementById('sidebarOverlay').classList.remove('active');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() { showSection('dashboard'); });
+    </script>
+</body>
+</html>

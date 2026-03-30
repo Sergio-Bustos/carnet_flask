@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>SENA - Acceso al Sistema</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            height: 100%;
+            height: 100dvh; /* Nueva unidad dinámica para móviles */
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #39A935 0%, #2E7D32 100%);
+            min-height: 100%;
+            min-height: 100dvh; /* Altura dinámica que se ajusta a la barra de navegación */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Patrón de fondo mejorado */
+        body::before {
+            content: '';
+            position: fixed;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255,255,255,0.05) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(255,255,255,0.08) 0%, transparent 50%);
+            animation: backgroundMove 60s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes backgroundMove {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(50px, 50px) rotate(360deg); }
+        }
+
+        /* Círculos flotantes mejorados */
+        .floating-shape {
+            position: fixed;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+            backdrop-filter: blur(5px);
+            animation: float 20s infinite ease-in-out;
+            pointer-events: none;
+        }
+
+        .floating-shape:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            top: -150px;
+            right: -150px;
+            border-radius: 50%;
+            animation-delay: 0s;
+        }
+
+        .floating-shape:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            bottom: -100px;
+            left: -100px;
+            border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+            animation-delay: 7s;
+        }
+
+        .floating-shape:nth-child(3) {
+            width: 150px;
+            height: 150px;
+            top: 50%;
+            left: 10%;
+            border-radius: 50%;
+            animation-delay: 14s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+            33% { transform: translateY(-30px) rotate(120deg) scale(1.1); }
+            66% { transform: translateY(30px) rotate(240deg) scale(0.9); }
+        }
+
+        /* Contenedor principal responsive */
+        .login-container {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.15),
+                0 10px 40px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255,255,255,0.9);
+            width: 100%;
+            max-width: 450px;
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+            animation: cardEntry 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            margin: auto;
+        }
+
+        @keyframes cardEntry {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        /* Panel de información - siempre visible arriba en móvil */
+        .info-panel {
+            background: linear-gradient(135deg, #39A935 0%, #2E7D32 100%);
+            padding: 30px 25px;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .info-panel::before {
+            content: '';
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            top: -25%;
+            right: -25%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .info-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .info-logo {
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            backdrop-filter: blur(10px);
+            animation: logoFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .info-logo-icon {
+            font-size: 35px;
+            color: white;
+        }
+
+        .info-title {
+            color: white;
+            font-size: clamp(28px, 6vw, 36px);
+            font-weight: 800;
+            margin-bottom: 8px;
+            letter-spacing: -1px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .info-subtitle {
+            color: rgba(255, 255, 255, 0.95);
+            font-size: clamp(14px, 3vw, 18px);
+            font-weight: 300;
+            line-height: 1.4;
+        }
+
+        /* Features ocultas en móvil por defecto */
+        .features-grid {
+            display: none;
+            margin-top: 20px;
+        }
+
+        /* Panel del formulario */
+        .form-panel {
+            padding: 35px 25px 30px;
+            background: white;
+        }
+
+        .form-header {
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .form-title {
+            color: #2E7D32;
+            font-size: clamp(22px, 5vw, 28px);
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .form-subtitle {
+            color: #666;
+            font-size: clamp(13px, 3vw, 15px);
+        }
+
+        /* Alertas mejoradas */
+        .alert {
+            background: white;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 20px;
+            font-size: clamp(12px, 3vw, 14px);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: alertSlide 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 2px solid;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .alert::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: currentColor;
+        }
+
+        @keyframes alertSlide {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .alert-error {
+            background: #FFF5F5;
+            border-color: #FFDDDD;
+            color: #C62828;
+        }
+
+        .alert-success {
+            background: #F5FFF5;
+            border-color: #DDFFDD;
+            color: #2E7D32;
+        }
+
+        .alert-warning {
+            background: #FFFAF5;
+            border-color: #FFE5CC;
+            color: #E65100;
+        }
+
+        /* Formulario mejorado */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            color: #333;
+            font-size: clamp(11px, 2.5vw, 13px);
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 18px 14px 45px;
+            border: 2px solid #E8EAF0;
+            border-radius: 12px;
+            font-size: clamp(14px, 3vw, 15px);
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #FAFBFC;
+            color: #333;
+        }
+
+        .form-input::placeholder {
+            color: #AAA;
+            font-weight: 400;
+        }
+
+        .form-input:hover {
+            background: white;
+            border-color: #39A935;
+        }
+
+        .form-input:focus {
+            outline: none;
+            background: white;
+            border-color: #39A935;
+            box-shadow: 
+                0 0 0 3px rgba(57, 169, 53, 0.1),
+                0 8px 16px rgba(57, 169, 53, 0.05);
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+            color: #39A935;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .form-input:focus ~ .input-icon {
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 18px;
+            color: #AAA;
+            transition: all 0.3s ease;
+            background: none;
+            border: none;
+            padding: 5px;
+            border-radius: 8px;
+        }
+
+        .password-toggle:hover {
+            color: #39A935;
+            background: rgba(57, 169, 53, 0.05);
+        }
+
+        /* Opciones responsive */
+        .options-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .checkbox-wrapper:hover {
+            background: rgba(57, 169, 53, 0.05);
+        }
+
+        .checkbox-wrapper input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #39A935;
+            cursor: pointer;
+        }
+
+        .checkbox-label {
+            color: #666;
+            font-size: clamp(12px, 2.5vw, 14px);
+            user-select: none;
+            font-weight: 500;
+        }
+
+        .forgot-link {
+            color: #39A935;
+            text-decoration: none;
+            font-size: clamp(12px, 2.5vw, 14px);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .forgot-link:hover {
+            background: rgba(57, 169, 53, 0.05);
+            color: #2E7D32;
+        }
+
+        /* Botón mejorado y responsive */
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #39A935 0%, #2E7D32 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: clamp(14px, 3vw, 16px);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 8px 20px rgba(57, 169, 53, 0.25),
+                0 4px 8px rgba(57, 169, 53, 0.15);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-submit::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 12px 28px rgba(57, 169, 53, 0.35),
+                0 5px 12px rgba(57, 169, 53, 0.25);
+        }
+
+        .btn-submit:hover::before {
+            width: 400px;
+            height: 400px;
+        }
+
+        .btn-submit:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .btn-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .btn-submit.loading .spinner {
+            display: block;
+        }
+
+        .btn-submit.loading .btn-text {
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Footer */
+        .form-footer {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 2px solid #E8EAF0;
+        }
+
+        .footer-text {
+            color: #999;
+            font-size: clamp(12px, 2.5vw, 14px);
+            margin-bottom: 8px;
+        }
+
+        .footer-link {
+            color: #39A935;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: clamp(12px, 2.5vw, 14px);
+            transition: all 0.3s ease;
+            padding: 4px 8px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .footer-link:hover {
+            background: rgba(57, 169, 53, 0.05);
+            color: #2E7D32;
+        }
+
+        /* TABLET - 600px+ */
+        @media (min-width: 600px) {
+            body {
+                padding: 20px;
+            }
+
+            .login-container {
+                max-width: 550px;
+                border-radius: 25px;
+            }
+
+            .info-panel {
+                padding: 40px 35px;
+            }
+
+            .info-logo {
+                width: 90px;
+                height: 90px;
+            }
+
+            .info-logo-icon {
+                font-size: 45px;
+            }
+
+            .form-panel {
+                padding: 40px 35px;
+            }
+
+            .form-input {
+                padding: 16px 20px 16px 50px;
+            }
+
+            .input-icon {
+                left: 18px;
+                font-size: 20px;
+            }
+
+            .password-toggle {
+                right: 18px;
+                font-size: 20px;
+            }
+
+            .btn-submit {
+                padding: 18px;
+            }
+        }
+
+        /* DESKTOP - 968px+ */
+        @media (min-width: 968px) {
+            .login-container {
+                max-width: 1100px;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                border-radius: 30px;
+            }
+
+            .info-panel {
+                padding: 50px 40px;
+                text-align: left;
+            }
+
+            .info-logo {
+                width: 100px;
+                height: 100px;
+                margin: 0 0 30px 0;
+            }
+
+            .info-logo-icon {
+                font-size: 50px;
+            }
+
+            .features-grid {
+                display: grid;
+                gap: 15px;
+                margin-top: 30px;
+            }
+
+            .feature-item {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                padding: 15px 20px;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 15px;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                transition: all 0.3s ease;
+            }
+
+            .feature-item:hover {
+                background: rgba(255, 255, 255, 0.15);
+                transform: translateX(5px);
+            }
+
+            .feature-icon {
+                width: 40px;
+                height: 40px;
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 20px;
+                flex-shrink: 0;
+            }
+
+            .feature-text {
+                color: white;
+                font-size: 15px;
+                font-weight: 500;
+            }
+
+            .form-panel {
+                padding: 60px 50px;
+            }
+
+            .form-header {
+                text-align: left;
+            }
+
+            .options-row {
+                flex-wrap: nowrap;
+            }
+        }
+
+        /* MÓVILES MUY PEQUEÑOS */
+        @media (max-width: 360px) {
+            body {
+                padding: 10px;
+            }
+
+            .info-panel {
+                padding: 25px 20px;
+            }
+
+            .form-panel {
+                padding: 25px 18px;
+            }
+
+            .options-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+        }
+
+        /* Soporte para navegadores iOS antiguos */
+        @supports not (height: 100dvh) {
+            html, body {
+                height: 100%;
+            }
+        }
+
+        /* OPTIMIZACIÓN PARA IMPRESIÓN */
+        @media print {
+            .floating-shape,
+            .info-panel,
+            .form-footer {
+                display: none;
+            }
+        }
+
+        /* Touch improvements para móviles */
+        @media (hover: none) and (pointer: coarse) {
+            .btn-submit,
+            .form-input,
+            .password-toggle,
+            .checkbox-wrapper,
+            .forgot-link,
+            .footer-link {
+                -webkit-tap-highlight-color: rgba(57, 169, 53, 0.1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Formas flotantes de fondo -->
+    <div class="floating-shape"></div>
+    <div class="floating-shape"></div>
+    <div class="floating-shape"></div>
+
+    <div class="login-container">
+        <!-- Panel Izquierdo - Información -->
+        <div class="info-panel">
+            <div class="info-content">
+                <div class="info-logo">
+                    <span class="info-logo-icon">🎓</span>
+                </div>
+                <h1 class="info-title">SENA</h1>
+                <p class="info-subtitle">Sistema de Carnets Digitales</p>
+                
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <div class="feature-icon">✨</div>
+                        <span class="feature-text">Genera carnets con diseño oficial</span>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🔐</div>
+                        <span class="feature-text">Sistema seguro con verificación QR</span>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">📱</div>
+                        <span class="feature-text">Acceso desde cualquier dispositivo</span>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">👥</div>
+                        <span class="feature-text">Gestión completa de aprendices</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Derecho - Formulario -->
+        <div class="form-panel">
+            <div class="form-header">
+                <h2 class="form-title">Bienvenido de vuelta</h2>
+                <p class="form-subtitle">Ingresa tus credenciales para continuar</p>
+            </div>
+
+            <!-- Mensajes Flash -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            <span>{{ '❌' if category == 'error' else '✅' if category == 'success' else '⚠️' }}</span>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('login') }}" id="loginForm">
+                <div class="form-group">
+                    <label class="form-label" for="usuario">Usuario</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="text" 
+                            class="form-input" 
+                            id="usuario" 
+                            name="usuario" 
+                            placeholder="Ingresa tu nombre de usuario"
+                            autocomplete="username"
+                            required 
+                            autofocus>
+                        <span class="input-icon">👤</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">Contraseña</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="password" 
+                            class="form-input" 
+                            id="password" 
+                            name="password" 
+                            placeholder="Ingresa tu contraseña"
+                            autocomplete="current-password"
+                            required>
+                        <span class="input-icon">🔒</span>
+                        <button type="button" class="password-toggle" onclick="togglePassword()" title="Ver contraseña" aria-label="Mostrar contraseña">
+                            👁️
+                        </button>
+                    </div>
+                </div>
+
+                <div class="options-row">
+                    <label class="checkbox-wrapper">
+                        <input type="checkbox" name="recordar" id="recordar">
+                        <span class="checkbox-label">Recordar mi sesión</span>
+                    </label>
+                    <a href="#" class="forgot-link">¿Olvidaste tu contraseña?</a>
+                </div>
+
+                <button type="submit" class="btn-submit" id="btnSubmit">
+                    <div class="btn-content">
+                        <span class="btn-icon">🚀</span>
+                        <span class="btn-text">Iniciar Sesión</span>
+                        <div class="spinner"></div>
+                    </div>
+                </button>
+            </form>
+
+            <div class="form-footer">
+                <p class="footer-text">¿Necesitas ayuda para acceder?</p>
+                <a href="#" class="footer-link">Contacta al administrador</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle password visibility
+        function togglePassword() {
+            const input = document.getElementById('password');
+            const toggle = document.querySelector('.password-toggle');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                toggle.innerHTML = '👁️‍🗨️';
+                toggle.title = 'Ocultar contraseña';
+                toggle.setAttribute('aria-label', 'Ocultar contraseña');
+            } else {
+                input.type = 'password';
+                toggle.innerHTML = '👁️';
+                toggle.title = 'Ver contraseña';
+                toggle.setAttribute('aria-label', 'Mostrar contraseña');
+            }
+        }
+
+        // Loading state
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            const btn = document.getElementById('btnSubmit');
+            btn.classList.add('loading');
+            btn.disabled = true;
+        });
+
+        // Auto-hide alerts
+        setTimeout(() => {
+            document.querySelectorAll('.alert').forEach(alert => {
+                alert.style.transition = 'all 0.5s ease';
+                alert.style.opacity = '0';
+                alert.style.transform = 'translateX(-30px)';
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 5000);
+
+        // Enter navigation
+        document.getElementById('usuario').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('password').focus();
+            }
+        });
+
+        // Add focus classes
+        document.querySelectorAll('.form-input').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('focused');
+            });
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('focused');
+            });
+        });
+
+        // Parallax effect on mouse move (desktop only)
+        if (window.innerWidth > 968) {
+            document.addEventListener('mousemove', (e) => {
+                const shapes = document.querySelectorAll('.floating-shape');
+                const x = e.clientX / window.innerWidth;
+                const y = e.clientY / window.innerHeight;
+                
+                shapes.forEach((shape, index) => {
+                    const speed = (index + 1) * 20;
+                    const tx = x * speed;
+                    const ty = y * speed;
+                    shape.style.transform = `translate(${tx}px, ${ty}px)`;
+                });
+            });
+        }
+
+        // Prevent double submission
+        let formSubmitted = false;
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            if (formSubmitted) {
+                e.preventDefault();
+                return false;
+            }
+            formSubmitted = true;
+        });
+    </script>
+</body>
+</html>

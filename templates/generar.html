@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generar Carnet - SENA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e0f2e9 0%, #c8e6c9 100%);
+            min-height: 100vh;
+            padding: 15px;
+            position: relative;
+        }
+        
+        .btn-regreso {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            background: linear-gradient(135deg, #007f3e 0%, #005f2e 100%);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 25px;
+            cursor: pointer;
+            z-index: 1000;
+            font-weight: 600;
+            font-size: clamp(13px, 3vw, 15px);
+            box-shadow: 0 4px 12px rgba(0, 127, 62, 0.3);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .btn-regreso:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 127, 62, 0.4);
+        }
+        
+        .btn-regreso:active {
+            transform: translateY(0);
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 60px auto 20px;
+            background: white;
+            padding: 25px 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #007f3e;
+        }
+        
+        .header h1 {
+            font-size: clamp(22px, 5vw, 28px);
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+        
+        .header p {
+            font-size: clamp(13px, 3vw, 15px);
+            color: #666;
+        }
+        
+        .debug-box {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            font-size: clamp(12px, 2.5vw, 14px);
+        }
+        
+        .debug-box h4 {
+            color: #007f3e;
+            margin-bottom: 10px;
+            font-size: clamp(14px, 3vw, 16px);
+        }
+        
+        .debug-box p {
+            margin-bottom: 6px;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+        
+        .debug-box strong {
+            color: #333;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #333;
+            font-size: clamp(14px, 3vw, 16px);
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            font-size: clamp(15px, 3vw, 16px);
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+        
+        input[type="text"]:focus {
+            border-color: #007f3e;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 127, 62, 0.1);
+        }
+        
+        input[type="text"]:hover {
+            border-color: #00b359;
+        }
+        
+        .btn-generar {
+            width: 100%;
+            background: linear-gradient(135deg, #007f3e 0%, #005f2e 100%);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: clamp(15px, 3vw, 17px);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 15px rgba(0, 127, 62, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-generar:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 127, 62, 0.35);
+        }
+        
+        .btn-generar:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        
+        .btn-generar:disabled {
+            background: linear-gradient(135deg, #999 0%, #777 100%);
+            cursor: not-allowed;
+            transform: none;
+            opacity: 0.7;
+        }
+        
+        .alert {
+            padding: 14px 16px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: clamp(13px, 3vw, 14px);
+            font-weight: 500;
+            animation: slideDown 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            border: 2px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            border: 2px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .log-box {
+            background: #2d3748;
+            border: 2px solid #4a5568;
+            padding: 15px;
+            margin-top: 25px;
+            border-radius: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: clamp(11px, 2.5vw, 12px);
+            max-height: 250px;
+            overflow-y: auto;
+            color: #e2e8f0;
+        }
+        
+        .log-box strong {
+            color: #48bb78;
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        #log-content {
+            color: #cbd5e0;
+            line-height: 1.6;
+        }
+        
+        /* Scrollbar personalizado para log */
+        .log-box::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .log-box::-webkit-scrollbar-track {
+            background: #1a202c;
+            border-radius: 4px;
+        }
+        
+        .log-box::-webkit-scrollbar-thumb {
+            background: #4a5568;
+            border-radius: 4px;
+        }
+        
+        .log-box::-webkit-scrollbar-thumb:hover {
+            background: #718096;
+        }
+        
+        /* TABLET - 600px+ */
+        @media (min-width: 600px) {
+            body {
+                padding: 20px;
+            }
+            
+            .btn-regreso {
+                top: 20px;
+                right: 20px;
+                padding: 12px 22px;
+            }
+            
+            .container {
+                margin: 80px auto 30px;
+                padding: 35px 30px;
+            }
+            
+            .header {
+                margin-bottom: 30px;
+            }
+            
+            .debug-box {
+                padding: 18px;
+            }
+            
+            input[type="text"] {
+                padding: 15px 18px;
+            }
+            
+            .btn-generar {
+                padding: 18px;
+            }
+            
+            .log-box {
+                padding: 18px;
+                max-height: 300px;
+            }
+        }
+        
+        /* DESKTOP - 900px+ */
+        @media (min-width: 900px) {
+            .container {
+                padding: 40px 35px;
+            }
+            
+            .debug-box {
+                padding: 20px;
+            }
+        }
+        
+        /* MÓVILES MUY PEQUEÑOS */
+        @media (max-width: 360px) {
+            body {
+                padding: 10px;
+            }
+            
+            .btn-regreso {
+                top: 10px;
+                right: 10px;
+                padding: 8px 14px;
+                font-size: 12px;
+            }
+            
+            .container {
+                margin: 50px auto 15px;
+                padding: 20px 15px;
+                border-radius: 15px;
+            }
+            
+            .debug-box {
+                padding: 12px;
+            }
+            
+            input[type="text"] {
+                padding: 12px 14px;
+            }
+            
+            .btn-generar {
+                padding: 14px;
+            }
+        }
+        
+        /* Touch improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .btn-regreso,
+            .btn-generar,
+            input[type="text"] {
+                -webkit-tap-highlight-color: rgba(0, 127, 62, 0.1);
+            }
+        }
+        
+        /* Loading spinner animation */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .spinner {
+            display: inline-block;
+            animation: spin 1s linear infinite;
+        }
+        
+        /* Estados de input mejorados */
+        input[type="text"].error {
+            border-color: #dc3545;
+            animation: shake 0.5s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+        
+        input[type="text"].success {
+            border-color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <button class="btn-regreso" onclick="regresarMenu()">
+        <span>🏠</span>
+        <span>Menú</span>
+    </button>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🆔 Generar Carnet</h1>
+            <p>Ingresa el número de documento para generar el carnet</p>
+        </div>
+        
+        <div class="debug-box">
+            <h4>🔧 Información de Debug:</h4>
+            <p><strong>URL actual:</strong> {{ request.url }}</p>
+            <p><strong>Método:</strong> {{ request.method }}</p>
+            <p><strong>Endpoint:</strong> {{ request.endpoint }}</p>
+            {% if request.form %}
+            <p><strong>Datos del formulario:</strong> {{ request.form.to_dict() }}</p>
+            {% endif %}
+        </div>
+        
+        <!-- Mostrar mensajes flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        <span>{{ '❌' if category == 'error' else '✅' }}</span>
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <form method="POST" action="/generar" id="form-debug">
+            <div class="form-group">
+                <label for="cedula">Número de Cédula:</label>
+                <input 
+                    type="text" 
+                    id="cedula" 
+                    name="cedula" 
+                    placeholder="Ejemplo: 1234567890"
+                    required
+                    value="{{ request.form.cedula if request.form.cedula else '' }}"
+                    autocomplete="off"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
+                >
+            </div>
+            
+            <button type="submit" class="btn-generar" id="btn-submit">
+                <span id="btn-icon">🎯</span>
+                <span id="btn-text">GENERAR CARNET</span>
+            </button>
+        </form>
+        
+        <div class="log-box" id="log-box">
+            <strong>📝 Log de eventos:</strong>
+            <div id="log-content">Esperando acciones...</div>
+        </div>
+    </div>
+
+    <script>
+        let logContent = document.getElementById('log-content');
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logContent.innerHTML += `<br>[${timestamp}] ${message}`;
+            
+            // Auto-scroll al final
+            const logBox = document.getElementById('log-box');
+            logBox.scrollTop = logBox.scrollHeight;
+            
+            console.log(`[DEBUG] ${message}`);
+        }
+        
+        function regresarMenu() {
+            log("🏠 Regresando al menú principal");
+            if (window.parent && window.parent !== window) {
+                window.parent.volverInicio();
+            } else {
+                window.location.href = "/dashboard_admin";
+            }
+        }
+        
+        // Debug del formulario
+        document.getElementById('form-debug').addEventListener('submit', function(e) {
+            log("📋 Formulario enviándose...");
+            
+            const cedula = document.getElementById('cedula').value;
+            log(`🔍 Cédula ingresada: "${cedula}"`);
+            
+            if (!cedula.trim()) {
+                e.preventDefault();
+                log("❌ Cédula vacía - cancelando envío");
+                alert("Por favor ingresa una cédula");
+                document.getElementById('cedula').classList.add('error');
+                return false;
+            }
+            
+            // Limpiar cédula
+            const cedulaLimpia = cedula.replace(/[^0-9]/g, '');
+            log(`🧹 Cédula limpia: "${cedulaLimpia}"`);
+            
+            if (cedulaLimpia.length < 7) {
+                e.preventDefault();
+                log("❌ Cédula muy corta - cancelando envío");
+                alert("La cédula debe tener al menos 7 dígitos");
+                document.getElementById('cedula').classList.add('error');
+                return false;
+            }
+            
+            // Actualizar campo con cédula limpia
+            document.getElementById('cedula').value = cedulaLimpia;
+            document.getElementById('cedula').classList.remove('error');
+            document.getElementById('cedula').classList.add('success');
+            
+            // Deshabilitar botón con animación
+            const btn = document.getElementById('btn-submit');
+            const btnIcon = document.getElementById('btn-icon');
+            const btnText = document.getElementById('btn-text');
+            
+            btn.disabled = true;
+            btnIcon.innerHTML = '<span class="spinner">⏳</span>';
+            btnText.textContent = 'GENERANDO...';
+            
+            log("✅ Formulario válido - enviando a Flask");
+            log(`📤 URL destino: ${this.action}`);
+            log(`📤 Método: ${this.method}`);
+            log(`📤 Datos: cedula=${cedulaLimpia}`);
+            
+            return true;
+        });
+        
+        // Debug de carga de página
+        window.addEventListener('load', function() {
+            log("🚀 Página cargada completamente");
+            log(`📍 URL actual: ${window.location.href}`);
+            
+            // Focus en cédula
+            const cedulaInput = document.getElementById('cedula');
+            cedulaInput.focus();
+            log("🎯 Focus puesto en campo cédula");
+        });
+        
+        // Debug de input con validación en tiempo real
+        document.getElementById('cedula').addEventListener('input', function(e) {
+            const valor = e.target.value;
+            log(`📝 Cédula cambiada: "${valor}"`);
+            
+            // Remover clases de error al escribir
+            this.classList.remove('error');
+            
+            // Solo permitir números
+            const soloNumeros = valor.replace(/[^0-9]/g, '');
+            if (soloNumeros !== valor) {
+                this.value = soloNumeros;
+                log(`🧹 Caracteres no numéricos removidos`);
+            }
+        });
+        
+        // Validación al perder foco
+        document.getElementById('cedula').addEventListener('blur', function() {
+            if (this.value.trim() && this.value.length >= 7) {
+                this.classList.add('success');
+                log(`✅ Cédula válida`);
+            } else if (this.value.trim()) {
+                this.classList.add('error');
+                log(`❌ Cédula inválida (muy corta)`);
+            }
+        });
+        
+        // Prevenir doble envío
+        let formSubmitted = false;
+        document.getElementById('form-debug').addEventListener('submit', function(e) {
+            if (formSubmitted) {
+                e.preventDefault();
+                log(`⚠️ Intento de doble envío bloqueado`);
+                return false;
+            }
+            formSubmitted = true;
+        });
+        
+        // Auto-hide alerts después de 5 segundos
+        setTimeout(() => {
+            document.querySelectorAll('.alert').forEach(alert => {
+                alert.style.transition = 'all 0.5s ease';
+                alert.style.opacity = '0';
+                alert.style.transform = 'translateY(-10px)';
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 5000);
+        
+        log("🔧 Script de debug inicializado");
+        log("✅ Sistema listo para generar carnets");
+    </script>
+</body>
+</html>

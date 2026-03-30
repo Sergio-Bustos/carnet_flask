@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cargar Plantilla Excel - SENA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #39A935 0%, #2E7D32 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(57, 169, 53, 0.3);
+        }
+
+        .header h1 {
+            font-size: clamp(1.5rem, 5vw, 2rem);
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: clamp(0.9rem, 3vw, 1.125rem);
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #F5FFF5 0%, #E8F5E9 100%);
+            padding: 20px 18px;
+            border-bottom: 1px solid #e8eaed;
+        }
+
+        .card-title {
+            font-size: clamp(1.125rem, 4vw, 1.375rem);
+            font-weight: 700;
+            color: #2E7D32;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-subtitle {
+            color: #666;
+            font-size: clamp(0.875rem, 2.5vw, 1rem);
+        }
+
+        .card-body {
+            padding: 20px 18px;
+        }
+
+        /* Botones de descarga */
+        .download-buttons {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 14px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: clamp(0.875rem, 2.5vw, 1rem);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: none;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #39A935 0%, #2E7D32 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(57, 169, 53, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(57, 169, 53, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 152, 0, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Zona de carga */
+        .upload-zone {
+            border: 3px dashed #39A935;
+            border-radius: 15px;
+            padding: 30px 20px;
+            text-align: center;
+            background: #F8F9FA;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+            cursor: pointer;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .upload-zone:hover {
+            background: #E8F5E9;
+            border-color: #2E7D32;
+        }
+
+        .upload-zone.dragover {
+            background: #E8F5E9;
+            border-color: #2E7D32;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: clamp(2.5rem, 8vw, 3rem);
+            color: #39A935;
+            margin-bottom: 12px;
+        }
+
+        .upload-text {
+            color: #666;
+            font-size: clamp(1rem, 3vw, 1.125rem);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .upload-subtext {
+            color: #999;
+            font-size: clamp(0.8rem, 2.5vw, 0.875rem);
+        }
+
+        /* Alertas */
+        .alert {
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border-left: 5px solid;
+            animation: slideIn 0.3s ease;
+            font-size: clamp(0.875rem, 2.5vw, 0.95rem);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .alert-success {
+            background: #E8F5E9;
+            border-color: #4CAF50;
+            color: #2E7D32;
+        }
+
+        .alert-error {
+            background: #FFEBEE;
+            border-color: #F44336;
+            color: #C62828;
+        }
+
+        .alert-info {
+            background: #E3F2FD;
+            border-color: #2196F3;
+            color: #1976D2;
+        }
+
+        .alert-warning {
+            background: #FFF8E1;
+            border-color: #FFC107;
+            color: #F57C00;
+        }
+
+        .alert h4 {
+            margin-bottom: 8px;
+            font-size: clamp(1rem, 3vw, 1.125rem);
+        }
+
+        .alert ul {
+            margin: 10px 0;
+            padding-left: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .alert li {
+            margin-bottom: 4px;
+        }
+
+        /* Progress bar */
+        .progress-container {
+            display: none;
+            margin: 20px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 25px;
+            background: #e1e5e9;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #39A935 0%, #2E7D32 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: clamp(0.75rem, 2.5vw, 0.875rem);
+            font-weight: bold;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 10px;
+            color: #666;
+            font-size: clamp(0.85rem, 2.5vw, 0.95rem);
+        }
+
+        /* Instrucciones */
+        .instructions {
+            background: #E3F2FD;
+            border-left: 5px solid #2196F3;
+            border-radius: 15px;
+            padding: 20px 18px;
+            margin-bottom: 20px;
+        }
+
+        .instructions h3 {
+            color: #1976D2;
+            font-size: clamp(1rem, 3vw, 1.25rem);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .instructions ol {
+            color: #555;
+            padding-left: 20px;
+            line-height: 1.8;
+            font-size: clamp(0.875rem, 2.5vw, 0.95rem);
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+
+        /* Botones de acción en resultados */
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* TABLET - 600px+ */
+        @media (min-width: 600px) {
+            body {
+                padding: 20px;
+            }
+
+            .header {
+                padding: 25px;
+                margin-bottom: 25px;
+            }
+
+            .card-header {
+                padding: 25px;
+            }
+
+            .card-body {
+                padding: 30px;
+            }
+
+            .download-buttons {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 15px;
+            }
+
+            .upload-zone {
+                padding: 40px 30px;
+                min-height: 200px;
+            }
+
+            .action-buttons {
+                flex-direction: row;
+                justify-content: center;
+            }
+
+            .action-buttons .btn {
+                flex: 1;
+                max-width: 280px;
+            }
+
+            .alert {
+                padding: 20px;
+            }
+
+            .instructions {
+                padding: 25px;
+            }
+        }
+
+        /* DESKTOP - 900px+ */
+        @media (min-width: 900px) {
+            .header {
+                padding: 30px;
+            }
+
+            .upload-zone {
+                padding: 50px 40px;
+            }
+        }
+
+        /* MÓVILES MUY PEQUEÑOS */
+        @media (max-width: 360px) {
+            body {
+                padding: 12px;
+            }
+
+            .header {
+                padding: 18px 15px;
+                margin-bottom: 15px;
+                border-radius: 15px;
+            }
+
+            .card {
+                border-radius: 15px;
+                margin-bottom: 15px;
+            }
+
+            .card-header,
+            .card-body {
+                padding: 18px 15px;
+            }
+
+            .upload-zone {
+                padding: 25px 15px;
+                min-height: 160px;
+            }
+
+            .instructions {
+                padding: 18px 15px;
+            }
+
+            .btn {
+                padding: 12px 16px;
+            }
+        }
+
+        /* Touch improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .btn,
+            .upload-zone {
+                -webkit-tap-highlight-color: rgba(57, 169, 53, 0.1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📁 Cargar Plantilla Excel</h1>
+            <p>Importa datos de aprendices desde un archivo Excel</p>
+        </div>
+
+        <!-- Mensajes Flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'success' if category == 'success' else 'error' if category == 'error' else 'info' if category == 'info' else 'warning' }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Instrucciones -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    📋 Instrucciones de Carga
+                </h3>
+                <p class="card-subtitle">Sigue estos pasos para cargar los datos correctamente</p>
+            </div>
+            <div class="card-body">
+                <div class="instructions">
+                    <h3>
+                        <span>ℹ️</span>
+                        <span>Pasos a Seguir</span>
+                    </h3>
+                    <ol>
+                        <li><strong>Descarga la plantilla Excel</strong> con los datos actuales del sistema</li>
+                        <li><strong>Completa todos los campos requeridos</strong> en el archivo Excel</li>
+                        <li><strong>Guarda el archivo</strong> en formato .xlsx (Excel 2007 o superior)</li>
+                        <li><strong>Selecciona y carga</strong> el archivo usando el botón de abajo</li>
+                        <li><strong>Espera</strong> a que se procesen todos los datos</li>
+                    </ol>
+                </div>
+
+                <div class="download-buttons">
+                    <a href="{{ url_for('descargar_plantilla') }}" class="btn btn-primary">
+                        📥 Descargar Plantilla Excel
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario de Carga -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    📤 Cargar Archivo Excel
+                </h3>
+                <p class="card-subtitle">Selecciona tu archivo Excel completado</p>
+            </div>
+            <div class="card-body">
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="upload-zone" id="uploadZone">
+                        <div class="upload-icon">📁</div>
+                        <div class="upload-text">Arrastra tu archivo Excel aquí</div>
+                        <div class="upload-subtext">o haz clic para seleccionar</div>
+                        <input type="file" 
+                               name="excel_file" 
+                               id="excel_file" 
+                               accept=".xlsx,.xls" 
+                               required 
+                               style="display: none;">
+                    </div>
+                    
+                    <div class="progress-container" id="progressContainer">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill">0%</div>
+                        </div>
+                        <p class="progress-text" id="progressText">
+                            Preparando...
+                        </p>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button type="submit" class="btn btn-primary" id="uploadBtn">
+                            <span>📤</span>
+                            <span>Cargar Archivo</span>
+                        </button>
+                        <a href="{{ url_for('dashboard_admin') }}" class="btn btn-secondary">
+                            <span>←</span>
+                            <span>Volver al Dashboard</span>
+                        </a>
+                    </div>
+                </form>
+                
+                <div id="uploadResult"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('excel_file');
+        const uploadForm = document.getElementById('uploadForm');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const uploadResult = document.getElementById('uploadResult');
+
+        // Configurar zona de arrastre
+        uploadZone.addEventListener('click', () => fileInput.click());
+        
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+        
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+        
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                updateUploadZone(files[0]);
+            }
+        });
+
+        // Manejar selección de archivo
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                
+                // Validar tamaño (máximo 16MB)
+                if (file.size > 16 * 1024 * 1024) {
+                    showAlert('El archivo es demasiado grande. Máximo 16MB.', 'error');
+                    fileInput.value = '';
+                    return;
+                }
+                
+                // Validar extensión
+                const allowedExtensions = ['xlsx', 'xls'];
+                const fileExtension = file.name.split('.').pop().toLowerCase();
+                
+                if (!allowedExtensions.includes(fileExtension)) {
+                    showAlert('Formato de archivo no válido. Solo se permiten archivos .xlsx y .xls', 'error');
+                    fileInput.value = '';
+                    return;
+                }
+                
+                updateUploadZone(file);
+            }
+        });
+
+        function updateUploadZone(file) {
+            uploadZone.innerHTML = `
+                <div class="upload-icon">✅</div>
+                <div class="upload-text">Archivo seleccionado:</div>
+                <div class="upload-subtext"><strong>${file.name}</strong></div>
+                <div class="upload-subtext">Tamaño: ${(file.size / 1024 / 1024).toFixed(2)} MB</div>
+            `;
+        }
+
+        // Simular progreso
+        function simulateProgress() {
+            progressContainer.style.display = 'block';
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 90) progress = 90;
+                
+                progressFill.style.width = progress + '%';
+                progressFill.textContent = Math.round(progress) + '%';
+                
+                if (progress < 30) {
+                    progressText.textContent = 'Leyendo archivo Excel...';
+                } else if (progress < 60) {
+                    progressText.textContent = 'Validando datos...';
+                } else if (progress < 90) {
+                    progressText.textContent = 'Guardando en base de datos...';
+                }
+                
+                if (progress >= 90) {
+                    clearInterval(interval);
+                    progressText.textContent = 'Finalizando...';
+                }
+            }, 200);
+            
+            return interval;
+        }
+
+        // Manejar envío del formulario
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!fileInput.files[0]) {
+                showAlert('Por favor selecciona un archivo Excel', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('excel_file', fileInput.files[0]);
+            
+            // Mostrar progreso
+            uploadBtn.innerHTML = '<span class="spinner"></span> <span>Procesando...</span>';
+            uploadBtn.disabled = true;
+            uploadResult.innerHTML = '';
+            
+            const progressInterval = simulateProgress();
+            
+            try {
+                const response = await fetch('{{ url_for("cargar_plantilla") }}', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                // Completar progreso
+                clearInterval(progressInterval);
+                progressFill.style.width = '100%';
+                progressFill.textContent = '100%';
+                progressText.textContent = 'Completado!';
+                
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                }, 2000);
+                
+                if (result.success) {
+                    let message = `
+                        <div class="alert alert-success">
+                            <h4>¡Procesamiento Exitoso!</h4>
+                            <p><strong>Resumen:</strong></p>
+                            <ul>
+                                ${result.created ? `<li>Aprendices creados: <strong>${result.created}</strong></li>` : ''}
+                                ${result.updated ? `<li>Aprendices actualizados: <strong>${result.updated}</strong></li>` : ''}
+                                ${result.errors ? `<li>Errores encontrados: <strong>${result.errors}</strong></li>` : ''}
+                            </ul>
+                            <p>Los datos han sido guardados en la base de datos y están disponibles para consultas.</p>
+                        </div>
+                    `;
+                    
+                    if (result.error_details && result.error_details.length > 0) {
+                        message += `
+                            <div class="alert alert-warning">
+                                <h4>Errores Detallados:</h4>
+                                <ul>
+                                    ${result.error_details.map(error => `<li>${error}</li>`).join('')}
+                                </ul>
+                            </div>
+                        `;
+                    }
+                    
+                    uploadResult.innerHTML = message;
+                    
+                    // Mostrar botones de navegación
+                    setTimeout(() => {
+                        uploadResult.innerHTML += `
+                            <div class="action-buttons">
+                                <a href="{{ url_for('consultar_aprendices') }}" class="btn btn-primary">
+                                    Ver Aprendices Cargados
+                                </a>
+                                <a href="{{ url_for('dashboard_admin') }}" class="btn btn-secondary">
+                                    Volver al Dashboard
+                                </a>
+                            </div>
+                        `;
+                    }, 1000);
+                    
+                } else {
+                    uploadResult.innerHTML = `
+                        <div class="alert alert-error">
+                            <h4>Error en el Procesamiento</h4>
+                            <p><strong>Error:</strong> ${result.message}</p>
+                            <p>Verifica que:</p>
+                            <ul>
+                                <li>El archivo sea un Excel válido (.xlsx)</li>
+                                <li>Tenga todas las columnas requeridas</li>
+                                <li>Los datos estén en el formato correcto</li>
+                                <li>No esté corrupto o protegido</li>
+                            </ul>
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                clearInterval(progressInterval);
+                progressContainer.style.display = 'none';
+                
+                uploadResult.innerHTML = `
+                    <div class="alert alert-error">
+                        <h4>Error de Conexión</h4>
+                        <p>No se pudo procesar el archivo. Verifica tu conexión e inténtalo de nuevo.</p>
+                        <p><strong>Error técnico:</strong> ${error.message}</p>
+                    </div>
+                `;
+            } finally {
+                uploadBtn.innerHTML = '<span>📤</span> <span>Cargar Archivo</span>';
+                uploadBtn.disabled = false;
+            }
+        });
+
+        // Función para mostrar alertas
+        function showAlert(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.innerHTML = message;
+            
+            const container = document.querySelector('.container');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            setTimeout(() => {
+                alertDiv.style.transition = 'all 0.5s ease';
+                alertDiv.style.opacity = '0';
+                setTimeout(() => alertDiv.remove(), 500);
+            }, 5000);
+        }
+
+        // Auto-hide existing alerts
+        setTimeout(() => {
+            document.querySelectorAll('.alert').forEach(alert => {
+                if (!alert.id && !alert.closest('#uploadResult')) {
+                    alert.style.transition = 'all 0.5s ease';
+                    alert.style.opacity = '0';
+                    setTimeout(() => alert.remove(), 500);
+                }
+            });
+        }, 8000);
+    </script>
+</body>
+</html>

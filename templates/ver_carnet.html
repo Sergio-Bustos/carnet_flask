@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vista del Carné Generado - SENA</title>
+  <style>
+    /* ===== VARIABLES CSS ===== */
+    :root {
+      --carnet-width: 5.5cm;
+      --carnet-height: 8.7cm;
+      --sena-green: #39A935;
+      --sena-green-dark: #2E7D32;
+      --sena-green-light: #E8F5E9;
+      --sena-green-ultra-light: #F1F8E9;
+      --shadow-soft: 0 4px 20px rgba(57, 169, 53, 0.1);
+      --shadow-medium: 0 8px 30px rgba(0, 0, 0, 0.12);
+      --shadow-strong: 0 15px 40px rgba(0, 0, 0, 0.15);
+      --border-radius: 16px;
+      --border-radius-large: 24px;
+      --spacing-xs: 8px;
+      --spacing-sm: 16px;
+      --spacing-md: 24px;
+      --spacing-lg: 32px;
+      --spacing-xl: 48px;
+      --transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    /* ===== RESET Y BASE ===== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, var(--sena-green) 0%, var(--sena-green-dark) 30%, #1B5E20 100%);
+      min-height: 100vh;
+      color: #333;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ===== FONDO ANIMADO ===== */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 40% 60%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ===== CONTENEDOR PRINCIPAL ===== */
+    .main-container {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      padding: 15px;
+    }
+
+    /* ===== HEADER COMPACTO ===== */
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      padding: 20px 15px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow-medium);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      animation: slideInDown 0.8s ease-out;
+    }
+
+    .header h1 {
+      color: var(--sena-green);
+      font-size: clamp(1.4rem, 5vw, 1.8rem);
+      font-weight: 700;
+      margin-bottom: 4px;
+      text-shadow: 0 2px 4px rgba(57, 169, 53, 0.2);
+    }
+
+    .header p {
+      color: #666;
+      font-size: clamp(0.85rem, 2.5vw, 1rem);
+      font-weight: 500;
+      opacity: 0.8;
+    }
+
+    /* ===== BARRA DE BOTONES SUPERIOR ===== */
+    .top-actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin: 0 auto 20px;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow-soft);
+      animation: slideInDown 0.8s ease-out 0.2s both;
+      max-width: 600px;
+    }
+
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-xs);
+      padding: 12px 18px;
+      border: none;
+      border-radius: 10px;
+      font-size: clamp(0.85rem, 2.5vw, 0.9rem);
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, var(--sena-green), var(--sena-green-dark));
+      color: white;
+      box-shadow: 0 4px 15px rgba(57, 169, 53, 0.3);
+      text-align: center;
+    }
+
+    .btn-action::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.6s;
+    }
+
+    .btn-action:hover {
+      background: linear-gradient(135deg, var(--sena-green-dark), #1B5E20);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(57, 169, 53, 0.4);
+    }
+
+    .btn-action:hover::before {
+      left: 100%;
+    }
+
+    /* ===== LAYOUT PRINCIPAL ===== */
+    .contenido {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* ===== SECCIÓN DE CARNETS ===== */
+    .carnets-section {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      padding: 20px 15px;
+      border-radius: var(--border-radius-large);
+      box-shadow: var(--shadow-strong);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      animation: slideInLeft 0.8s ease-out;
+    }
+
+    .carnets-title {
+      text-align: center;
+      color: var(--sena-green);
+      font-size: clamp(1.2rem, 4vw, 1.6rem);
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .carnets-title::before,
+    .carnets-title::after {
+      content: '';
+      width: 40px;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--sena-green), transparent);
+      border-radius: 2px;
+      display: none;
+    }
+
+    .carnet-container {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      align-items: center;
+      margin: 20px 0;
+    }
+
+    /* ===== CARNET ===== */
+    .carnet {
+      position: relative;
+      width: 100%;
+      max-width: 350px;
+      aspect-ratio: 5.5 / 8.7;
+      background: #fff;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow-strong);
+      overflow: hidden;
+      border: 3px solid #e0e0e0;
+      transition: var(--transition);
+    }
+
+    .carnet::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--sena-green), var(--sena-green-dark));
+      z-index: 2;
+    }
+
+    .carnet:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+      border-color: var(--sena-green);
+    }
+
+    .carnet img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      transition: var(--transition);
+    }
+
+    .carnet:hover img {
+      filter: brightness(1.05);
+    }
+
+    /* ===== PANEL DE INFORMACIÓN ===== */
+    .info-panel {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      padding: 20px 15px;
+      border-radius: var(--border-radius-large);
+      box-shadow: var(--shadow-strong);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      animation: slideInRight 0.8s ease-out;
+    }
+
+    .info-panel h2 {
+      color: var(--sena-green);
+      font-size: clamp(1.2rem, 4vw, 1.5rem);
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 15px;
+      border-bottom: 3px solid var(--sena-green-light);
+    }
+
+    .info-grid {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .info-item {
+      background: linear-gradient(135deg, #F8F9FA, #E9ECEF);
+      padding: 16px;
+      border-radius: 12px;
+      border-left: 4px solid var(--sena-green);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .info-item::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(180deg, var(--sena-green), var(--sena-green-dark));
+      transition: width 0.3s ease;
+    }
+
+    .info-item:hover {
+      transform: translateX(3px);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .info-item:hover::before {
+      width: 100%;
+      opacity: 0.05;
+    }
+
+    .info-item strong {
+      color: var(--sena-green);
+      font-weight: 700;
+      font-size: clamp(0.75rem, 2.5vw, 0.9rem);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .info-item span {
+      color: #333;
+      font-size: clamp(0.9rem, 2.5vw, 1rem);
+      font-weight: 500;
+      word-break: break-word;
+    }
+
+    /* ===== INFORMACIÓN DE MEDIDAS ===== */
+    .medidas-info {
+      text-align: center;
+      margin-top: 20px;
+      padding: 15px;
+      background: linear-gradient(135deg, var(--sena-green-ultra-light), rgba(255, 255, 255, 0.8));
+      border-radius: 12px;
+      font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+      color: var(--sena-green-dark);
+      border: 1px solid var(--sena-green-light);
+      font-weight: 500;
+    }
+
+    /* ===== ANIMACIONES ===== */
+    @keyframes slideInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slideInLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .carnet:nth-child(1) {
+      animation: fadeInUp 0.6s ease-out 0.2s both;
+    }
+
+    .carnet:nth-child(2) {
+      animation: fadeInUp 0.6s ease-out 0.4s both;
+    }
+
+    /* ===== TABLET - 600px+ ===== */
+    @media (min-width: 600px) {
+      .main-container {
+        padding: 20px;
+      }
+
+      .header {
+        padding: 25px 20px;
+        margin-bottom: 25px;
+      }
+
+      .top-actions {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        padding: 20px;
+        margin-bottom: 25px;
+      }
+
+      .carnets-section,
+      .info-panel {
+        padding: 30px 25px;
+      }
+
+      .carnets-title::before,
+      .carnets-title::after {
+        display: block;
+      }
+
+      .carnet-container {
+        flex-direction: row;
+        justify-content: center;
+        gap: 25px;
+      }
+
+      .carnet {
+        max-width: 280px;
+      }
+
+      .info-grid {
+        gap: 15px;
+      }
+
+      .info-item {
+        padding: 18px;
+      }
+    }
+
+    /* ===== DESKTOP - 900px+ ===== */
+    @media (min-width: 900px) {
+      .main-container {
+        padding: var(--spacing-lg);
+      }
+
+      .header {
+        padding: var(--spacing-md) var(--spacing-lg);
+        margin-bottom: var(--spacing-md);
+      }
+
+      .top-actions {
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md);
+      }
+
+      .contenido {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: var(--spacing-xl);
+      }
+
+      .carnets-section {
+        order: 1;
+        padding: var(--spacing-xl);
+      }
+
+      .info-panel {
+        order: 2;
+        width: 350px;
+        max-width: 350px;
+        position: sticky;
+        top: var(--spacing-lg);
+        padding: var(--spacing-xl);
+      }
+
+      .carnets-title::before,
+      .carnets-title::after {
+        width: 50px;
+      }
+
+      .carnet {
+        max-width: 320px;
+      }
+
+      .carnet-container {
+        gap: var(--spacing-lg);
+      }
+
+      .info-grid {
+        gap: var(--spacing-sm);
+      }
+
+      .info-item {
+        padding: var(--spacing-md);
+      }
+
+      .medidas-info {
+        margin-top: var(--spacing-lg);
+      }
+    }
+
+    /* ===== LARGE DESKTOP - 1200px+ ===== */
+    @media (min-width: 1200px) {
+      .carnet {
+        width: calc(var(--carnet-width) * 1.6);
+        height: calc(var(--carnet-height) * 1.6);
+        max-width: none;
+      }
+    }
+
+    /* ===== MÓVILES MUY PEQUEÑOS ===== */
+    @media (max-width: 360px) {
+      .main-container {
+        padding: 12px;
+      }
+
+      .header {
+        padding: 18px 12px;
+      }
+
+      .top-actions {
+        padding: 12px;
+        gap: 8px;
+      }
+
+      .carnets-section,
+      .info-panel {
+        padding: 18px 12px;
+      }
+
+      .carnet {
+        max-width: 100%;
+      }
+
+      .info-item {
+        padding: 14px;
+      }
+    }
+
+    /* ===== MEDIDAS PARA IMPRESIÓN ===== */
+    @media print {
+      body {
+        background: white !important;
+        padding: 0 !important;
+      }
+
+      .header, .info-panel, .top-actions, .medidas-info {
+        display: none !important;
+      }
+
+      .main-container, .contenido, .carnets-section {
+        background: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+      }
+
+      .carnet-container {
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 1cm !important;
+        justify-content: flex-start !important;
+        margin: 1cm !important;
+      }
+
+      .carnet {
+        width: 5.5cm !important;
+        height: 8.7cm !important;
+        max-width: none !important;
+        box-shadow: none !important;
+        border: 1px solid #000 !important;
+        border-radius: 3mm !important;
+      }
+
+      .carnets-title {
+        display: none !important;
+      }
+    }
+
+    /* ===== TOUCH IMPROVEMENTS ===== */
+    @media (hover: none) and (pointer: coarse) {
+      .btn-action,
+      .info-item,
+      .carnet {
+        -webkit-tap-highlight-color: rgba(57, 169, 53, 0.1);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="main-container">
+    <!-- Header Compacto -->
+    <div class="header">
+      <h1>Carné SENA Generado</h1>
+      <p>Servicio Nacional de Aprendizaje</p>
+    </div>
+
+    <!-- Barra de Botones Superior -->
+    <div class="top-actions">
+      <button onclick="imprimirCarnet()" class="btn-action">
+        🖨️ Imprimir Carnet
+      </button>
+      <button onclick="verVistaPrevia()" class="btn-action">
+        👁️ Vista Previa
+      </button>
+      <a href="{{ url_for('descargar_carnet', carnet=carnet) }}" class="btn-action" download="{{ empleado.nombre }}.png">
+        💾 Descargar Carné
+      </a>
+      <a href="{{ url_for('dashboard_admin') }}" class="btn-action">
+        🏠 Volver al Dashboard
+      </a>
+    </div>
+
+    <!-- Contenido Principal -->
+    <div class="contenido">
+      
+      <!-- Sección de Carnets -->
+      <div class="carnets-section">
+        <h3 class="carnets-title">📋 Vista del Carné</h3>
+        
+        <div class="carnet-container">
+          <!-- Anverso del Carné -->
+          <div class="carnet">
+            <img src="{{ url_for('static', filename='carnets/carnet_' + empleado.cedula + '.png') }}" alt="Carné Anverso">
+          </div>
+
+          <!-- Reverso del Carné -->
+          <div class="carnet">
+            <img src="{{ url_for('static', filename='carnets/reverso_' + empleado.cedula + '.png') }}" alt="Carné Reverso">
+          </div>
+        </div>
+
+        <!-- Información de medidas -->
+        <div class="medidas-info">
+          📏 <strong>Medidas oficiales:</strong> 8.7cm alto × 5.5cm ancho para impresión
+        </div>
+      </div>
+
+      <!-- Panel de Información -->
+      <div class="info-panel">
+        <h2>👤 Información del Empleado</h2>
+        
+        <div class="info-grid">
+          <div class="info-item">
+            <strong>Nombre Completo</strong>
+            <span>{{ empleado.nombre }}</span>
+          </div>
+          
+          <div class="info-item">
+            <strong>Documento</strong>
+            <span>{{ empleado.tipo_documento }} {{ empleado.cedula }}</span>
+          </div>
+          
+          <div class="info-item">
+            <strong>Cargo</strong>
+            <span>{{ empleado.cargo }}</span>
+          </div>
+          
+          <div class="info-item">
+            <strong>Tipo de Sangre</strong>
+            <span>{{ empleado.tipo_sangre }}</span>
+          </div>
+          
+          <div class="info-item">
+            <strong>Período de Vigencia</strong>
+            <span>{{ empleado.fecha_emision }} - {{ empleado.fecha_vencimiento }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function imprimirCarnet() {
+      if (confirm('¿Deseas imprimir el carnet con las medidas exactas (8.7cm alto × 5.5cm ancho)?')) {
+        window.print();
+      }
+    }
+
+    function verVistaPrevia() {
+      const printWindow = window.open('', '_blank', 'width=1000,height=800');
+      
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Vista Previa - Carnet SENA</title>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            
+            body { 
+              font-family: 'Segoe UI', system-ui, sans-serif; 
+              background: linear-gradient(135deg, #39A935 0%, #2E7D32 30%, #1B5E20 100%);
+              min-height: 100vh;
+              padding: 15px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+            
+            body::before {
+              content: '';
+              position: fixed;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              background: 
+                radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+              pointer-events: none;
+              z-index: 0;
+            }
+            
+            .preview-container {
+              position: relative;
+              z-index: 1;
+              background: rgba(255, 255, 255, 0.95);
+              backdrop-filter: blur(20px);
+              padding: 25px 20px;
+              border-radius: 24px;
+              box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+              border: 1px solid rgba(255, 255, 255, 0.3);
+              max-width: 95vw;
+              max-height: 95vh;
+              overflow: auto;
+              animation: slideIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            }
+            
+            @keyframes slideIn {
+              from {
+                opacity: 0;
+                transform: translateY(-30px) scale(0.95);
+              }
+              to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+              }
+            }
+            
+            .preview-header {
+              text-align: center;
+              margin-bottom: 25px;
+              padding-bottom: 20px;
+              border-bottom: 3px solid #E8F5E9;
+            }
+            
+            .preview-header h2 {
+              color: #39A935;
+              font-size: clamp(1.4rem, 4vw, 2rem);
+              font-weight: 700;
+              margin-bottom: 8px;
+            }
+            
+            .preview-header p {
+              color: #666;
+              font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+              margin-bottom: 15px;
+            }
+            
+            .close-btn {
+              background: linear-gradient(135deg, #39A935, #2E7D32);
+              color: white;
+              border: none;
+              padding: 10px 20px;
+              border-radius: 10px;
+              cursor: pointer;
+              font-weight: 600;
+              font-size: clamp(0.85rem, 2.5vw, 0.9rem);
+              transition: all 0.4s ease;
+              box-shadow: 0 4px 15px rgba(57, 169, 53, 0.3);
+              display: inline-flex;
+              align-items: center;
+              gap: 8px;
+              width: 100%;
+              max-width: 240px;
+              justify-content: center;
+              margin: 0 auto 20px;
+            }
+            
+            .close-btn:hover {
+              background: linear-gradient(135deg, #2E7D32, #1B5E20);
+              transform: translateY(-2px);
+              box-shadow: 0 6px 20px rgba(57, 169, 53, 0.4);
+            }
+            
+            .info-badge { 
+              background: linear-gradient(135deg, #39A935, #2E7D32);
+              color: white;
+              padding: 10px 20px;
+              border-radius: 25px;
+              font-weight: 600;
+              margin: 20px auto;
+              display: inline-block;
+              font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+              box-shadow: 0 4px 15px rgba(57, 169, 53, 0.3);
+              text-align: center;
+              width: fit-content;
+            }
+            
+            .carnet-container { 
+              display: flex;
+              flex-direction: column;
+              gap: 25px; 
+              align-items: center;
+              margin: 25px 0;
+            }
+            
+            .carnet { 
+              width: 100%;
+              max-width: 350px;
+              aspect-ratio: 5.5 / 8.7;
+              border: 3px solid #39A935;
+              border-radius: 12px;
+              overflow: hidden;
+              box-shadow: 0 8px 30px rgba(57, 169, 53, 0.25);
+              transition: all 0.4s ease;
+              position: relative;
+              background: white;
+            }
+            
+            .carnet::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: 0;
+              right: 0;
+              height: 4px;
+              background: linear-gradient(90deg, #39A935, #2E7D32);
+              z-index: 2;
+            }
+            
+            .carnet:hover {
+              transform: translateY(-5px) scale(1.02);
+              box-shadow: 0 12px 40px rgba(57, 169, 53, 0.35);
+              border-color: #2E7D32;
+            }
+            
+            .carnet img { 
+              width: 100%; 
+              height: 100%; 
+              object-fit: contain;
+              transition: all 0.3s ease;
+            }
+            
+            .carnet:hover img {
+              filter: brightness(1.05);
+            }
+            
+            .carnet-label {
+              margin-top: 10px;
+              background: linear-gradient(135deg, #39A935, #2E7D32);
+              color: white;
+              padding: 8px 20px;
+              border-radius: 15px;
+              font-size: clamp(0.75rem, 2.5vw, 0.85rem);
+              font-weight: 700;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              box-shadow: 0 4px 15px rgba(57, 169, 53, 0.3);
+              display: inline-block;
+            }
+            
+            .footer-note {
+              text-align: center; 
+              margin-top: 25px; 
+              padding: 18px;
+              background: linear-gradient(135deg, #F1F8E9, rgba(255, 255, 255, 0.8));
+              border-radius: 12px;
+              border: 1px solid #E8F5E9;
+              color: #2E7D32;
+              font-style: italic;
+              font-weight: 500;
+              font-size: clamp(0.85rem, 2.5vw, 0.95rem);
+            }
+            
+            @media (min-width: 600px) {
+              .preview-container {
+                padding: 35px 30px;
+              }
+              
+              .carnet-container {
+                flex-direction: row;
+                gap: 30px;
+              }
+              
+              .carnet {
+                max-width: 280px;
+              }
+            }
+            
+            @media (min-width: 900px) {
+              .preview-container {
+                padding: 40px;
+              }
+              
+              .carnet {
+                max-width: 320px;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="preview-container">
+            <div class="preview-header">
+              <button class="close-btn" onclick="window.close()">✕ Cerrar Vista Previa</button>
+              <h2>🎓 Vista Previa del Carnet SENA</h2>
+              <p>Visualización exacta para impresión</p>
+            </div>
+            <div class="info-badge">📏 Medidas exactas: 8.7cm alto × 5.5cm ancho</div>
+            <div class="carnet-container">
+              <div style="text-align: center;">
+                <div class="carnet">
+                  <img src="{{ url_for('static', filename='carnets/carnet_' + empleado.cedula + '.png') }}" alt="Anverso">
+                </div>
+                <div class="carnet-label">Anverso</div>
+              </div>
+              <div style="text-align: center;">
+                <div class="carnet">
+                  <img src="{{ url_for('static', filename='carnets/reverso_' + empleado.cedula + '.png') }}" alt="Reverso">
+                </div>
+                <div class="carnet-label">Reverso</div>
+              </div>
+            </div>
+            <div class="footer-note">
+              Esta es la vista exacta de cómo se imprimirá el carnet con las medidas oficiales del SENA
+            </div>
+          </div>
+        </body>
+        </html>
+      `);
+      
+      printWindow.document.close();
+    }
+
+    // Efecto de paralaje suave (solo en desktop)
+    if (window.innerWidth > 900) {
+      document.addEventListener('mousemove', (e) => {
+        const cards = document.querySelectorAll('.carnet');
+        const mouseX = e.clientX / window.innerWidth;
+        const mouseY = e.clientY / window.innerHeight;
+        
+        cards.forEach((card, index) => {
+          const offsetX = (mouseX - 0.5) * 10 * (index % 2 === 0 ? 1 : -1);
+          const offsetY = (mouseY - 0.5) * 5;
+          card.style.transform = `translateX(${offsetX}px) translateY(${offsetY}px)`;
+        });
+      });
+    }
+
+    // Detectar Ctrl+P para imprimir
+    document.addEventListener('keydown', function(e) {
+      if (e.ctrlKey && e.key === 'p') {
+        e.preventDefault();
+        imprimirCarnet();
+      }
+    });
+
+    // Animación de carga
+    window.addEventListener('load', () => {
+      document.body.style.opacity = '0';
+      document.body.style.transition = 'opacity 0.5s ease';
+      setTimeout(() => {
+        document.body.style.opacity = '1';
+      }, 100);
+    });
+  </script>
+</body>
+</html>

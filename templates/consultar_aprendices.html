@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Gestionar Aprendices - SENA Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            height: 100%;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+            min-height: 100%;
+            padding: 15px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #39A935 0%, #2E7D32 100%);
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: clamp(20px, 5vw, 28px);
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: clamp(13px, 3vw, 16px);
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        /* Filtros y búsqueda RESPONSIVE */
+        .filters {
+            background: #F8F9FA;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-left: 5px solid #39A935;
+        }
+
+        .filters-row {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #2E7D32;
+            margin-bottom: 8px;
+            font-size: clamp(12px, 3vw, 14px);
+        }
+
+        .form-input, .form-select {
+            padding: 12px 15px;
+            border: 2px solid #E0E0E0;
+            border-radius: 10px;
+            font-size: clamp(13px, 3vw, 14px);
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #39A935;
+            box-shadow: 0 0 0 3px rgba(57, 169, 53, 0.1);
+        }
+
+        .filters-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: clamp(12px, 3vw, 14px);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #39A935 0%, #2E7D32 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(57, 169, 53, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(57, 169, 53, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6C757D 0%, #495057 100%);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #495057 0%, #343A40 100%);
+            transform: translateY(-2px);
+        }
+
+        .btn-dashboard {
+            background: linear-gradient(135deg, #39A935 0%, #2E7D32 100%);
+            color: white;
+            grid-column: 1 / -1;
+            margin-top: 5px;
+        }
+
+        .btn-dashboard:hover {
+            background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #DC3545 0%, #C82333 100%);
+            color: white;
+            font-size: clamp(11px, 2.5vw, 12px);
+            padding: 8px 12px;
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #C82333 0%, #A71E2A 100%);
+        }
+
+        .btn-carnet {
+            background: linear-gradient(135deg, #39A935 0%, #2E7D32 100%);
+            color: white;
+            font-size: clamp(11px, 2.5vw, 12px);
+            padding: 8px 12px;
+        }
+
+        .btn-carnet:hover {
+            background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 100%);
+            box-shadow: 0 4px 10px rgba(57, 169, 53, 0.3);
+        }
+
+        /* Estadísticas RESPONSIVE */
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #F8F9FA 0%, #E9ECEF 100%);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            border-left: 5px solid;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        .stat-card.total,
+        .stat-card.sin-foto {
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+            border-left-color: #39A935;
+            box-shadow: 0 4px 15px rgba(57, 169, 53, 0.15);
+        }
+
+        .stat-card.con-foto {
+            background: linear-gradient(135deg, #E8F8F5 0%, #D1F2EB 100%);
+            border-left-color: #28A745;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.15);
+        }
+
+        .stat-number {
+            font-size: clamp(32px, 8vw, 40px);
+            font-weight: 700;
+            color: #2E7D32;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            color: #2E7D32;
+            font-size: clamp(13px, 3vw, 15px);
+            font-weight: 600;
+        }
+
+        /* VISTA DE TARJETAS PARA MÓVIL */
+        .aprendices-cards {
+            display: none;
+        }
+
+        .aprendiz-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            border-left: 5px solid #39A935;
+        }
+
+        .aprendiz-card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #F0F0F0;
+        }
+
+        .aprendiz-foto {
+            flex-shrink: 0;
+        }
+
+        .foto-preview {
+            width: 60px;
+            height: 72px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 2px solid #39A935;
+        }
+
+        .sin-foto {
+            width: 60px;
+            height: 72px;
+            background: linear-gradient(135deg, #F0F0F0 0%, #E0E0E0 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 30px;
+            border: 2px dashed #39A935;
+        }
+
+        .aprendiz-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .aprendiz-nombre {
+            font-size: clamp(15px, 4vw, 17px);
+            font-weight: 700;
+            color: #2E7D32;
+            margin-bottom: 5px;
+            word-wrap: break-word;
+        }
+
+        .aprendiz-cedula {
+            font-size: clamp(12px, 3vw, 13px);
+            color: #666;
+            margin-bottom: 3px;
+        }
+
+        .aprendiz-card-body {
+            margin-bottom: 15px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: clamp(12px, 3vw, 13px);
+            gap: 10px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #666;
+            flex-shrink: 0;
+        }
+
+        .info-value {
+            color: #333;
+            text-align: right;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .aprendiz-card-footer {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .aprendiz-card-footer .btn {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: clamp(10px, 2.5vw, 11px);
+            font-weight: 600;
+            text-transform: uppercase;
+            display: inline-block;
+        }
+
+        .badge.con-foto {
+            background: linear-gradient(135deg, #D4EDDA 0%, #C3E6CB 100%);
+            color: #155724;
+            border: 1px solid #28A745;
+        }
+
+        .badge.sin-foto {
+            background: linear-gradient(135deg, #FFF3CD 0%, #FFEAA7 100%);
+            color: #856404;
+            border: 1px solid #FFC107;
+        }
+
+        /* TABLA PARA DESKTOP */
+        .table-container {
+            display: none;
+            overflow-x: auto;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        .table th {
+            background: linear-gradient(135deg, #39A935 0%, #2E7D32 100%);
+            color: white;
+            font-weight: 600;
+            padding: 15px 12px;
+            text-align: left;
+            border-bottom: 2px solid #2E7D32;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .table td {
+            padding: 15px 12px;
+            border-bottom: 1px solid #F0F0F0;
+            font-size: 13px;
+        }
+
+        .table tr:hover {
+            background: linear-gradient(135deg, #F8F9FA 0%, #E9ECEF 100%);
+        }
+
+        .table .foto-preview {
+            width: 50px;
+            height: 60px;
+        }
+
+        .table .sin-foto {
+            width: 50px;
+            height: 60px;
+            font-size: 24px;
+        }
+
+        .acciones {
+            display: flex;
+            gap: 8px;
+            flex-direction: column;
+        }
+
+        /* Alertas */
+        .alert {
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: clamp(12px, 3vw, 14px);
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, #D4EDDA 0%, #C3E6CB 100%);
+            color: #155724;
+            border-left: 4px solid #28A745;
+        }
+
+        .alert-error {
+            background: linear-gradient(135deg, #F8D7DA 0%, #F1AAB0 100%);
+            color: #721C24;
+            border-left: 4px solid #DC3545;
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, #D1ECF1 0%, #B8DAFF 100%);
+            color: #0C5460;
+            border-left: 4px solid #17A2B8;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: clamp(48px, 12vw, 64px);
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: clamp(18px, 4vw, 22px);
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            font-size: clamp(13px, 3vw, 15px);
+            margin-bottom: 20px;
+        }
+
+        /* TABLET - 600px+ */
+        @media (min-width: 600px) {
+            body {
+                padding: 20px;
+            }
+
+            .content {
+                padding: 30px;
+            }
+
+            .header {
+                padding: 30px;
+            }
+
+            .filters {
+                padding: 25px;
+            }
+
+            .filters-row {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .filters-buttons {
+                grid-column: 1 / -1;
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .btn-dashboard {
+                grid-column: auto;
+            }
+
+            .stats {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 20px;
+            }
+
+            .aprendices-cards {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+        }
+
+        /* DESKTOP - 900px+ */
+        @media (min-width: 900px) {
+            .filters-row {
+                grid-template-columns: 2fr 1fr;
+            }
+
+            .filters-buttons {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            /* Mostrar tabla en desktop */
+            .table-container {
+                display: block;
+            }
+
+            /* Ocultar tarjetas en desktop */
+            .aprendices-cards {
+                display: none !important;
+            }
+        }
+
+        /* MÓVILES - Mostrar tarjetas */
+        @media (max-width: 899px) {
+            .aprendices-cards {
+                display: block;
+            }
+
+            .table-container {
+                display: none;
+            }
+        }
+
+        /* MÓVILES MUY PEQUEÑOS */
+        @media (max-width: 360px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                border-radius: 15px;
+            }
+
+            .content {
+                padding: 15px;
+            }
+
+            .filters {
+                padding: 15px;
+            }
+
+            .aprendiz-card {
+                padding: 15px;
+            }
+
+            .aprendiz-card-footer .btn {
+                min-width: 100px;
+                font-size: 11px;
+                padding: 8px 10px;
+            }
+        }
+
+        /* Touch improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .btn {
+                -webkit-tap-highlight-color: rgba(57, 169, 53, 0.1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 Gestionar Aprendices</h1>
+            <p>Consulta, busca y gestiona las fotos de los aprendices registrados</p>
+        </div>
+
+        <div class="content">
+            <!-- Mensajes Flash -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'success' if category == 'success' else 'error' if category == 'error' else 'info' }}">
+                            <span>{{ '✅' if category == 'success' else '❌' if category == 'error' else 'ℹ️' }}</span>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Filtros y búsqueda -->
+            <div class="filters">
+                <form method="GET" action="{{ url_for('consultar_aprendices') }}">
+                    <div class="filters-row">
+                        <div class="form-group">
+                            <label class="form-label">🔍 Buscar aprendiz</label>
+                            <input type="text" name="buscar" class="form-input" 
+                                   placeholder="Nombre, cédula o código..." 
+                                   value="{{ filtros.buscar or '' }}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">📸 Estado de foto</label>
+                            <select name="foto" class="form-select">
+                                <option value="">Todos</option>
+                                <option value="con_foto" {{ 'selected' if filtros.foto == 'con_foto' }}>Con foto</option>
+                                <option value="sin_foto" {{ 'selected' if filtros.foto == 'sin_foto' }}>Sin foto</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="filters-buttons">
+                        <button type="submit" class="btn btn-primary">
+                            🔍 Buscar
+                        </button>
+                        
+                        <a href="{{ url_for('consultar_aprendices') }}" class="btn btn-secondary">
+                            🔄 Limpiar
+                        </a>
+                        
+                        <a href="{{ url_for('dashboard_admin') }}" class="btn btn-dashboard">
+                            🏠 Dashboard
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Estadísticas -->
+            <div class="stats">
+                <div class="stat-card total">
+                    <span class="stat-number">{{ estadisticas.total }}</span>
+                    <div class="stat-label">Total Aprendices</div>
+                </div>
+                <div class="stat-card con-foto">
+                    <span class="stat-number">{{ estadisticas.con_foto }}</span>
+                    <div class="stat-label">Con Foto</div>
+                </div>
+                <div class="stat-card sin-foto">
+                    <span class="stat-number">{{ estadisticas.sin_foto }}</span>
+                    <div class="stat-label">Sin Foto</div>
+                </div>
+            </div>
+
+            {% if aprendices %}
+                <!-- VISTA DE TARJETAS (MÓVIL Y TABLET) -->
+                <div class="aprendices-cards">
+                    {% for aprendiz in aprendices %}
+                    <div class="aprendiz-card">
+                        <div class="aprendiz-card-header">
+                            <div class="aprendiz-foto">
+                                {% if aprendiz.foto_existe %}
+                                    <img src="{{ url_for('static', filename='fotos/' + aprendiz.foto) }}" 
+                                         alt="Foto de {{ aprendiz.nombre }}" 
+                                         class="foto-preview">
+                                {% else %}
+                                    <div class="sin-foto">👤</div>
+                                {% endif %}
+                            </div>
+                            <div class="aprendiz-info">
+                                <div class="aprendiz-nombre">{{ aprendiz.nombre }}</div>
+                                <div class="aprendiz-cedula">{{ aprendiz.tipo_documento }}: {{ aprendiz.cedula }}</div>
+                                {% if aprendiz.foto_existe %}
+                                    <span class="badge con-foto">Con Foto</span>
+                                {% else %}
+                                    <span class="badge sin-foto">Sin Foto</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="aprendiz-card-body">
+                            <div class="info-row">
+                                <span class="info-label">📚 Programa:</span>
+                                <span class="info-value">{{ aprendiz.nombre_programa }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">🎫 Ficha:</span>
+                                <span class="info-value">{{ aprendiz.codigo_ficha }}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">📊 Nivel:</span>
+                                <span class="info-value">{{ aprendiz.nivel_formacion }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="aprendiz-card-footer">
+                            {% if aprendiz.foto_existe %}
+                                <form method="POST" action="{{ url_for('generar_carnet_web') }}" style="flex: 1;">
+                                    <input type="hidden" name="cedula" value="{{ aprendiz.cedula }}">
+                                    <button type="submit" class="btn btn-carnet" title="Ver carnet" style="width: 100%;">
+                                        🎴 Ver Carnet
+                                    </button>
+                                </form>
+                                
+                                <button onclick="confirmarEliminacion('{{ aprendiz.nombre }}', '{{ aprendiz.cedula }}')" 
+                                        class="btn btn-danger" title="Eliminar foto" style="flex: 1;">
+                                    🗑️ Eliminar
+                                </button>
+                            {% else %}
+                                <span style="color: #999; font-size: 13px; flex: 1; text-align: center;">Sin foto disponible</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- VISTA DE TABLA (DESKTOP) -->
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Foto</th>
+                                <th>Nombre</th>
+                                <th>Cédula</th>
+                                <th>Programa</th>
+                                <th>Ficha</th>
+                                <th>Estado Foto</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for aprendiz in aprendices %}
+                            <tr>
+                                <td>
+                                    {% if aprendiz.foto_existe %}
+                                        <img src="{{ url_for('static', filename='fotos/' + aprendiz.foto) }}" 
+                                             alt="Foto de {{ aprendiz.nombre }}" 
+                                             class="foto-preview">
+                                    {% else %}
+                                        <div class="sin-foto">👤</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <strong>{{ aprendiz.nombre }}</strong><br>
+                                    <small style="color: #666;">{{ aprendiz.tipo_documento }}: {{ aprendiz.cedula }}</small>
+                                </td>
+                                <td>{{ aprendiz.cedula }}</td>
+                                <td>
+                                    <small>{{ aprendiz.nombre_programa }}</small>
+                                </td>
+                                <td>{{ aprendiz.codigo_ficha }}</td>
+                                <td>
+                                    {% if aprendiz.foto_existe %}
+                                        <span class="badge con-foto">Con Foto</span>
+                                    {% else %}
+                                        <span class="badge sin-foto">Sin Foto</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="acciones">
+                                        {% if aprendiz.foto_existe %}
+                                            <form method="POST" action="{{ url_for('generar_carnet_web') }}" style="display: inline;">
+                                                <input type="hidden" name="cedula" value="{{ aprendiz.cedula }}">
+                                                <button type="submit" class="btn btn-carnet" title="Ver carnet">
+                                                    🎴 Ver Carnet
+                                                </button>
+                                            </form>
+                                            
+                                            <button onclick="confirmarEliminacion('{{ aprendiz.nombre }}', '{{ aprendiz.cedula }}')" 
+                                                    class="btn btn-danger" title="Eliminar foto">
+                                                🗑️ Eliminar Foto
+                                            </button>
+                                        {% else %}
+                                            <span style="color: #999; font-size: 12px;">Sin foto disponible</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">🔍</div>
+                    <h3>No se encontraron aprendices</h3>
+                    <p>Intenta ajustar los filtros de búsqueda o verifica que haya aprendices registrados.</p>
+                    <a href="{{ url_for('dashboard_admin') }}" class="btn btn-primary">
+                        🏠 Volver al Dashboard
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+<script>
+    function confirmarEliminacion(nombre, cedula) {
+        if (!confirm(`¿Estás seguro de que deseas eliminar la foto de ${nombre}?\n\nEsta acción no se puede deshacer.`)) {
+            return;
+        }
+        
+        fetch(`/admin/eliminar_foto_cedula/${cedula}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                alert('✅ ' + result.message);
+                window.location.reload();
+            } else {
+                alert('❌ Error: ' + result.message);
+            }
+        })
+        .catch(error => {
+            alert('❌ Error al eliminar la foto. Por favor, intenta de nuevo.');
+            console.error('Error:', error);
+        });
+    }
+    
+    setTimeout(() => {
+        document.querySelectorAll('.alert').forEach(alert => {
+            alert.style.transition = 'all 0.5s ease';
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 500);
+        });
+    }, 5000);
+</script>
+</body>
+</html>
