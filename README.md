@@ -168,12 +168,13 @@ Excel SENA → Carga masiva → Validación de duplicados → Registro en BD
 - Mayron (Instructor SENA)
 
 **Desarrolladores Auxiliares**
-- Sergio Bustos
+
 - Alejandro Tamayo
 - Alejandro Ducuara
 - Juan David Cadena
 - Edison Andrés Martínez
-
+- Sergio Bustos
+- 
 ---
 
 ## 🏛️ Información Institucional
