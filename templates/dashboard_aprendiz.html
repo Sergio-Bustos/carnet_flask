@@ -486,7 +486,7 @@
                 <div class="menu-section">
                     <div class="menu-section-title">Mis Datos</div>
                     <a href="#" class="menu-item" onclick="abrirSeccionConsulta()">
-                        <div class="menu-icon">🔍</div><span class="menu-text">Consultar CC o TI</span>
+                        <div class="menu-icon">🔍</div><span class="menu-text">Consultar documento</span>
                     </a>
                 </div>
                 <div class="menu-section">
@@ -510,7 +510,7 @@
                     <h3>⚡ Accesos Rápidos</h3>
                     <p style="color:#666;margin-bottom:20px">Accede rápidamente a las funciones principales del sistema.</p>
                     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:15px">
-                        <button class="action-button" onclick="abrirSeccionConsulta()">🔍 Consultar CC o TI</button>
+                        <button class="action-button" onclick="abrirSeccionConsulta()">🔍 Consultar documento</button>
                         <button class="action-button" onclick="showSection('preguntas-frecuentes')">❓ Ayuda</button>
                     </div>
                 </div>
@@ -526,15 +526,24 @@
 
             <div id="consultar-datos" class="content-section">
                 <div class="section-header">
-                    <h1 class="section-title">🔍 Consultar CC o TI</h1>
+                    <h1 class="section-title">🔍 Consultar documento</h1>
                     <p class="section-subtitle">Ingresa tu número de documento para ver tu información y cargar tu foto</p>
                 </div>
                 <div class="info-card">
                     <h3>Búsqueda por Número de Documento</h3>
                     <form id="formularioConsulta" method="POST" style="margin-top:20px">
                         <div class="form-group">
-                            <label class="form-label" for="cedula">Número de Cédula (CC) o Tarjeta de Identidad (TI):</label>
-                            <input type="text" name="cedula" id="cedula" class="form-input" placeholder="Ej: 1006342488" autocomplete="off" required>
+                            <label class="form-label" for="cedula">Número de documento:</label>
+                            <input
+                               type="text"
+                               name="cedula"
+                               id="cedula"
+                               class="form-input"
+                               placeholder="Ingresa tu número de documento"
+                               title="Por favor, ingresa tu número de documento"
+                               autocomplete="off"
+                               required
+                            >
                         </div>
                         <button type="submit" class="action-button" id="btnConsultar">🔍 Buscar Aprendiz</button>
                     </form>
