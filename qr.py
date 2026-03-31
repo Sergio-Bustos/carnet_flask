@@ -1,13 +1,13 @@
 import qrcode
 import os
 
-def generar_qr(cedula):
+def generar_qr(cedula: str) -> str:
     enlace = "https://oferta.senasofiaplus.edu.co/sofia-oferta/inicio-sofia-plus.html"
     nombre_archivo = f"{cedula}.png"
     ruta = os.path.join("static", "qr", nombre_archivo)
 
     # Eliminar QR viejo si existe
-    if os.path.exists(ruta):
+    if os.path.exists(ruta): 
         os.remove(ruta)
 
     qr = qrcode.QRCode(

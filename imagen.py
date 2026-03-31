@@ -82,7 +82,7 @@ def wrap_text(texto, font, draw, max_ancho):
     return lineas
 
 
-def generar_carnet(empleado, ruta_qr):
+def generar_carnet(empleado:dict, ruta_qr:str) ->str:
     # MEDIDAS EXACTAS DEL CARNET SENA: 5.5cm ancho x 8.7cm alto (formato vertical)
     # A 300 DPI para impresión de calidad: 650px ancho x 1028px alto (5.5cm x 8.7cm)
     ancho, alto = 650, 1028
@@ -155,7 +155,7 @@ def generar_carnet(empleado, ruta_qr):
     nombre_completo = empleado['nombre'].upper()
     partes = nombre_completo.split()
 
-    y_nombre = 315
+    y_nombre = 315 
     espaciado = 60   # espacio entre líneas del nombre
 
     # Siempre máximo 2 palabras por línea para consistencia visual
@@ -312,8 +312,17 @@ def generar_carnet(empleado, ruta_qr):
 
     return ruta_anverso
 
+#Tarea: T5 funcion para verificar la medida
+def verificar_medidas(ancho: int, alto: int) -> bool:
+    ancho_minimo, alto_minimo = 1012, 638
+    if ancho<ancho_minimo:
+        return {"lado": "ancho", "medida": ancho_minimo}
+    if alto<alto_minimo:
+        return {"lado": "alto", "medida": alto}
+    return False
+#--------
 
-def combinar_anverso_reverso(nombre_archivo_anverso, nombre_archivo_reverso, nombre_aprendiz):
+def combinar_anverso_reverso(nombre_archivo_anverso: str, nombre_archivo_reverso: str, nombre_aprendiz:str)  -> str:
     ruta_anverso = os.path.join("static", "carnets", nombre_archivo_anverso)
     ruta_reverso = os.path.join("static", "carnets", nombre_archivo_reverso)
 
@@ -327,7 +336,17 @@ def combinar_anverso_reverso(nombre_archivo_anverso, nombre_archivo_reverso, nom
     padding = 40
     ancho_total = anverso.width + reverso.width + padding
     alto_total  = max(anverso.height, reverso.height) + 60
-
+    
+    #Tarea: T5
+    #verificar la medida del carnet con sus dos lados
+    lados = verificar_medidas(ancho_total, alto_total)
+    if lados:
+        if lados["lado"] == "ancho":
+            ancho_total = ancho_total + (verificar_medidas["medida"]-ancho_total)
+        if lados["lado"] == "alto":
+            alto_total = ancho_total + (verificar_medidas["medida"]-alto_total)
+    #-------------        
+    
     combinado = Image.new("RGB", (ancho_total, alto_total), (245, 245, 245))
     combinado.paste(anverso, (0, 0))
     combinado.paste(reverso, (anverso.width + padding, 0))
@@ -346,3 +365,4 @@ def combinar_anverso_reverso(nombre_archivo_anverso, nombre_archivo_reverso, nom
     print(f"✅ Carnet combinado guardado: {ruta_combinada}")
 
     return nombre_archivo
+
