@@ -1777,20 +1777,47 @@ def descargar_plantilla():
             filename = 'plantilla_empleados_sena.xlsx'
             flash('Se descargó la plantilla con datos de ejemplo (no hay empleados registrados)', 'info')
         
-        # Crear DataFrame y archivo Excel
-        df = pd.DataFrame(data)
-        
-        # Crear archivo temporal
+        # Crear archivo Excel con openpyxl
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = 'Empleados SENA'
+
+        headers = list(data.keys())
+        header_fill = openpyxl.styles.PatternFill(start_color='39A935', end_color='39A935', fill_type='solid')
+        header_font = openpyxl.styles.Font(bold=True, color='FFFFFF')
+        header_align = openpyxl.styles.Alignment(horizontal='center', vertical='center', wrap_text=True)
+
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col_num, value=header)
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = header_align
+
+        row_fill_alt = openpyxl.styles.PatternFill(start_color='E8F5E9', end_color='E8F5E9', fill_type='solid')
+        for col_num, key in enumerate(headers, 1):
+            for i, value in enumerate(data[key]):
+                cell = ws.cell(row=i + 2, column=col_num, value=value)
+                cell.alignment = openpyxl.styles.Alignment(horizontal='left', vertical='center')
+                if (i + 2) % 2 == 0:
+                    cell.fill = row_fill_alt
+
+        for col in ws.columns:
+            max_len = max((len(str(c.value)) if c.value else 0) for c in col)
+            ws.column_dimensions[col[0].column_letter].width = min(max_len + 4, 40)
+
+        ws.row_dimensions[1].height = 30
+
         with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as temp_file:
-            df.to_excel(temp_file.name, index=False, sheet_name='Empleados SENA')
             temp_file_path = temp_file.name
-        
+        wb.save(temp_file_path)
+
         return send_file(temp_file_path, as_attachment=True, download_name=filename)
-        
+
     except Exception as e:
         print(f"Error generando plantilla: {e}")
         flash(f'Error al generar la plantilla: {str(e)}', 'error')
         return redirect(url_for('dashboard_admin'))
+        
 
 @app.route('/cargar_plantilla', methods=['GET', 'POST'])
 def cargar_plantilla():

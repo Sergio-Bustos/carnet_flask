@@ -216,7 +216,7 @@
       transition: var(--transition);
     }
 
-    /* ===== T6 US-03: CSS responsivo para .carnet-preview img ===== */
+
     .carnet-preview img {
       max-width: 100%;
       height: auto;
@@ -254,6 +254,48 @@
       filter: brightness(1.05);
     }
 
+
+    /* =========================== */
+    /* ====== MEDIA QUERIES ====== */
+    /* =========================== */
+
+    /* ===== CARNET PREVIEW ===== */
+    .carnet-preview {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      width: 100%;
+      padding: 15px;
+      background: var(--sena-green-ultra-light);
+      border-radius: var(--border-radius);
+      border: 2px solid var(--sena-green-light);
+    }
+
+    .carnet-preview img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      object-fit: contain;
+    }
+
+    /* Móvil pequeño */
+    @media (max-width: 480px) {
+      .carnet-preview {
+        padding: 10px;
+        gap: 12px;
+        border-radius: 10px;
+      }
+    }
+
+    /* Tablet+ */
+    @media (min-width: 600px) {
+      .carnet-preview {
+        flex-direction: row;
+        justify-content: center;
+        padding: 25px;
+      }
+    }
     /* ===== PANEL DE INFORMACIÓN ===== */
     .info-panel {
       background: rgba(255, 255, 255, 0.95);
@@ -649,15 +691,14 @@
         <h3 class="carnets-title">📋 Vista del Carné</h3>
         
         <div class="carnet-container">
-          <!-- Anverso del Carné -->
-          <div class="carnet">
-            <img src="{{ url_for('static', filename='carnets/carnet_' + empleado.cedula + '.png') }}" alt="Carné Anverso">
-          </div>
-
-          <!-- Reverso del Carné -->
-          <div class="carnet">
-            <img src="{{ url_for('static', filename='carnets/reverso_' + empleado.cedula + '.png') }}" alt="Carné Reverso">
-          </div>
+            <div class="carnet-preview">
+              <div class="carnet">
+                <img src="{{ url_for('static', filename='carnets/carnet_' + empleado.cedula + '.png') }}" alt="Carné Anverso">
+              </div>
+              <div class="carnet">
+                <img src="{{ url_for('static', filename='carnets/reverso_' + empleado.cedula + '.png') }}" alt="Carné Reverso">
+              </div>
+            </div>
         </div>
 
         <!-- Información de medidas -->
