@@ -337,7 +337,7 @@ def combinar_anverso_reverso(nombre_archivo_anverso: str, nombre_archivo_reverso
     ancho_total = anverso.width + reverso.width + padding
     alto_total  = max(anverso.height, reverso.height) + 60
     
-    #Tarea: T5
+    #Tarea: T5 :)
     #verificar la medida del carnet con sus dos lados
     lados = verificar_medidas(ancho_total, alto_total)
     if lados:
