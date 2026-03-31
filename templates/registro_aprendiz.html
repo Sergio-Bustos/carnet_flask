@@ -337,6 +337,16 @@
         <div class="info-card">
             <h3>📋 Panel de Aprendiz</h3>
             <p>Desde aquí puedes gestionar tu información personal y solicitar tu carné estudiantil del SENA.</p>
+            {# TAREA DE VALIDACION - 17 #}
+            {% if cedula_autenticada %}
+            <p style="margin-top:10px; color:#0c5460;">
+                🔐 Cuenta vinculada al documento {{ cedula_autenticada }}. Solo ese aprendiz puede descargar su carnet.
+            </p>
+            {% else %}
+            <p style="margin-top:10px; color:#856404;">
+                ⚠️ Esta cuenta no tiene documento vinculado para descargas. Solicita validación al administrador.
+            </p>
+            {% endif %}
         </div>
 
         <div class="features">

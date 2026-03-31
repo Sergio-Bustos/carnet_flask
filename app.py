@@ -15,6 +15,7 @@ import sqlite3
 import shutil
 import json
 import time
+import re
 
 app = Flask(__name__)
 app.secret_key = 'clave_secreta_segura'
@@ -43,6 +44,50 @@ usuarios = {
     "sena": {"clave": "sena2024", "rol": "admin"},
     "usuario": {"clave": "123456", "rol": "admin"}
 }
+
+# TAREA DE VALIDACION - 17
+# Vincula y recupera la cédula autorizada de la sesión del aprendiz.
+def obtener_cedula_aprendiz_autenticado():
+    """Devuelve la cédula autorizada para el aprendiz autenticado."""
+    if session.get('rol') != 'aprendiz':
+        return None
+
+    cedula_sesion = session.get('aprendiz_cedula_auth')
+    if cedula_sesion:
+        return ''.join(filter(str.isdigit, str(cedula_sesion)))
+
+    # Fallback: si el usuario de login es una cédula, se usa como identidad.
+    usuario = str(session.get('usuario', '')).strip()
+    usuario_limpio = ''.join(filter(str.isdigit, usuario))
+    if 7 <= len(usuario_limpio) <= 12:
+        session['aprendiz_cedula_auth'] = usuario_limpio
+        return usuario_limpio
+
+    return None
+
+
+def obtener_archivo_carnet_por_cedula(cedula):
+    """Retorna el nombre de archivo del carnet disponible para una cédula."""
+    cedula_limpia = ''.join(filter(str.isdigit, str(cedula)))
+    if not cedula_limpia:
+        return None
+
+    aprendiz = buscar_empleado_completo(cedula_limpia)
+    if not aprendiz:
+        return None
+
+    # TAREA DE VALIDACION - 17
+    # Prioriza archivo completo/combinado (anverso + reverso) antes del anverso solo.
+    posibles_carnets = [
+        os.path.join('static', 'carnets', f"{aprendiz['nombre'].replace(' ', '_')}_completo.png"),
+        os.path.join('static', 'carnets', f'carnet_combinado_{cedula_limpia}.png'),
+        os.path.join('static', 'carnets', f'carnet_{cedula_limpia}.png'),
+    ]
+
+    for carnet_path in posibles_carnets:
+        if os.path.exists(carnet_path):
+            return os.path.basename(carnet_path)
+    return None
 
 # =============================================
 # FUNCIONES AUXILIARES PRINCIPALES
@@ -1111,12 +1156,18 @@ def dashboard_admin():
         carnets=carnets   # ESTA ES LA NUEVA VARIABLE
     )
 
+# TAREA DE VALIDACION - 17
+# Se envía al frontend la cédula autorizada para bloquear consulta en UI.
 @app.route('/dashboard_aprendiz')
 def dashboard_aprendiz():
     if 'usuario' not in session or session['rol'] != 'aprendiz':
         flash('Debes iniciar sesión como aprendiz para acceder.', 'error')
         return redirect(url_for('login'))
-    return render_template("dashboard_aprendiz.html", usuario=session['usuario'])
+    return render_template(
+        "dashboard_aprendiz.html",
+        usuario=session['usuario'],
+        cedula_autenticada=obtener_cedula_aprendiz_autenticado()
+    )
 
 # =====================================================
 # 🆕 NUEVOS ENDPOINTS DE API PARA LA BÚSQUEDA
@@ -1250,12 +1301,26 @@ def api_lista_aprendices_filtrada():
             'message': f'Error: {str(e)}'
         }), 500
 
+# TAREA DE VALIDACION - 17
+# API con control de propiedad: primera búsqueda fija cédula y luego la restringe.
 @app.route('/api/buscar_aprendiz/<cedula>')
 def api_buscar_aprendiz(cedula):
     """Buscar un aprendiz específico por cédula"""
     try:
 
         cedula_limpia = ''.join(filter(str.isdigit, cedula))
+
+        if 'usuario' not in session:
+            return jsonify({'success': False, 'message': 'Debes iniciar sesión para consultar datos'}), 401
+
+        if session.get('rol') == 'aprendiz':
+            cedula_autorizada = obtener_cedula_aprendiz_autenticado()
+            if cedula_autorizada and cedula_limpia != cedula_autorizada:
+                return jsonify({
+                    'success': False,
+                    'message': f'Solo puedes consultar la cédula vinculada a esta sesión: {cedula_autorizada}.'
+                }), 403
+
         empleado = buscar_empleado_completo(cedula_limpia)
         
         if empleado:
@@ -1277,6 +1342,10 @@ def api_buscar_aprendiz(cedula):
             except Exception as e:
                 print("Error leyendo carnets:", e)
                 empleado['carnet_generado'] = False
+
+            # Si es aprendiz y aún no tiene cédula vinculada, se fija en la primera consulta exitosa
+            if session.get('rol') == 'aprendiz' and not obtener_cedula_aprendiz_autenticado():
+                session['aprendiz_cedula_auth'] = cedula_limpia
 
             return jsonify({'success': True, 'data': empleado})
         else:
@@ -1584,7 +1653,13 @@ def registro_aprendiz():
             flash(f"Error inesperado: {e}")
             return redirect(request.url)
 
-    return render_template("registro_aprendiz.html", usuario=session['usuario'], fecha_hoy=hoy.strftime("%Y-%m-%d"), fecha_vencimiento=vencimiento.strftime("%Y-%m-%d"))
+    return render_template(
+        "registro_aprendiz.html",
+        usuario=session['usuario'],
+        fecha_hoy=hoy.strftime("%Y-%m-%d"),
+        fecha_vencimiento=vencimiento.strftime("%Y-%m-%d"),
+        cedula_autenticada=obtener_cedula_aprendiz_autenticado()
+    )
 
 @app.route('/generar')
 def generar():
@@ -1679,9 +1754,55 @@ def generar_carnet_web():
     print("Mostrando formulario GET")
     return render_template("generar.html")
 
+# TAREA DE VALIDACION - 17
+# Solo el aprendiz dueño (cédula de sesión) puede descargar su archivo de carnet.
 @app.route('/descargar_carnet/<path:carnet>')
 def descargar_carnet(carnet):
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    if session.get('rol') == 'aprendiz':
+        cedula_autorizada = obtener_cedula_aprendiz_autenticado()
+        if not cedula_autorizada:
+            flash('Primero consulta tu cédula en el dashboard para vincular esta sesión.', 'error')
+            return redirect(url_for('dashboard_aprendiz'))
+
+        nombre_archivo = os.path.basename(carnet)
+        match_cedula = re.search(r'(\d{7,12})', nombre_archivo)
+        if match_cedula:
+            if match_cedula.group(1) != cedula_autorizada:
+                flash('No tienes permisos para descargar ese carnet.', 'error')
+                return redirect(url_for('dashboard_aprendiz'))
+        else:
+            # TAREA DE VALIDACION - 17
+            # Permite archivos *_completo.png del aprendiz autenticado.
+            carnet_autorizado = obtener_archivo_carnet_por_cedula(cedula_autorizada)
+            if not carnet_autorizado or nombre_archivo != carnet_autorizado:
+                flash('No tienes permisos para descargar ese carnet.', 'error')
+                return redirect(url_for('dashboard_aprendiz'))
+
     return send_from_directory('static/carnets', carnet, as_attachment=True)
+
+
+# TAREA DE VALIDACION - 17
+# Descarga segura para aprendiz autenticado usando su cédula vinculada en sesión.
+@app.route('/descargar_mi_carnet')
+def descargar_mi_carnet():
+    if 'usuario' not in session or session.get('rol') != 'aprendiz':
+        flash('Debes iniciar sesión como aprendiz para descargar tu carnet.', 'error')
+        return redirect(url_for('login'))
+
+    cedula_autorizada = obtener_cedula_aprendiz_autenticado()
+    if not cedula_autorizada:
+        flash('Primero consulta tu cédula en el dashboard para vincular esta sesión.', 'error')
+        return redirect(url_for('dashboard_aprendiz'))
+
+    carnet_archivo = obtener_archivo_carnet_por_cedula(cedula_autorizada)
+    if not carnet_archivo:
+        flash('Tu carnet aún no está disponible para descarga.', 'warning')
+        return redirect(url_for('dashboard_aprendiz'))
+
+    return redirect(url_for('descargar_carnet', carnet=carnet_archivo))
 
 @app.route('/descargar_plantilla')
 def descargar_plantilla():
@@ -1901,6 +2022,8 @@ def buscar_rapido():
     
     return render_template('buscar_rapido.html', aprendiz=aprendiz)
 
+# TAREA DE VALIDACION - 17
+# Bloquea actualización de foto para cédulas distintas a la vinculada en sesión.
 @app.route('/actualizar_foto_rapido', methods=['POST'])
 def actualizar_foto_rapido():
     """Ruta para actualizar foto - accesible para aprendiz y admin"""
@@ -1916,6 +2039,19 @@ def actualizar_foto_rapido():
         
         # Limpiar cédula
         cedula_limpia = ''.join(filter(str.isdigit, cedula))
+
+        if session.get('rol') == 'aprendiz':
+            cedula_autorizada = obtener_cedula_aprendiz_autenticado()
+            if not cedula_autorizada:
+                return jsonify({
+                    'success': False,
+                    'message': 'Primero consulta tu cédula en el dashboard para vincular esta sesión.'
+                }), 403
+            if cedula_limpia != cedula_autorizada:
+                return jsonify({
+                    'success': False,
+                    'message': 'Solo puedes actualizar tu propia foto.'
+                }), 403
         
         # Procesar foto con backup
         exito, nombre_archivo_foto, mensaje = procesar_foto_admin_con_backup(archivo_foto, cedula_limpia)

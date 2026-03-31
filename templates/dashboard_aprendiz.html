@@ -485,6 +485,10 @@
                 </div>
                 <div class="menu-section">
                     <div class="menu-section-title">Mis Datos</div>
+                    {# TAREA DE VALIDACION - 17 #}
+                    <a href="#" class="menu-item" id="menuItemDescargarCarnet" onclick="descargarMiCarnet(); return false;" style="display:none;">
+                        <div class="menu-icon">📥</div><span class="menu-text">Descargar carnet</span>
+                    </a>
                     <a href="#" class="menu-item" onclick="abrirSeccionConsulta()">
                         <div class="menu-icon">🔍</div><span class="menu-text">Consultar documento</span>
                     </a>
@@ -531,6 +535,16 @@
                 </div>
                 <div class="info-card">
                     <h3>Búsqueda por Número de Documento</h3>
+                    {# TAREA DE VALIDACION - 17 #}
+                    {% if cedula_autenticada %}
+                    <div class="alert alert-info">
+                        🔐 Seguridad activa: solo puedes consultar y descargar el carnet asociado a tu documento autenticado ({{ cedula_autenticada }}).
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        🔐 Seguridad de sesión: después de tu primera búsqueda, la cédula quedará bloqueada en esta sesión.
+                    </div>
+                    {% endif %}
                     <form id="formularioConsulta" method="POST" style="margin-top:20px">
                         <div class="form-group">
                             <label class="form-label" for="cedula">Número de documento:</label>
@@ -542,6 +556,8 @@
                                placeholder="Ingresa tu número de documento"
                                title="Por favor, ingresa tu número de documento"
                                autocomplete="off"
+                               {# TAREA DE VALIDACION - 17 #}
+                               {% if cedula_autenticada %}value="{{ cedula_autenticada }}" readonly{% endif %}
                                required
                             >
                         </div>
@@ -775,7 +791,9 @@
             var cedula = document.getElementById('cedula').value.trim();
             var resultDiv = document.getElementById('resultadoConsulta');
             var btnConsultar = document.getElementById('btnConsultar');
+            var menuDescarga = document.getElementById('menuItemDescargarCarnet');
             if (!cedula) { resultDiv.innerHTML = '<div class="alert alert-error">❌ Por favor ingresa tu número de documento</div>'; return; }
+            if (menuDescarga) menuDescarga.style.display = 'none';
             btnConsultar.disabled = true;
             btnConsultar.innerHTML = '<span class="spinner"></span> Buscando...';
             resultDiv.innerHTML = '';
@@ -787,12 +805,17 @@
                 if (data.success && data.data) {
                     window._aprendizActual = data.data;
                     mostrarInfoAprendiz(data.data);
+                    if (menuDescarga) {
+                        menuDescarga.style.display = data.data.carnet_generado ? 'flex' : 'none';
+                    }
                 } else {
                     resultDiv.innerHTML = '<div class="alert alert-error"><strong>❌ No encontrado:</strong> ' + (data.message || 'Verifica el número de documento') + '</div>';
+                    if (menuDescarga) menuDescarga.style.display = 'none';
                 }
             } catch (error) {
                 mostrarLoading(false);
                 resultDiv.innerHTML = '<div class="alert alert-error"><strong>❌ Error:</strong> ' + error.message + '</div>';
+                if (menuDescarga) menuDescarga.style.display = 'none';
             } finally {
                 btnConsultar.disabled = false;
                 btnConsultar.innerHTML = '🔍 Buscar Aprendiz';
@@ -1017,6 +1040,10 @@
             }
         }
 
+        function descargarMiCarnet() {
+            window.location.href = '/descargar_mi_carnet';
+        }
+
         window.addEventListener('resize', function() {
             if (window.innerWidth > 768) {
                 document.getElementById('sidebar').classList.remove('active');
@@ -1024,7 +1051,18 @@
             }
         });
 
-        document.addEventListener('DOMContentLoaded', function() { showSection('dashboard'); });
+        document.addEventListener('DOMContentLoaded', function() {
+            showSection('dashboard');
+        });
+        {# TAREA DE VALIDACION - 17 #}
+        {% if cedula_autenticada %}
+        document.addEventListener('DOMContentLoaded', function() {
+            var cedulaInput = document.getElementById('cedula');
+            if (cedulaInput) {
+                cedulaInput.value = '{{ cedula_autenticada }}';
+            }
+        });
+        {% endif %}
     </script>
 </body>
 </html>
