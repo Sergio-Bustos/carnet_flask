@@ -364,4 +364,3 @@ def combinar_anverso_reverso(nombre_archivo_anverso: str, nombre_archivo_reverso
     print(f"✅ Carnet combinado guardado: {ruta_combinada}")
 
     return nombre_archivo
-

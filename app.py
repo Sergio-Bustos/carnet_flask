@@ -16,6 +16,7 @@ import shutil
 import json
 import time
 import re
+import calendar
 
 app = Flask(__name__)
 app.secret_key = 'clave_secreta_segura'
@@ -1720,26 +1721,27 @@ def generar_carnet_web():
             nombre_archivo = os.path.basename(ruta_carnet)
             print(f"Nombre archivo: {nombre_archivo}")
             
-            # Combinar anverso y reverso aquí (nombre está en empleado['nombre'])
+            # Combinar anverso y reverso
             print("Combinando anverso y reverso...")
-            reverso_path = f"reverso_{empleado['cedula']}.png"  # Nombre del reverso esperado
+            reverso_path = f"reverso_{empleado['cedula']}.png"
             archivo_combinado = combinar_anverso_reverso(nombre_archivo, reverso_path, empleado['nombre'])
-
-
-            conn = sqlite3.connect('carnet.db')
-            cursor = conn.cursor()
-
-            cursor.execute("""
-                UPDATE empleados 
-                SET carnet_disponible = 1 
-                WHERE cedula = ?
-            """, (cedula_limpia,))
-
-            conn.commit()
-            conn.close()
-            
             print(f"Archivo combinado: {archivo_combinado}")
-            
+
+            # ✅ Marcar carnet como disponible SOLO si el PNG combinado existe en disco
+            ruta_png = os.path.join('static', 'carnets', archivo_combinado)
+            if os.path.exists(ruta_png):
+                conn = sqlite3.connect('carnet.db')
+                cursor = conn.cursor()
+                cursor.execute(
+                    "UPDATE empleados SET carnet_disponible = 1 WHERE cedula = ?",
+                    (cedula_limpia,)
+                )
+                conn.commit()
+                conn.close()
+                print(f"✅ carnet_disponible = 1 para cédula {cedula_limpia}")
+            else:
+                print(f"⚠️ PNG combinado no encontrado en disco, no se marcó carnet_disponible")
+
             print("Carnet generado exitosamente!")
             flash(f"Carnet generado exitosamente para {empleado['nombre']} (Nivel: {empleado['nivel_formacion']})", 'success')
             return render_template("ver_carnet.html", carnet=archivo_combinado, empleado=empleado)
@@ -1750,9 +1752,37 @@ def generar_carnet_web():
             print(f"Traceback completo: {traceback.format_exc()}")
             flash(f"Error al generar el carné: {str(e)}", 'error')
             return render_template("generar.html")
-    
+
     print("Mostrando formulario GET")
     return render_template("generar.html")
+
+# TAREA DE VALIDACION - 16
+# Descarga por número de documento: /descargar_carnet/1234567890 (Content-Disposition: attachment via as_attachment).
+@app.route('/descargar_carnet/<int:cedula>')
+def descargar_carnet_por_cedula(cedula):
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    cedula_str = str(cedula)
+
+    if session.get('rol') == 'aprendiz':
+        cedula_autorizada = obtener_cedula_aprendiz_autenticado()
+        if not cedula_autorizada:
+            flash('Primero consulta tu cédula en el dashboard para vincular esta sesión.', 'error')
+            return redirect(url_for('dashboard_aprendiz'))
+        if cedula_str != cedula_autorizada:
+            flash('No tienes permisos para descargar ese carnet.', 'error')
+            return redirect(url_for('dashboard_aprendiz'))
+
+    carnet_archivo = obtener_archivo_carnet_por_cedula(cedula_str)
+    if not carnet_archivo:
+        flash('El carnet no está disponible para descarga.', 'warning')
+        if session.get('rol') == 'aprendiz':
+            return redirect(url_for('dashboard_aprendiz'))
+        return redirect(url_for('dashboard_admin'))
+
+    return send_from_directory('static/carnets', carnet_archivo, as_attachment=True)
+
 
 # TAREA DE VALIDACION - 17
 # Solo el aprendiz dueño (cédula de sesión) puede descargar su archivo de carnet.
@@ -2440,6 +2470,329 @@ def eliminar_foto_aprendiz(aprendiz_id):
     
     return redirect(url_for('consultar_aprendices'))
 
+@app.route('/reporte_mensual')
+def reporte_mensual():
+    if 'usuario' not in session or session.get('rol') != 'admin':
+        flash('Acceso denegado. Solo administradores.', 'error')
+        return redirect(url_for('login'))
+
+    hoy = date.today()
+    try:
+        mes_actual  = int(request.args.get('mes',  hoy.month))
+        anio_actual = int(request.args.get('anio', hoy.year))
+        if not (1 <= mes_actual <= 12):
+            mes_actual = hoy.month
+    except (ValueError, TypeError):
+        mes_actual  = hoy.month
+        anio_actual = hoy.year
+
+    primer_dia = date(anio_actual, mes_actual, 1)
+    ultimo_dia = date(anio_actual, mes_actual,
+                      calendar.monthrange(anio_actual, mes_actual)[1])
+
+    fecha_inicio_str = primer_dia.strftime('%Y-%m-%d')
+    fecha_fin_str    = ultimo_dia.strftime('%Y-%m-%d')
+
+    meses_es = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
+    periodo          = f"{meses_es[mes_actual-1]} {anio_actual}"
+    fecha_generacion = datetime.now().strftime('%d/%m/%Y %H:%M')
+
+    try:
+        conn_anios = sqlite3.connect('carnet.db')
+        cur_anios  = conn_anios.cursor()
+        cur_anios.execute("SELECT MIN(fecha_emision), MAX(fecha_emision) FROM empleados")
+        row_anios = cur_anios.fetchone()
+        conn_anios.close()
+        anio_min = int(row_anios[0][:4]) if row_anios and row_anios[0] else hoy.year
+        anios_disponibles = list(range(anio_min, hoy.year + 2))
+    except Exception:
+        anios_disponibles = [hoy.year]
+
+    try:
+        conn   = sqlite3.connect('carnet.db')
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT COUNT(*) FROM empleados")
+        total_aprendices = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM empleados WHERE foto IS NOT NULL AND foto != ''")
+        con_foto_total = cursor.fetchone()[0]
+        sin_foto_total = total_aprendices - con_foto_total
+        pct_con_foto   = round((con_foto_total / total_aprendices * 100), 1) if total_aprendices > 0 else 0
+
+        cursor.execute("SELECT COUNT(*) FROM empleados WHERE fecha_emision BETWEEN ? AND ?", (fecha_inicio_str, fecha_fin_str))
+        registrados_periodo = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(DISTINCT codigo_ficha) FROM empleados WHERE codigo_ficha IS NOT NULL AND codigo_ficha != ''")
+        total_fichas = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(DISTINCT nombre_programa) FROM empleados WHERE nombre_programa IS NOT NULL AND nombre_programa != ''")
+        total_programas = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(*) FROM empleados WHERE carnet_disponible = 1")
+        carnets_disponibles = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM empleados WHERE carnet_disponible = 0 OR carnet_disponible IS NULL")
+        carnets_no_disponibles = cursor.fetchone()[0]
+        carnets_total = carnets_disponibles
+        pct_carnets_disponibles    = round((carnets_disponibles    / total_aprendices * 100), 1) if total_aprendices > 0 else 0
+        pct_carnets_no_disponibles = round((carnets_no_disponibles / total_aprendices * 100), 1) if total_aprendices > 0 else 0
+
+        cursor.execute("SELECT COUNT(*) FROM empleados WHERE foto IS NOT NULL AND foto != '' AND (carnet_disponible = 0 OR carnet_disponible IS NULL)")
+        carnets_pendientes = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM empleados WHERE carnet_disponible = 1 AND (foto IS NULL OR foto = '')")
+        carnets_sin_foto = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM empleados WHERE carnet_disponible = 1 AND DATE(updated_at) BETWEEN ? AND ?", (fecha_inicio_str, fecha_fin_str))
+        carnets_periodo = cursor.fetchone()[0]
+
+        semanas = _calcular_semanas_mes(primer_dia, ultimo_dia)
+        por_semana = []
+        for sem in semanas:
+            fi = sem['inicio'].strftime('%Y-%m-%d')
+            ff = sem['fin'].strftime('%Y-%m-%d')
+            cursor.execute("SELECT COUNT(*), SUM(CASE WHEN foto IS NOT NULL AND foto != '' THEN 1 ELSE 0 END) FROM empleados WHERE fecha_emision BETWEEN ? AND ?", (fi, ff))
+            row_s = cursor.fetchone()
+            ap = row_s[0] or 0; cf = row_s[1] or 0
+            cursor.execute("SELECT COUNT(*) FROM empleados WHERE carnet_disponible = 1 AND DATE(updated_at) BETWEEN ? AND ?", (fi, ff))
+            cs = cursor.fetchone()[0] or 0
+            por_semana.append({'numero': sem['numero'], 'fecha_inicio': sem['inicio'].strftime('%d/%m'), 'fecha_fin': sem['fin'].strftime('%d/%m'), 'aprendices': ap, 'carnets': cs, 'con_foto': cf, 'sin_foto': ap - cf, 'pct_foto': round((cf / ap * 100), 1) if ap > 0 else 0})
+
+        cursor.execute("SELECT e.codigo_ficha, COUNT(*), SUM(CASE WHEN e.foto IS NOT NULL AND e.foto != '' THEN 1 ELSE 0 END), SUM(CASE WHEN e.carnet_disponible = 1 THEN 1 ELSE 0 END) FROM empleados e WHERE e.fecha_emision BETWEEN ? AND ? AND e.codigo_ficha IS NOT NULL AND e.codigo_ficha != '' GROUP BY e.codigo_ficha ORDER BY 2 DESC", (fecha_inicio_str, fecha_fin_str))
+        fichas_periodo = [{'ficha': r[0], 'total': r[1], 'con_foto': r[2], 'carnets_disponibles': r[3]} for r in cursor.fetchall()]
+
+        cursor.execute("SELECT nombre_programa, COUNT(*), SUM(CASE WHEN foto IS NOT NULL AND foto != '' THEN 1 ELSE 0 END) FROM empleados WHERE nombre_programa IS NOT NULL AND nombre_programa != '' GROUP BY nombre_programa ORDER BY 2 DESC LIMIT 20")
+        por_programa = [{'programa': r[0], 'total': r[1], 'con_foto': r[2], 'pct_foto': round((r[2]/r[1]*100),1) if r[1]>0 else 0} for r in cursor.fetchall()]
+
+        cursor.execute("SELECT COALESCE(nivel_formacion,'Sin especificar'), COUNT(*), SUM(CASE WHEN foto IS NOT NULL AND foto != '' THEN 1 ELSE 0 END), SUM(CASE WHEN carnet_disponible = 1 THEN 1 ELSE 0 END) FROM empleados GROUP BY nivel_formacion ORDER BY 2 DESC")
+        por_nivel = [{'nivel': r[0], 'total': r[1], 'con_foto': r[2], 'carnets_disponibles': r[3], 'carnets_no_disponibles': r[1]-r[3], 'pct_total': round((r[1]/total_aprendices*100),1) if total_aprendices>0 else 0, 'pct_disponibles': round((r[3]/r[1]*100),1) if r[1]>0 else 0} for r in cursor.fetchall()]
+
+        cursor.execute("SELECT e.codigo_ficha, MAX(e.nombre_programa), COALESCE(MAX(e.nivel_formacion),'Técnico'), COUNT(*), SUM(CASE WHEN e.foto IS NOT NULL AND e.foto != '' THEN 1 ELSE 0 END), SUM(CASE WHEN e.carnet_disponible = 1 THEN 1 ELSE 0 END) FROM empleados e WHERE e.codigo_ficha IS NOT NULL AND e.codigo_ficha != '' GROUP BY e.codigo_ficha ORDER BY 4 DESC LIMIT 15")
+        top_fichas = [{'ficha': r[0], 'programa': r[1] or 'Sin programa', 'nivel': r[2], 'total': r[3], 'con_foto': r[4], 'sin_foto': r[3]-r[4], 'carnets_disponibles': r[5], 'carnets_generados': r[5], 'pct_foto': round((r[4]/r[3]*100),1) if r[3]>0 else 0} for r in cursor.fetchall()]
+
+        cursor.execute("SELECT codigo_ficha, MAX(nombre_programa), COUNT(*), SUM(CASE WHEN foto IS NULL OR foto = '' THEN 1 ELSE 0 END), SUM(CASE WHEN foto IS NOT NULL AND foto != '' THEN 1 ELSE 0 END) FROM empleados WHERE codigo_ficha IS NOT NULL AND codigo_ficha != '' GROUP BY codigo_ficha HAVING SUM(CASE WHEN foto IS NULL OR foto = '' THEN 1 ELSE 0 END) > 0 ORDER BY 4 DESC")
+        fichas_sin_foto = [{'ficha': r[0], 'programa': r[1] or 'Sin programa', 'total': r[2], 'sin_foto': r[3], 'con_foto': r[4], 'pct_sin_foto': round((r[3]/r[2]*100),1) if r[2]>0 else 0} for r in cursor.fetchall()]
+
+        carnets_por_semana = []
+        acumulado = 0
+        for sem in semanas:
+            fi = sem['inicio'].strftime('%Y-%m-%d')
+            ff = sem['fin'].strftime('%Y-%m-%d')
+            cursor.execute("SELECT COUNT(*), SUM(CASE WHEN carnet_disponible = 1 THEN 1 ELSE 0 END) FROM empleados WHERE DATE(updated_at) BETWEEN ? AND ? AND carnet_disponible = 1", (fi, ff))
+            row_cs = cursor.fetchone()
+            gen = row_cs[0] or 0; disp = row_cs[1] or 0
+            acumulado += gen
+            carnets_por_semana.append({'numero': sem['numero'], 'fecha_inicio': sem['inicio'].strftime('%d/%m'), 'fecha_fin': sem['fin'].strftime('%d/%m'), 'carnets_generados': gen, 'disponibles': disp, 'no_disponibles': gen-disp, 'acumulado': acumulado, 'pct_total': round((gen/carnets_periodo*100),1) if carnets_periodo>0 else 0})
+
+        conn.close()
+
+        stats = {
+            'total_aprendices': total_aprendices, 'registrados_periodo': registrados_periodo,
+            'total_fichas': total_fichas, 'total_programas': total_programas,
+            'con_foto': con_foto_total, 'sin_foto': sin_foto_total, 'pct_con_foto': pct_con_foto,
+            'carnets_total': carnets_total, 'carnets_periodo': carnets_periodo,
+            'carnets_disponibles': carnets_disponibles, 'carnets_no_disponibles': carnets_no_disponibles,
+            'carnets_pendientes': carnets_pendientes, 'carnets_sin_foto': carnets_sin_foto,
+            'pct_carnets_disponibles': pct_carnets_disponibles,
+            'pct_carnets_no_disponibles': pct_carnets_no_disponibles,
+            'por_semana': por_semana, 'fichas_periodo': fichas_periodo,
+            'por_programa': por_programa, 'por_nivel': por_nivel,
+            'top_fichas': top_fichas, 'fichas_sin_foto': fichas_sin_foto,
+            'carnets_por_semana': carnets_por_semana,
+        }
+
+        return render_template(
+            'reporte_mensual.html',
+            stats=stats, periodo=periodo, fecha_generacion=fecha_generacion,
+            fecha_inicio=primer_dia.strftime('%d/%m/%Y'),
+            fecha_fin=ultimo_dia.strftime('%d/%m/%Y'),
+            mes_actual=mes_actual, anio_actual=anio_actual,
+            anios_disponibles=anios_disponibles,
+        )
+
+    except Exception as e:
+        print(f"Error generando reporte: {e}")
+        import traceback; traceback.print_exc()
+        flash(f'Error al generar el reporte: {str(e)}', 'error')
+        return redirect(url_for('dashboard_admin'))
+import pdfkit
+from flask import make_response
+
+@app.route('/reporte_mensual/pdf')
+def reporte_mensual_pdf():
+    if 'usuario' not in session or session.get('rol') != 'admin':
+        flash('Acceso denegado. Solo administradores.', 'error')
+        return redirect(url_for('login'))
+
+    hoy = date.today()
+    try:
+        mes_actual  = int(request.args.get('mes',  hoy.month))
+        anio_actual = int(request.args.get('anio', hoy.year))
+        if not (1 <= mes_actual <= 12):
+            mes_actual = hoy.month
+    except (ValueError, TypeError):
+        mes_actual  = hoy.month
+        anio_actual = hoy.year
+
+    primer_dia = date(anio_actual, mes_actual, 1)
+    ultimo_dia = date(anio_actual, mes_actual,
+                      calendar.monthrange(anio_actual, mes_actual)[1])
+
+    fecha_inicio_str = primer_dia.strftime('%Y-%m-%d')
+    fecha_fin_str    = ultimo_dia.strftime('%Y-%m-%d')
+
+    meses_es = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
+    periodo          = f"{meses_es[mes_actual-1]} {anio_actual}"
+    fecha_generacion = datetime.now().strftime('%d/%m/%Y %H:%M')
+
+    try:
+        conn_anios = sqlite3.connect('carnet.db')
+        cur_anios  = conn_anios.cursor()
+        cur_anios.execute("SELECT MIN(fecha_emision), MAX(fecha_emision) FROM empleados")
+        row_anios = cur_anios.fetchone()
+        conn_anios.close()
+        anio_min = int(row_anios[0][:4]) if row_anios and row_anios[0] else hoy.year
+        anios_disponibles = list(range(anio_min, hoy.year + 2))
+    except Exception:
+        anios_disponibles = [hoy.year]
+
+    try:
+        conn   = sqlite3.connect('carnet.db')
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT COUNT(*) FROM empleados")
+        total_aprendices = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM empleados WHERE foto IS NOT NULL AND foto != ''")
+        con_foto_total = cursor.fetchone()[0]
+        sin_foto_total = total_aprendices - con_foto_total
+        pct_con_foto   = round((con_foto_total / total_aprendices * 100), 1) if total_aprendices > 0 else 0
+
+        cursor.execute("SELECT COUNT(*) FROM empleados WHERE fecha_emision BETWEEN ? AND ?", (fecha_inicio_str, fecha_fin_str))
+        registrados_periodo = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(DISTINCT codigo_ficha) FROM empleados WHERE codigo_ficha IS NOT NULL AND codigo_ficha != ''")
+        total_fichas = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(DISTINCT nombre_programa) FROM empleados WHERE nombre_programa IS NOT NULL AND nombre_programa != ''")
+        total_programas = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(*) FROM empleados WHERE carnet_disponible = 1")
+        carnets_disponibles = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM empleados WHERE carnet_disponible = 0 OR carnet_disponible IS NULL")
+        carnets_no_disponibles = cursor.fetchone()[0]
+        carnets_total = carnets_disponibles
+        pct_carnets_disponibles    = round((carnets_disponibles    / total_aprendices * 100), 1) if total_aprendices > 0 else 0
+        pct_carnets_no_disponibles = round((carnets_no_disponibles / total_aprendices * 100), 1) if total_aprendices > 0 else 0
+
+        cursor.execute("SELECT COUNT(*) FROM empleados WHERE foto IS NOT NULL AND foto != '' AND (carnet_disponible = 0 OR carnet_disponible IS NULL)")
+        carnets_pendientes = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM empleados WHERE carnet_disponible = 1 AND (foto IS NULL OR foto = '')")
+        carnets_sin_foto = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM empleados WHERE carnet_disponible = 1 AND DATE(updated_at) BETWEEN ? AND ?", (fecha_inicio_str, fecha_fin_str))
+        carnets_periodo = cursor.fetchone()[0]
+
+        semanas = _calcular_semanas_mes(primer_dia, ultimo_dia)
+        por_semana = []
+        for sem in semanas:
+            fi = sem['inicio'].strftime('%Y-%m-%d')
+            ff = sem['fin'].strftime('%Y-%m-%d')
+            cursor.execute("SELECT COUNT(*), SUM(CASE WHEN foto IS NOT NULL AND foto != '' THEN 1 ELSE 0 END) FROM empleados WHERE fecha_emision BETWEEN ? AND ?", (fi, ff))
+            row_s = cursor.fetchone()
+            ap = row_s[0] or 0; cf = row_s[1] or 0
+            cursor.execute("SELECT COUNT(*) FROM empleados WHERE carnet_disponible = 1 AND DATE(updated_at) BETWEEN ? AND ?", (fi, ff))
+            cs = cursor.fetchone()[0] or 0
+            por_semana.append({'numero': sem['numero'], 'fecha_inicio': sem['inicio'].strftime('%d/%m'), 'fecha_fin': sem['fin'].strftime('%d/%m'), 'aprendices': ap, 'carnets': cs, 'con_foto': cf, 'sin_foto': ap - cf, 'pct_foto': round((cf / ap * 100), 1) if ap > 0 else 0})
+
+        cursor.execute("SELECT e.codigo_ficha, COUNT(*), SUM(CASE WHEN e.foto IS NOT NULL AND e.foto != '' THEN 1 ELSE 0 END), SUM(CASE WHEN e.carnet_disponible = 1 THEN 1 ELSE 0 END) FROM empleados e WHERE e.fecha_emision BETWEEN ? AND ? AND e.codigo_ficha IS NOT NULL AND e.codigo_ficha != '' GROUP BY e.codigo_ficha ORDER BY 2 DESC", (fecha_inicio_str, fecha_fin_str))
+        fichas_periodo = [{'ficha': r[0], 'total': r[1], 'con_foto': r[2], 'carnets_disponibles': r[3]} for r in cursor.fetchall()]
+
+        cursor.execute("SELECT nombre_programa, COUNT(*), SUM(CASE WHEN foto IS NOT NULL AND foto != '' THEN 1 ELSE 0 END) FROM empleados WHERE nombre_programa IS NOT NULL AND nombre_programa != '' GROUP BY nombre_programa ORDER BY 2 DESC LIMIT 20")
+        por_programa = [{'programa': r[0], 'total': r[1], 'con_foto': r[2], 'pct_foto': round((r[2]/r[1]*100),1) if r[1]>0 else 0} for r in cursor.fetchall()]
+
+        cursor.execute("SELECT COALESCE(nivel_formacion,'Sin especificar'), COUNT(*), SUM(CASE WHEN foto IS NOT NULL AND foto != '' THEN 1 ELSE 0 END), SUM(CASE WHEN carnet_disponible = 1 THEN 1 ELSE 0 END) FROM empleados GROUP BY nivel_formacion ORDER BY 2 DESC")
+        por_nivel = [{'nivel': r[0], 'total': r[1], 'con_foto': r[2], 'carnets_disponibles': r[3], 'carnets_no_disponibles': r[1]-r[3], 'pct_total': round((r[1]/total_aprendices*100),1) if total_aprendices>0 else 0, 'pct_disponibles': round((r[3]/r[1]*100),1) if r[1]>0 else 0} for r in cursor.fetchall()]
+
+        cursor.execute("SELECT e.codigo_ficha, MAX(e.nombre_programa), COALESCE(MAX(e.nivel_formacion),'Técnico'), COUNT(*), SUM(CASE WHEN e.foto IS NOT NULL AND e.foto != '' THEN 1 ELSE 0 END), SUM(CASE WHEN e.carnet_disponible = 1 THEN 1 ELSE 0 END) FROM empleados e WHERE e.codigo_ficha IS NOT NULL AND e.codigo_ficha != '' GROUP BY e.codigo_ficha ORDER BY 4 DESC LIMIT 15")
+        top_fichas = [{'ficha': r[0], 'programa': r[1] or 'Sin programa', 'nivel': r[2], 'total': r[3], 'con_foto': r[4], 'sin_foto': r[3]-r[4], 'carnets_disponibles': r[5], 'carnets_generados': r[5], 'pct_foto': round((r[4]/r[3]*100),1) if r[3]>0 else 0} for r in cursor.fetchall()]
+
+        cursor.execute("SELECT codigo_ficha, MAX(nombre_programa), COUNT(*), SUM(CASE WHEN foto IS NULL OR foto = '' THEN 1 ELSE 0 END), SUM(CASE WHEN foto IS NOT NULL AND foto != '' THEN 1 ELSE 0 END) FROM empleados WHERE codigo_ficha IS NOT NULL AND codigo_ficha != '' GROUP BY codigo_ficha HAVING SUM(CASE WHEN foto IS NULL OR foto = '' THEN 1 ELSE 0 END) > 0 ORDER BY 4 DESC")
+        fichas_sin_foto = [{'ficha': r[0], 'programa': r[1] or 'Sin programa', 'total': r[2], 'sin_foto': r[3], 'con_foto': r[4], 'pct_sin_foto': round((r[3]/r[2]*100),1) if r[2]>0 else 0} for r in cursor.fetchall()]
+
+        carnets_por_semana = []
+        acumulado = 0
+        for sem in semanas:
+            fi = sem['inicio'].strftime('%Y-%m-%d')
+            ff = sem['fin'].strftime('%Y-%m-%d')
+            cursor.execute("SELECT COUNT(*), SUM(CASE WHEN carnet_disponible = 1 THEN 1 ELSE 0 END) FROM empleados WHERE DATE(updated_at) BETWEEN ? AND ? AND carnet_disponible = 1", (fi, ff))
+            row_cs = cursor.fetchone()
+            gen = row_cs[0] or 0; disp = row_cs[1] or 0
+            acumulado += gen
+            carnets_por_semana.append({'numero': sem['numero'], 'fecha_inicio': sem['inicio'].strftime('%d/%m'), 'fecha_fin': sem['fin'].strftime('%d/%m'), 'carnets_generados': gen, 'disponibles': disp, 'no_disponibles': gen-disp, 'acumulado': acumulado, 'pct_total': round((gen/carnets_periodo*100),1) if carnets_periodo>0 else 0})
+
+        conn.close()
+
+        stats = {
+            'total_aprendices': total_aprendices, 'registrados_periodo': registrados_periodo,
+            'total_fichas': total_fichas, 'total_programas': total_programas,
+            'con_foto': con_foto_total, 'sin_foto': sin_foto_total, 'pct_con_foto': pct_con_foto,
+            'carnets_total': carnets_total, 'carnets_periodo': carnets_periodo,
+            'carnets_disponibles': carnets_disponibles, 'carnets_no_disponibles': carnets_no_disponibles,
+            'carnets_pendientes': carnets_pendientes, 'carnets_sin_foto': carnets_sin_foto,
+            'pct_carnets_disponibles': pct_carnets_disponibles,
+            'pct_carnets_no_disponibles': pct_carnets_no_disponibles,
+            'por_semana': por_semana, 'fichas_periodo': fichas_periodo,
+            'por_programa': por_programa, 'por_nivel': por_nivel,
+            'top_fichas': top_fichas, 'fichas_sin_foto': fichas_sin_foto,
+            'carnets_por_semana': carnets_por_semana,
+        }
+
+        html_string = render_template(
+            'reporte_mensual.html',
+            stats=stats, periodo=periodo, fecha_generacion=fecha_generacion,
+            fecha_inicio=primer_dia.strftime('%d/%m/%Y'),
+            fecha_fin=ultimo_dia.strftime('%d/%m/%Y'),
+            mes_actual=mes_actual, anio_actual=anio_actual,
+            anios_disponibles=anios_disponibles,
+        )
+
+        pdf = pdfkit.from_string(html_string, False, options={
+            'encoding': 'UTF-8',
+            'enable-local-file-access': '',
+            'quiet': '',
+        })
+
+        response = make_response(pdf)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'attachment; filename=reporte_{periodo.replace(" ", "_")}.pdf'
+        return response
+
+    except Exception as e:
+        print(f"Error generando PDF: {e}")
+        import traceback; traceback.print_exc()
+        flash(f'Error al generar el PDF: {str(e)}', 'error')
+        return redirect(url_for('reporte_mensual'))
+# ── Helper: divide el mes en semanas ISO ──────────────────────────────
+def _calcular_semanas_mes(primer_dia, ultimo_dia):
+    """
+    Retorna lista de dicts {numero, inicio, fin} para cada semana
+    del mes, ajustando inicio/fin al primer/último día del mes.
+    """
+    semanas = []
+    cursor_day = primer_dia
+    num_semana = 1
+ 
+    while cursor_day <= ultimo_dia:
+        # Fin de semana = domingo de esa semana o último día del mes
+        fin_semana = cursor_day + timedelta(days=(6 - cursor_day.weekday()))
+        if fin_semana > ultimo_dia:
+            fin_semana = ultimo_dia
+ 
+        semanas.append({
+            'numero': num_semana,
+            'inicio': cursor_day,
+            'fin':    fin_semana,
+        })
+        cursor_day = fin_semana + timedelta(days=1)
+        num_semana += 1
+ 
+    return semanas
 # =============================================
 # RUTAS PARA GESTIÓN DE BACKUPS DE FOTOS
 # =============================================
@@ -2754,6 +3107,21 @@ def ver_carnet_archivo(cedula):
                 # Combinar anverso y reverso
                 reverso_path = f"reverso_{aprendiz['cedula']}.png"
                 carnet_encontrado = combinar_anverso_reverso(nombre_archivo, reverso_path, aprendiz['nombre'])
+
+                # ✅ Marcar carnet_disponible = 1 SOLO si el PNG existe en disco
+                ruta_png = os.path.join('static', 'carnets', carnet_encontrado)
+                if os.path.exists(ruta_png):
+                    conn = sqlite3.connect('carnet.db')
+                    cursor = conn.cursor()
+                    cursor.execute(
+                        "UPDATE empleados SET carnet_disponible = 1 WHERE cedula = ?",
+                        (aprendiz['cedula'],)
+                    )
+                    conn.commit()
+                    conn.close()
+                    print(f"✅ carnet_disponible = 1 marcado para cédula {aprendiz['cedula']}")
+                else:
+                    print(f"⚠️ PNG no encontrado en disco, no se marcó carnet_disponible")
                 
                 flash(f'✅ Carnet generado exitosamente para {aprendiz["nombre"]}', 'success')
                 
