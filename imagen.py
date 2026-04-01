@@ -318,11 +318,11 @@ def verificar_medidas(ancho: int, alto: int) -> bool:
     if ancho<ancho_minimo:
         return {"lado": "ancho", "medida": ancho_minimo}
     if alto<alto_minimo:
-        return {"lado": "alto", "medida": alto}
+        return {"lado": "alto", "medida": alto_minimo}
     return False
 #--------
 
-def combinar_anverso_reverso(nombre_archivo_anverso: str, nombre_archivo_reverso: str, nombre_aprendiz:str)  -> str:
+def combinar_anverso_reverso(nombre_archivo_anverso: str, nombre_archivo_reverso: str, nombre_aprendiz: str, cedula: str) -> str:
     ruta_anverso = os.path.join("static", "carnets", nombre_archivo_anverso)
     ruta_reverso = os.path.join("static", "carnets", nombre_archivo_reverso)
 
@@ -337,14 +337,14 @@ def combinar_anverso_reverso(nombre_archivo_anverso: str, nombre_archivo_reverso
     ancho_total = anverso.width + reverso.width + padding
     alto_total  = max(anverso.height, reverso.height) + 60
     
-    #Tarea: T5 :)
+    #Tarea: T5 :
     #verificar la medida del carnet con sus dos lados
     lados = verificar_medidas(ancho_total, alto_total)
     if lados:
         if lados["lado"] == "ancho":
-            ancho_total = ancho_total + (verificar_medidas["medida"]-ancho_total)
+            ancho_total = ancho_total + (lados["medida"]-ancho_total)
         if lados["lado"] == "alto":
-            alto_total = ancho_total + (verificar_medidas["medida"]-alto_total)
+            alto_total = alto_total + (lados["medida"]-alto_total)
     #-------------        
     
     combinado = Image.new("RGB", (ancho_total, alto_total), (245, 245, 245))
@@ -358,8 +358,7 @@ def combinar_anverso_reverso(nombre_archivo_anverso: str, nombre_archivo_reverso
               "ANVERSO", fill=(80, 80, 80), font=font_label)
     draw.text((anverso.width + padding + reverso.width // 2 - 40, reverso.height + 15),
               "REVERSO", fill=(80, 80, 80), font=font_label)
-
-    nombre_archivo = f"{nombre_aprendiz.replace(' ', '_')}_completo.png"
+    nombre_archivo =f"{nombre_aprendiz.replace(' ', '_')}_{cedula}.png"
     ruta_combinada = os.path.join("static", "carnets", nombre_archivo)
     combinado.save(ruta_combinada, dpi=(300, 300))
     print(f"✅ Carnet combinado guardado: {ruta_combinada}")

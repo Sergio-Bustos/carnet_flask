@@ -2521,11 +2521,11 @@ async function acDescargar(cedula, nombre) {
     mostrarLoading(true);
     for (const archivo of posibles) {
         try {
-            const resp = await fetch('/descargar_carnet/' + archivo, { method: 'HEAD' });
+            const resp = await fetch('/descargar_carnet/' + archivo + "/" + cedula, { method: 'HEAD' });
             if (resp.ok) {
                 mostrarLoading(false);
                 const a = document.createElement('a');
-                a.href = '/descargar_carnet/' + archivo; a.download = archivo;
+                a.href = '/descargar_carnet/' + archivo + "/" + cedula; a.download = archivo;
                 document.body.appendChild(a); a.click(); document.body.removeChild(a); return;
             }
         } catch(e) {}
@@ -3090,7 +3090,7 @@ function mcMostrarCarnetExistente(rutaCarnet, cedula, wrapD, wrapT) {
                 URL.revokeObjectURL(blobUrl); // liberar memoria
                 const nombreArchivo = rutaCarnet.split('/').pop();
                 const btnDl = document.getElementById('mcBtnDescargar');
-                btnDl.href = '/descargar_carnet/' + nombreArchivo;
+                btnDl.href = '/descargar_carnet/' + nombreArchivo + "/" + cedula;
                 btnDl.style.opacity = '1';
             };
             img.onerror = function() {
@@ -3100,7 +3100,7 @@ function mcMostrarCarnetExistente(rutaCarnet, cedula, wrapD, wrapT) {
                 wrapT.innerHTML = '<div class="mc-error" style="font-size:11px;color:#39A935">✅ Vista completa arriba</div>';
                 const nombreArchivo = rutaCarnet.split('/').pop();
                 const btnDl = document.getElementById('mcBtnDescargar');
-                btnDl.href = '/descargar_carnet/' + nombreArchivo;
+                btnDl.href = '/descargar_carnet/' + nombreArchivo + "/" + cedula;
                 btnDl.style.opacity = '1';
             };
             img.src = blobUrl;
@@ -3111,7 +3111,7 @@ function mcMostrarCarnetExistente(rutaCarnet, cedula, wrapD, wrapT) {
             wrapT.innerHTML = '<div class="mc-error">⚠️ ' + err.message + '</div>';
             const nombreArchivo = rutaCarnet.split('/').pop();
             const btnDl = document.getElementById('mcBtnDescargar');
-            btnDl.href = '/descargar_carnet/' + nombreArchivo;
+            btnDl.href = '/descargar_carnet/' + nombreArchivo + "/" + cedula;
             btnDl.style.opacity = '1';
         });
 }

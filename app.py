@@ -1756,8 +1756,8 @@ def generar_carnet_web():
 
 # TAREA DE VALIDACION - 17
 # Solo el aprendiz dueño (cédula de sesión) puede descargar su archivo de carnet.
-@app.route('/descargar_carnet/<path:carnet>')
-def descargar_carnet(carnet):
+@app.route('/descargar_carnet/<path:carnet>/<cedula>')
+def descargar_carnet(carnet, cedula):
     if 'usuario' not in session:
         return redirect(url_for('login'))
 
@@ -1780,8 +1780,9 @@ def descargar_carnet(carnet):
             if not carnet_autorizado or nombre_archivo != carnet_autorizado:
                 flash('No tienes permisos para descargar ese carnet.', 'error')
                 return redirect(url_for('dashboard_aprendiz'))
-
-    return send_from_directory('static/carnets', carnet, as_attachment=True)
+    user = buscar_empleado_completo(cedula)
+    
+    return send_from_directory('static/carnets', carnet, as_attachment=True, download_name = f"carnet_{user['nombre']}_{user['cedula']}.png" )
 
 
 # TAREA DE VALIDACION - 17
@@ -1802,7 +1803,7 @@ def descargar_mi_carnet():
         flash('Tu carnet aún no está disponible para descarga.', 'warning')
         return redirect(url_for('dashboard_aprendiz'))
 
-    return redirect(url_for('descargar_carnet', carnet=carnet_archivo))
+    return redirect(url_for('descargar_carnet', carnet=carnet_archivo, cedula=cedula_autorizada))
 
 @app.route('/descargar_plantilla')
 def descargar_plantilla():
