@@ -2596,7 +2596,7 @@ def reporte_mensual():
             'por_programa': por_programa, 'por_nivel': por_nivel,
             'top_fichas': top_fichas, 'fichas_sin_foto': fichas_sin_foto,
             'carnets_por_semana': carnets_por_semana,
-        }
+        } 
 
         return render_template(
             'reporte_mensual.html',
@@ -2606,7 +2606,7 @@ def reporte_mensual():
             mes_actual=mes_actual, anio_actual=anio_actual,
             anios_disponibles=anios_disponibles,
         )
-
+ 
     except Exception as e:
         print(f"Error generando reporte: {e}")
         import traceback; traceback.print_exc()

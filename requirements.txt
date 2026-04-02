@@ -9,3 +9,4 @@ openpyxl==3.1.2
 numpy==1.26.2
 matplotlib==3.8.2
 werkzeug==3.0.1
+pdfkit

@@ -857,6 +857,19 @@
                     {% else %}<div class="empty-state"><span class="empty-state-icon">📭</span>Sin carnets generados en este período.</div>{% endif %}
                 </div>
 
+
+                <div class="seccion">
+                    <div class="seccion-titulo">📊 Carnets generados por semana </div>
+                    <!-- Generaer grafico de barras para registros por semana -->
+                    {% if stats.por_semana %}
+                            <canvas id="graficoCarnets" width="600" height="400"></canvas>
+                        <!--Código para generar el gráfico de barras-->
+                    {% else %}<div class="empty-state"><span class="empty-state-icon">📭</span>Sin carnets generados en este período.</div>
+                    {% endif %}
+                </div> 
+
+                
+
                 <!-- conclusiones -->
                 <div class="seccion">
                     <div class="seccion-titulo">📌 Conclusiones y Recomendaciones</div>
@@ -881,8 +894,9 @@
     </main>
 </div>
 
-<script>
+<script type="module">
     // Funciones de navegación y sidebar
+    console.log("sadasdasd")
     function toggleSidebar() {
         document.getElementById('sidebar').classList.toggle('active');
         document.getElementById('sidebarOverlay').classList.toggle('active');
@@ -900,7 +914,7 @@
             document.getElementById('sidebarOverlay').classList.remove('active');
         }
     });
-
+    console.log("mmmmmmmmmmmmmmmmmmmmmmmmmmm")
     // Opcional: habilitar menú imprimir si ya hay carnets generados (para la apariencia)
     (function verificarCarnets() {
         fetch('/api/carnets_generados?_=' + Date.now())
@@ -915,8 +929,48 @@
                     }
                 }
             })
-            .catch(() => {});
+            .catch(() => {console.log(":)")});
     })();
+</script>
+
+<!-- Cargar Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Script para el gráfico -->
+<script>
+    const datosSemanas = {  
+        {% for s in stats.por_semana %}  
+            "semana{{ loop.index }}": {{ s.carnets }}{% if not loop.last %},{% endif %}  
+        {% endfor %}  
+    };
+    
+    // Separar claves y valores
+    const labels = Object.keys(datosSemanas);
+    const data = Object.values(datosSemanas);
+
+    // Verificar que el elemento canvas existe
+    const ctx = document.getElementById('graficoCarnets');
+    if (ctx) {
+        new Chart(ctx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Carnets por semana',
+                    data: data,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
 </script>
 </body>
 </html>
