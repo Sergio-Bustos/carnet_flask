@@ -940,6 +940,34 @@
 
         @media (max-width: 900px) { .db-metrics-grid { grid-template-columns: repeat(2, 1fr); } .db-metrics-grid.three { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 500px) { .db-metrics-grid, .db-metrics-grid.three { grid-template-columns: 1fr 1fr; } .db-metric-num { font-size: 28px; } }
+
+        /* ===== MODAL REPORTE MENSUAL ===== */
+        #reporteMensua.modal {
+            display: none; /* oculto por defecto */
+            position: fixed;
+            z-index: 9999; /* por encima de todo tu layout */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+
+            background: rgba(0, 0, 0, 0.6);
+
+            /* centrado */
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* cuando lo abras con JS (display:flex) */
+        #modalReporteMensual.modal.activo {
+            display: flex;
+        }
+
+        /* contenido tipo card */
+        #modalReporteMensual .modal-contenido {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 20px;
     </style>
 </head>
 <body>
@@ -1030,6 +1058,48 @@
                     <div class="db-titulo">📊 Panel de Control</div>
                     <div class="db-sub">Métricas en tiempo real del sistema</div>
                 </div>
+                <!-- BOTÓN -->
+                <button onclick="abrirModal()">📊 Reporte Mensual</button>
+
+                <!-- MODAL (justo debajo) -->
+                <div id="reporteMensualBtn" class="modal">
+                    <div class="modal-contenido">
+                        <span class="cerrar" onclick="cerrarModal()">&times;</span>
+                        <h2>Contenido del reporte</h2>
+                    </div>
+                </div>
+
+                <!-- CSS LOCAL -->
+                <style>
+                #reporteMensualBtn {
+                    display: none;
+                    position: fixed;
+                    z-index: 9999;
+                    top: 0; left: 0;
+                    width: 100%; height: 100%;
+                    background: rgba(0,0,0,0.6);
+
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                #reporteMensualBtn .modal-contenido {
+                    background: white;
+                    padding: 20px;
+                    border-radius: 12px;
+                }
+                </style>
+
+                <!-- JS LOCAL -->
+                <script>
+                function abrirModal() {
+                    document.getElementById("reporteMensualBtn").style.display = "flex";
+                }
+
+                function cerrarModal() {
+                    document.getElementById("reporteMensualBtn").style.display = "none";
+                }
+                </script>
                 <button class="db-refresh" onclick="dbCargarMetricas()" id="dbRefreshBtn">
                     <span class="db-refresh-icon">🔄</span> Actualizar
                 </button>
@@ -1417,7 +1487,15 @@
     </div>
 </div>
 
+
 <script>
+
+function mostrar_modal_reporte_mensual() {
+    const modal = document.getElementById("modalReporteMensual").classList.toggle("active")
+    console.log(modal.classList)
+    console.log("f")
+}
+
 let currentSection = 'dashboard';
 let aprendicesSeleccionados = new Set();
 
@@ -1425,6 +1503,17 @@ function toggleSidebar() {
     document.getElementById('sidebar').classList.toggle('active');
     document.getElementById('sidebarOverlay').classList.toggle('active');
 }
+
+window.addEventListener('load', function() {
+    // 1. Obtenemos el hash de la URL (ej: "#seccion-fotos")
+    const hash = window.location.hash.slice(1);
+
+    if (hash) {
+        // 2. Buscamos el elemento que tenga ese ID
+            showSection(hash)
+        
+    }
+});
 
 function showSection(sectionId) {
     document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
@@ -3136,6 +3225,9 @@ window.addEventListener('resize', function() {
 });
 
 document.addEventListener('DOMContentLoaded', function() { showSection('dashboard'); dbCargarMetricas(); dbIniciarAutoRefresh(); });
+
+
+
 </script>
 
 <!-- ══ MODAL VER CARNET ══ -->

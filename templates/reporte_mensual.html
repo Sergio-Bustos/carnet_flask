@@ -511,34 +511,34 @@
         <nav class="sidebar-menu">
             <div class="menu-section">
                 <div class="menu-section-title">Principal</div>
-                <a href="#" class="menu-item" onclick="navegarADashboard('dashboard')">
+                <a href="{{ url_for('dashboard_admin') }}" class="menu-item menu-item-orange" onclick="navegarADashboard('cargar-foto')">
                     <div class="menu-icon">📊</div>
                     <span class="menu-text">Dashboard</span>
                 </a>
             </div>
             <div class="menu-section">
                 <div class="menu-section-title">Gestión de Datos</div>
-                <a href="#" class="menu-item" onclick="navegarADashboard('cargar-excel')">
+                <a href="{{ url_for('dashboard_admin', _anchor='cargar-excel') }}" class="menu-item" onclick="navegarADashboard('cargar-excel')">
                     <div class="menu-icon">📁</div>
                     <span class="menu-text">Cargar Plantilla Excel</span>
                     <span class="menu-badge">Nuevo</span>
                 </a>
-                <a href="#" class="menu-item menu-item-orange" onclick="navegarADashboard('cargar-foto')">
+                <a href="{{ url_for('dashboard_admin', _anchor='cargar-foto') }}" class="menu-item menu-item-orange" onclick="navegarADashboard('cargar-foto')">
                     <div class="menu-icon menu-icon-orange">📸</div>
                     <span class="menu-text">Cargar Foto</span>
                 </a>
             </div>
             <div class="menu-section">
                 <div class="menu-section-title">Carnets</div>
-                <a href="#" class="menu-item" onclick="navegarADashboard('gestionar-carnets')">
+                <a href="{{ url_for('dashboard_admin', _anchor='gestionar-carnets') }}" class="menu-item menu-item-orange" onclick="navegarADashboard('gestionar-carnets')">
                     <div class="menu-icon">🎴</div>
                     <span class="menu-text">Generar y Gestionar Carnets</span>
                 </a>
-                <a href="#" class="menu-item" onclick="navegarADashboard('archivo-carnets')">
+                <a href="{{ url_for('dashboard_admin', _anchor='archivo-carnets') }}" class="menu-item menu-item-orange" onclick="navegarADashboard('archivo-carnets')">
                     <div class="menu-icon">📂</div>
                     <span class="menu-text">Archivo de Carnets</span>
                 </a>
-                <a href="#" class="menu-item" id="menuImprimir" onclick="navegarADashboard('imprimir-carnets')" style="opacity:0.45;pointer-events:none" title="Genera carnets primero para habilitar este botón">
+                <a href="{{ url_for('dashboard_admin', _anchor='imprimir-carnets') }}" class="menu-item menu-item-orange" onclick="navegarADashboard('imprimir-carnets')" style="opacity:0.45;pointer-events:none" title="Genera carnets primero para habilitar este botón">
                     <div class="menu-icon">🖨️</div>
                     <span class="menu-text">Imprimir Carnets</span>
                 </a>
@@ -550,7 +550,7 @@
             </div>
             <div class="menu-section">
                 <div class="menu-section-title">Sistema</div>
-                <a href="#" class="menu-item" onclick="navegarADashboard('eliminar-aprendices')">
+                <a href="{{ url_for('dashboard_admin', _anchor='eliminar-aprendices') }}" class="menu-item" onclick="navegarADashboard('eliminar-aprendices')">
                     <div class="menu-icon">🗑️</div>
                     <span class="menu-text">Eliminar Fichas y Editar Aprendices</span>
                 </a>
@@ -894,10 +894,10 @@
     </main>
 </div>
 
-<script type="module">
+<script>
     // Funciones de navegación y sidebar
-    console.log("sadasdasd")
     function toggleSidebar() {
+       
         document.getElementById('sidebar').classList.toggle('active');
         document.getElementById('sidebarOverlay').classList.toggle('active');
     }
@@ -914,7 +914,6 @@
             document.getElementById('sidebarOverlay').classList.remove('active');
         }
     });
-    console.log("mmmmmmmmmmmmmmmmmmmmmmmmmmm")
     // Opcional: habilitar menú imprimir si ya hay carnets generados (para la apariencia)
     (function verificarCarnets() {
         fetch('/api/carnets_generados?_=' + Date.now())
@@ -972,5 +971,6 @@
         });
     }
 </script>
+
 </body>
 </html>
