@@ -213,7 +213,7 @@
             .menu-item, .action-button, .btn-logout { min-height: 44px; }
             .mobile-menu-toggle { min-width: 48px; min-height: 48px; }
         }
-        /* ===== ESTILOS DEL REPORTE (originales, con ajustes para no colisionar) ===== */
+        /* ===== ESTILOS DEL REPORTE ===== */
         :root {
             --verde:      #39A935;
             --verde-osc:  #1e5c1e;
@@ -280,6 +280,24 @@
             min-height: 44px;
         }
         .btn-filtrar:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(57,169,53,0.4); }
+        /* TAREA 2: Botón imprimir junto al filtro */
+        .btn-imprimir-filtro {
+            padding: 9px 18px;
+            background: white;
+            color: #1e5c1e;
+            border: 2px solid #c8e6c9;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            transition: all 0.2s;
+            min-height: 44px;
+            white-space: nowrap;
+        }
+        .btn-imprimir-filtro:hover { background: var(--verde-cl); border-color: var(--verde); transform: translateY(-2px); }
         .reporte {
             width: 100%;
             max-width: 1180px;
@@ -379,7 +397,7 @@
         .barra-texto { font-size: 10px; color: #666; margin-top: 3px; }
         .tabla-wrap { overflow-x: auto; border-radius: 10px; margin-top: 4px; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        thead tr { background: linear-gradient(135deg, var(--verde-osc), var(--verde)); color: white; }
+        thead tr { background: linear-gradient(135deg, var(--verde-osc), var(--verde)); color: rgb(0, 0, 0); }
         thead th { padding: 11px 14px; text-align: left; font-weight: 700; white-space: nowrap; }
         thead th.center { text-align: center; }
         tbody tr { border-bottom: 1px solid #f0f0f0; transition: background 0.15s; }
@@ -433,45 +451,205 @@
             text-transform: uppercase;
             letter-spacing: 0.6px;
         }
-        .btn-topbar {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 7px;
-        padding: 8px 15px;
-        border-radius: 10px;
-        font-size: 13px;
-        font-weight: 700;
-        cursor: pointer;
-        border: none;
-        font-family: inherit;
-        transition: all 0.3s;
-        text-decoration: none;
-        min-height: 44px;
-        white-space: nowrap;
-    }
-    .btn-topbar:hover { transform: translateY(-2px); }
-    .btn-imprimir {
-        background: white;
-        color: #1e5c1e;
-    }
         .empty-state { text-align: center; padding: 40px 20px; color: #aaa; font-size: 14px; }
         .empty-state-icon { font-size: 48px; display: block; margin-bottom: 12px; opacity: 0.5; }
         @media (max-width: 900px) { .dos-col { grid-template-columns: 1fr; } }
         @media print {
-            .top-header, .sidebar, .sidebar-overlay, .filtros-bar { display: none !important; }
-            body { background: white; font-size: 11px; margin: 0; }
-            .main-layout { margin-top: 0; min-height: auto; }
-            .content-area { margin-left: 0; width: 100%; padding: 0; background: white; }
-            .reporte { margin: 0; padding: 4mm 8mm 10mm; max-width: 100%; }
-            @page { margin: 20mm 22mm 35mm 15mm; }
-            .rep-header { padding: 10px 14px; margin-bottom: 10px; border-radius: 6px; border-top: 4px solid var(--verde-osc); box-shadow: none; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .seccion { padding: 10px 12px; margin-bottom: 10px; box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; break-inside: avoid; }
-            .metrica { padding: 8px 7px; }
-            .met-num { font-size: 22px; }
-            .dos-col { gap: 8px; }
-            .interpretacion { border: 1.5px solid #4caf50 !important; border-left: 5px solid var(--verde-osc) !important; background: #f0fdf0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .metrica, .badge, thead tr, tfoot tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            /* Ocultar elementos no deseados */
+            .top-header, .sidebar, .sidebar-overlay, .filtros-bar, .btn-filtrar, .btn-imprimir-filtro,
+            .mobile-menu-toggle, .header-right, .btn-logout {
+                display: none !important;
+            }
+
+            body {
+                background: white !important;
+                font-size: 10pt !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .main-layout {
+                margin-top: 0 !important;
+                min-height: auto !important;
+            }
+
+            .content-area {
+                margin-left: 0 !important;
+                width: 100% !important;
+                padding: 0 !important;
+                background: white !important;
+            }
+
+            .reporte {
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0.2in !important;
+            }
+
+            /* Encabezado del reporte */
+            .rep-header {
+                padding: 8px 10px !important;
+                margin-bottom: 10px !important;
+                border-top: 3px solid #1e5c1e !important;
+                box-shadow: none !important;
+                break-inside: avoid;
+            }
+
+            .rep-header-logo {
+                gap: 8px !important;
+            }
+
+            .rep-header-icon {
+                width: 40px !important;
+                height: 40px !important;
+            }
+
+            .rep-header-titulo {
+                font-size: 14pt !important;
+            }
+
+            .rep-header-sub, .rep-header-centro, .rep-header-fecha {
+                font-size: 8pt !important;
+            }
+
+            .rep-header-periodo {
+                font-size: 12pt !important;
+                padding: 4px 10px !important;
+            }
+
+            /* Secciones y tarjetas */
+            .seccion {
+                padding: 10px 12px !important;
+                margin-bottom: 12px !important;
+                box-shadow: none !important;
+                border: 1px solid #ddd !important;
+                border-radius: 8px !important;
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
+            .seccion-titulo {
+                font-size: 11pt !important;
+                margin-bottom: 8px !important;
+                padding-bottom: 4px !important;
+            }
+
+            /* Tarjetas de métricas */
+            .metricas-grid {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
+                gap: 8px !important;
+            }
+
+            .metrica {
+                padding: 8px 6px !important;
+                border-left-width: 3px !important;
+            }
+
+            .met-num {
+                font-size: 18pt !important;
+            }
+
+            .met-label {
+                font-size: 8pt !important;
+            }
+
+            .met-sub {
+                font-size: 7pt !important;
+            }
+
+            /* Tablas - crítico para que no se corten */
+            .tabla-wrap {
+                overflow: visible !important;
+                width: 100% !important;
+            }
+
+            table {
+                width: 100% !important;
+                font-size: 8pt !important;
+                border-collapse: collapse !important;
+            }
+
+            th, td {
+                padding: 4px 6px !important;
+                word-break: break-word !important;
+                white-space: normal !important;
+                border-bottom: 1px solid #ccc !important;
+            }
+
+            thead tr {
+                background: #e8f5e9 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            /* Badges y mini barras */
+            .badge {
+                font-size: 7pt !important;
+                padding: 1px 5px !important;
+            }
+
+            .mini-barra-wrap {
+                gap: 4px !important;
+            }
+
+            .mini-barra-track {
+                min-width: 40px !important;
+            }
+
+            /* Gráfico */
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+                page-break-inside: avoid;
+            }
+
+            /* Interpretación y avisos */
+            .interpretacion {
+                padding: 8px 10px !important;
+                margin-top: 8px !important;
+                border-left-width: 4px !important;
+                font-size: 8pt !important;
+                background: #f0fdf0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .aviso {
+                font-size: 8pt !important;
+                padding: 6px 10px !important;
+            }
+
+            /* Footer */
+            hr {
+                margin: 12px 0 !important;
+            }
+
+            .footer-texto {
+                font-size: 7pt !important;
+            }
+
+            /* Evitar que las secciones se partan entre páginas */
+            .seccion, .rep-header, .interpretacion, .dos-col > * {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+
+            /* Ajustar columnas dobles en impresión */
+            .dos-col {
+                display: block !important;
+            }
+
+            .dos-col .seccion {
+                margin-bottom: 12px !important;
+            }
+        }
+        canvas {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 8px;
+            max-width: 100%;
+            height: auto;
         }
     </style>
 </head>
@@ -488,14 +666,7 @@
         <div class="user-info">
             <span>👤 Bienvenido, <strong>admin</strong></span>
         </div>
-        <button class="btn-topbar btn-imprimir" type="button" onclick="window.print()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px">
-                <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                <rect x="6" y="14" width="12" height="8"></rect>
-            </svg>
-            Imprimir / PDF
-        </button>
+        <!-- TAREA 2: Botón imprimir eliminado del header -->
         <a href="{{ url_for('logout') }}" class="btn-logout">
             <span>🚪</span><span>Cerrar Sesión</span>
         </a>
@@ -511,7 +682,7 @@
         <nav class="sidebar-menu">
             <div class="menu-section">
                 <div class="menu-section-title">Principal</div>
-                <a href="{{ url_for('dashboard_admin') }}" class="menu-item menu-item-orange" onclick="navegarADashboard('cargar-foto')">
+                <a href="{{ url_for('dashboard_admin') }}" class="menu-item" onclick="navegarADashboard('cargar-foto')">
                     <div class="menu-icon">📊</div>
                     <span class="menu-text">Dashboard</span>
                 </a>
@@ -523,26 +694,26 @@
                     <span class="menu-text">Cargar Plantilla Excel</span>
                     <span class="menu-badge">Nuevo</span>
                 </a>
-                <a href="{{ url_for('dashboard_admin', _anchor='cargar-foto') }}" class="menu-item menu-item-orange" onclick="navegarADashboard('cargar-foto')">
-                    <div class="menu-icon menu-icon-orange">📸</div>
+                <a href="{{ url_for('dashboard_admin', _anchor='cargar-foto') }}" class="menu-item" onclick="navegarADashboard('cargar-foto')">
+                    <div class="menu-icon">📸</div>
                     <span class="menu-text">Cargar Foto</span>
                 </a>
             </div>
             <div class="menu-section">
                 <div class="menu-section-title">Carnets</div>
-                <a href="{{ url_for('dashboard_admin', _anchor='gestionar-carnets') }}" class="menu-item menu-item-orange" onclick="navegarADashboard('gestionar-carnets')">
+                <a href="{{ url_for('dashboard_admin', _anchor='gestionar-carnets') }}" class="menu-item" onclick="navegarADashboard('gestionar-carnets')">
                     <div class="menu-icon">🎴</div>
                     <span class="menu-text">Generar y Gestionar Carnets</span>
                 </a>
-                <a href="{{ url_for('dashboard_admin', _anchor='archivo-carnets') }}" class="menu-item menu-item-orange" onclick="navegarADashboard('archivo-carnets')">
+                <a href="{{ url_for('dashboard_admin', _anchor='archivo-carnets') }}" class="menu-item" onclick="navegarADashboard('archivo-carnets')">
                     <div class="menu-icon">📂</div>
                     <span class="menu-text">Archivo de Carnets</span>
                 </a>
-                <a href="{{ url_for('dashboard_admin', _anchor='imprimir-carnets') }}" class="menu-item menu-item-orange" onclick="navegarADashboard('imprimir-carnets')" style="opacity:0.45;pointer-events:none" title="Genera carnets primero para habilitar este botón">
+                <!-- TAREA 1: Imprimir carnets habilitado — se activa dinámicamente igual que en el dashboard -->
+                <a href="{{ url_for('dashboard_admin', _anchor='imprimir-carnets') }}" class="menu-item" id="menuImprimir" onclick="navegarADashboard('imprimir-carnets')" style="opacity:0.45;pointer-events:none" title="Genera carnets primero para habilitar este botón">
                     <div class="menu-icon">🖨️</div>
                     <span class="menu-text">Imprimir Carnets</span>
                 </a>
-                
                 <a href="{{ url_for('reporte_mensual') }}" class="menu-item active">
                     <div class="menu-icon">📊</div>
                     <span class="menu-text">Reporte Mensual</span>
@@ -561,7 +732,7 @@
 
     <main class="content-area">
         <div id="reporte-mensual" class="content-section active">
-            <!-- filtros -->
+            <!-- TAREA 2: Botón Imprimir/PDF movido al lado de Generar Reporte -->
             <div class="filtros-bar">
                 <form method="GET" action="{{ url_for('reporte_mensual') }}">
                     <label>Mes:</label>
@@ -578,7 +749,18 @@
                         <option value="{{ a }}" {% if a == anio_actual %}selected{% endif %}>{{ a }}</option>
                         {% endfor %}
                     </select>
-                    <button type="submit" class="btn-filtrar">Generar Reporte</button>
+                    <button type="submit" class="btn-filtrar">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        Generar Reporte
+                    </button>
+                    <button type="button" class="btn-imprimir-filtro" onclick="window.print()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px">
+                            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                            <rect x="6" y="14" width="12" height="8"></rect>
+                        </svg>
+                        Imprimir / PDF
+                    </button>
                 </form>
             </div>
 
@@ -857,18 +1039,13 @@
                     {% else %}<div class="empty-state"><span class="empty-state-icon">📭</span>Sin carnets generados en este período.</div>{% endif %}
                 </div>
 
-
                 <div class="seccion">
-                    <div class="seccion-titulo">📊 Carnets generados por semana </div>
-                    <!-- Generaer grafico de barras para registros por semana -->
+                    <div class="seccion-titulo">📊 Carnets generados por semana</div>
                     {% if stats.por_semana %}
                             <canvas id="graficoCarnets" width="600" height="400"></canvas>
-                        <!--Código para generar el gráfico de barras-->
                     {% else %}<div class="empty-state"><span class="empty-state-icon">📭</span>Sin carnets generados en este período.</div>
                     {% endif %}
-                </div> 
-
-                
+                </div>
 
                 <!-- conclusiones -->
                 <div class="seccion">
@@ -882,8 +1059,8 @@
                     </div>
                 </div>
 
-                <hr class="sep">
-                <div class="pie">
+                <hr style="border:none;border-top:1px solid #e0e0e0;margin:30px 0 20px">
+                <div style="text-align:center;color:#aaa;font-size:12px;padding-bottom:20px">
                     <p>📊 Reporte generado automáticamente por el <strong>Sistema de Carnets Digitales SENA</strong></p>
                     <p style="margin-top:6px">Centro de Biotecnología Industrial – Valle del Cauca • {{ fecha_generacion }}</p>
                     <p style="margin-top:4px;color:#ccc">Este documento es confidencial y de uso interno</p>
@@ -895,26 +1072,23 @@
 </div>
 
 <script>
-    // Funciones de navegación y sidebar
     function toggleSidebar() {
-       
         document.getElementById('sidebar').classList.toggle('active');
         document.getElementById('sidebarOverlay').classList.toggle('active');
     }
 
-    // Redirige al dashboard con el parámetro de sección
     function navegarADashboard(seccion) {
         window.location.href = "{{ url_for('dashboard_admin') }}?section=" + seccion;
     }
 
-    // Cierre del sidebar al redimensionar (para escritorio)
     window.addEventListener('resize', function() {
         if (window.innerWidth > 768) {
             document.getElementById('sidebar').classList.remove('active');
             document.getElementById('sidebarOverlay').classList.remove('active');
         }
     });
-    // Opcional: habilitar menú imprimir si ya hay carnets generados (para la apariencia)
+
+    // TAREA 1: Verificar si hay carnets generados para habilitar "Imprimir Carnets"
     (function verificarCarnets() {
         fetch('/api/carnets_generados?_=' + Date.now())
             .then(res => res.json())
@@ -928,26 +1102,23 @@
                     }
                 }
             })
-            .catch(() => {console.log(":)")});
+            .catch(() => { console.log(':)'); });
     })();
 </script>
 
 <!-- Cargar Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- Script para el gráfico -->
 <script>
-    const datosSemanas = {  
-        {% for s in stats.por_semana %}  
-            "semana{{ loop.index }}": {{ s.carnets }}{% if not loop.last %},{% endif %}  
-        {% endfor %}  
+    const datosSemanas = {
+        {% for s in stats.por_semana %}
+            "semana{{ loop.index }}": {{ s.carnets }}{% if not loop.last %},{% endif %}
+        {% endfor %}
     };
-    
-    // Separar claves y valores
+
     const labels = Object.keys(datosSemanas);
     const data = Object.values(datosSemanas);
 
-    // Verificar que el elemento canvas existe
     const ctx = document.getElementById('graficoCarnets');
     if (ctx) {
         new Chart(ctx.getContext('2d'), {
@@ -962,11 +1133,7 @@
             },
             options: {
                 responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
+                scales: { y: { beginAtZero: true } }
             }
         });
     }

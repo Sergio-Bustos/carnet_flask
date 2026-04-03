@@ -80,7 +80,8 @@ def obtener_archivo_carnet_por_cedula(cedula):
     # TAREA DE VALIDACION - 17
     # Prioriza archivo completo/combinado (anverso + reverso) antes del anverso solo.
     posibles_carnets = [
-        os.path.join('static', 'carnets', f"{aprendiz['nombre'].replace(' ', '_')}_completo.png"),
+        os.path.join('static', 'carnets', f"{aprendiz['nombre'].replace(' ', '_')}_{cedula_limpia}.png"),
+        os.path.join('static', 'carnets', f"{aprendiz['nombre'].replace(' ', '_')}_completo.png"),  # compatibilidad con carnets viejos
         os.path.join('static', 'carnets', f'carnet_combinado_{cedula_limpia}.png'),
         os.path.join('static', 'carnets', f'carnet_{cedula_limpia}.png'),
     ]
@@ -1724,7 +1725,8 @@ def generar_carnet_web():
             # Combinar anverso y reverso
             print("Combinando anverso y reverso...")
             reverso_path = f"reverso_{empleado['cedula']}.png"
-            archivo_combinado = combinar_anverso_reverso(nombre_archivo, reverso_path, empleado['nombre'])
+            archivo_combinado = combinar_anverso_reverso(nombre_archivo, reverso_path, empleado['nombre'], empleado['cedula'])
+
             print(f"Archivo combinado: {archivo_combinado}")
 
             # ✅ Marcar carnet como disponible SOLO si el PNG combinado existe en disco
@@ -2771,27 +2773,25 @@ def reporte_mensual_pdf():
 # ── Helper: divide el mes en semanas ISO ──────────────────────────────
 def _calcular_semanas_mes(primer_dia, ultimo_dia):
     """
-    Retorna lista de dicts {numero, inicio, fin} para cada semana
-    del mes, ajustando inicio/fin al primer/último día del mes.
+    Retorna lista de dicts {numero, inicio, fin} para cada semana del mes,
+    máximo 4 semanas (trunca si el mes tiene 5 semanas).
     """
     semanas = []
     cursor_day = primer_dia
     num_semana = 1
- 
-    while cursor_day <= ultimo_dia:
-        # Fin de semana = domingo de esa semana o último día del mes
+
+    while cursor_day <= ultimo_dia and len(semanas) < 4:   # ← máximo 4 semanas
         fin_semana = cursor_day + timedelta(days=(6 - cursor_day.weekday()))
         if fin_semana > ultimo_dia:
             fin_semana = ultimo_dia
- 
         semanas.append({
             'numero': num_semana,
             'inicio': cursor_day,
-            'fin':    fin_semana,
+            'fin': fin_semana,
         })
         cursor_day = fin_semana + timedelta(days=1)
         num_semana += 1
- 
+
     return semanas
 # =============================================
 # RUTAS PARA GESTIÓN DE BACKUPS DE FOTOS
@@ -3067,14 +3067,11 @@ def ver_carnet_archivo(cedula):
         return redirect(url_for('login'))
     
     try:
-        # Buscar el aprendiz por cédula
         aprendiz = buscar_empleado_completo(cedula)
-        
         if not aprendiz:
             flash(f'No se encontró aprendiz con cédula {cedula}', 'error')
             return redirect(url_for('archivo_carnets'))
         
-        # Buscar el archivo del carnet
         posibles_carnets = [
             f"static/carnets/{aprendiz['nombre'].replace(' ', '_')}_completo.png",
             f"static/carnets/carnet_combinado_{cedula}.png",
@@ -3087,47 +3084,10 @@ def ver_carnet_archivo(cedula):
                 carnet_encontrado = os.path.basename(carnet_path)
                 break
         
-        # Si no existe el carnet, generarlo ahora
+        # ✅ CAMBIO AQUÍ: ya no se genera automáticamente
         if not carnet_encontrado:
-            print(f"⚠️ Carnet no encontrado, generando ahora para {aprendiz['nombre']}")
-            
-            # Verificar que tenga foto
-            if not aprendiz.get('foto'):
-                flash(f'El aprendiz {aprendiz["nombre"]} no tiene foto. Debe cargar una primero.', 'error')
-                return redirect(url_for('archivo_carnets'))
-            
-            try:
-                # Generar QR
-                ruta_qr = generar_qr(aprendiz["cedula"])
-                
-                # Generar carnet
-                ruta_carnet = generar_carnet(aprendiz, ruta_qr)
-                nombre_archivo = os.path.basename(ruta_carnet)
-                
-                # Combinar anverso y reverso
-                reverso_path = f"reverso_{aprendiz['cedula']}.png"
-                carnet_encontrado = combinar_anverso_reverso(nombre_archivo, reverso_path, aprendiz['nombre'])
-
-                # ✅ Marcar carnet_disponible = 1 SOLO si el PNG existe en disco
-                ruta_png = os.path.join('static', 'carnets', carnet_encontrado)
-                if os.path.exists(ruta_png):
-                    conn = sqlite3.connect('carnet.db')
-                    cursor = conn.cursor()
-                    cursor.execute(
-                        "UPDATE empleados SET carnet_disponible = 1 WHERE cedula = ?",
-                        (aprendiz['cedula'],)
-                    )
-                    conn.commit()
-                    conn.close()
-                    print(f"✅ carnet_disponible = 1 marcado para cédula {aprendiz['cedula']}")
-                else:
-                    print(f"⚠️ PNG no encontrado en disco, no se marcó carnet_disponible")
-                
-                flash(f'✅ Carnet generado exitosamente para {aprendiz["nombre"]}', 'success')
-                
-            except Exception as e:
-                flash(f'Error al generar el carnet: {str(e)}', 'error')
-                return redirect(url_for('archivo_carnets'))
+            flash(f'⚠️ El carnet de {aprendiz["nombre"]} aún no ha sido generado. Ve a la sección "Generar y Gestionar Carnets" y haz clic en "Generar".', 'warning')
+            return redirect(url_for('archivo_carnets'))
         
         return render_template("ver_carnet.html", 
                              carnet=carnet_encontrado, 
@@ -3479,7 +3439,8 @@ def generar_carnets_ficha(codigo_ficha):
                 # Combinar anverso y reverso
                 nombre_archivo = os.path.basename(ruta_carnet)
                 reverso_path = f"reverso_{empleado['cedula']}.png"
-                archivo_combinado = combinar_anverso_reverso(nombre_archivo, reverso_path, empleado['nombre'])
+                archivo_combinado = combinar_anverso_reverso(nombre_archivo, reverso_path, empleado['nombre'], empleado['cedula'])
+
                 
                 carnets_generados += 1
                 print(f"Carnet generado para: {empleado['nombre']}")

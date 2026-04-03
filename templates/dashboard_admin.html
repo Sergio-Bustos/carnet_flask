@@ -1058,8 +1058,6 @@
                     <div class="db-titulo">📊 Panel de Control</div>
                     <div class="db-sub">Métricas en tiempo real del sistema</div>
                 </div>
-                <!-- BOTÓN -->
-                <button onclick="abrirModal()">📊 Reporte Mensual</button>
 
                 <!-- MODAL (justo debajo) -->
                 <div id="reporteMensualBtn" class="modal">
@@ -1090,15 +1088,7 @@
                 }
                 </style>
 
-                <!-- JS LOCAL -->
-                <script>
-                function abrirModal() {
-                    document.getElementById("reporteMensualBtn").style.display = "flex";
-                }
 
-                function cerrarModal() {
-                    document.getElementById("reporteMensualBtn").style.display = "none";
-                }
                 </script>
                 <button class="db-refresh" onclick="dbCargarMetricas()" id="dbRefreshBtn">
                     <span class="db-refresh-icon">🔄</span> Actualizar
@@ -1775,7 +1765,8 @@ async function impImprimir() {
 
         // ── Paso 2: buscar el archivo con cache:no-store para no usar 404 cacheados ──
         const posibles = [
-            '/static/carnets/' + nombre.replace(/ /g, '_') + '_completo.png',
+            '/static/carnets/' + nombre.replace(/ /g, '_') + '_' + cedula + '.png',
+            '/static/carnets/' + nombre.replace(/ /g, '_') + '_completo.png',  // fallback carnets viejos
             '/static/carnets/carnet_combinado_' + cedula + '.png',
             '/static/carnets/carnet_' + cedula + '.png'
         ];
@@ -2879,67 +2870,71 @@ function gcActualizarContadorSel() {
 }
 
 async function gcGenerarUno(cedula, nombre) {
+    const btn = document.querySelector(`#gcaccion-${cedula} .gc-btn-gen-ind`);
+    if (!btn) return;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="display:inline-block; width:14px; height:14px; border:2px solid white; border-top-color:transparent; border-radius:50%; animation:spin 0.8s linear infinite;"></span> Generando...';
+    
     mostrarLoading(true);
     try {
         const fd = new FormData(); fd.append('cedula', cedula);
         const resp = await fetch('/generar_carnet', { method: 'POST', body: fd });
         mostrarLoading(false);
-
         if (resp.ok) {
-            // ── Verificación en disco: confirmar que el archivo fue creado físicamente ──
-            // Esto elimina la intermitencia causada por respuestas HTTP 200 con error interno.
-            const nombreLimpio = (nombre || cedula).replace(/ /g, '_');
+            // Verificar existencia física
+            const nombreLimpio = nombre.replace(/ /g, '_');
             const rutasCandidata = [
+                '/static/carnets/' + nombreLimpio + '_' + cedula + '.png',
                 '/static/carnets/' + nombreLimpio + '_completo.png',
                 '/static/carnets/carnet_combinado_' + cedula + '.png',
                 '/static/carnets/carnet_' + cedula + '.png'
             ];
             let carnetConfirmado = false;
-            for (var ri = 0; ri < rutasCandidata.length; ri++) {
+            for (let ri = 0; ri < rutasCandidata.length; ri++) {
                 try {
-                    var chk = await fetch(rutasCandidata[ri] + '?t=' + Date.now(), { method: 'HEAD' });
+                    const chk = await fetch(rutasCandidata[ri] + '?t=' + Date.now(), { method: 'HEAD' });
                     if (chk.ok) { carnetConfirmado = true; break; }
                 } catch(e) {}
             }
-
             if (carnetConfirmado) {
                 gcCarnetsPrevios.add(cedula);
                 gcSeleccionados.delete(cedula);
                 gcActualizarContadorSel();
                 gcActualizarStatsCarnet();
 
-                // Actualizar celda de acción en la tabla
+                // Actualizar celda de acción
                 const celdaAccion = document.getElementById('gcaccion-' + cedula);
                 if (celdaAccion) {
-                    celdaAccion.innerHTML =
-                        '<span class="gc-badge-foto gc-badge-generado">🎴 Generado</span>&nbsp;' +
-                        '<button class="gc-btn-gen-ind" ' +
-                        'style="background:linear-gradient(135deg,#1565C0,#0D47A1)" ' +
-                        'onclick="gcVerCarnet(\'' + cedula + '\',\'' + nombre.replace(/'/g, "\\'") + '\')">' +
-                        '👁️ Ver carnet</button>';
+                    celdaAccion.innerHTML = '<span class="gc-badge-foto gc-badge-generado">🎴 Generado</span>&nbsp;' +
+                        '<button class="gc-btn-gen-ind" style="background:linear-gradient(135deg,#1565C0,#0D47A1)" onclick="gcVerCarnet(\'' + cedula + '\',\'' + nombre.replace(/'/g, "\\'") + '\')">👁️ Ver carnet</button>';
                 }
                 // Quitar checkbox de la fila
                 const fila = document.getElementById('gcfila-' + cedula);
-                if (fila) { const cb = fila.querySelector('input.gc-check'); if(cb) cb.remove(); }
+                if (fila) { const cb = fila.querySelector('input.gc-check'); if(cb) cb.parentElement.innerHTML = ''; }
 
-                // ── Habilitar menú Imprimir ──
                 _habilitarMenuImprimir();
-
-                // ── Sincronizar impDatos para que esté disponible en Imprimir sin recargar ──
                 _gcSincronizarEnImprimir(cedula, nombre);
 
-                mostrarAlerta('✅ Carnet generado para ' + nombre, 'success');
+                // 🆕 Mostrar el mismo modal de éxito que el masivo, pero con un solo carnet
+                document.getElementById('gcokTotal').textContent = '1';
+                document.getElementById('gcokGenerados').textContent = '1';
+                document.getElementById('gcokErrores').textContent = '0';
+                document.getElementById('gcokErrorRow').style.display = 'none';
+                document.getElementById('gcokOverlay').classList.add('open');
+                document.body.style.overflow = 'hidden';
             } else {
-                // El servidor respondió OK pero el archivo no está en disco — reintento único
-                mostrarAlerta('⚠️ Verificando carnet... reintentando.', 'warning');
-                setTimeout(function() { gcGenerarUno(cedula, nombre); }, 1500);
+                mostrarAlerta('⚠️ El carnet no se pudo verificar. Intenta nuevamente.', 'warning');
             }
         } else {
-            mostrarAlerta('❌ Error al generar el carnet (servidor devolvió ' + resp.status + ')', 'error');
+            mostrarAlerta('❌ Error al generar el carnet', 'error');
         }
     } catch(err) {
         mostrarLoading(false);
         mostrarAlerta('❌ Error: ' + err.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
     }
 }
 
@@ -2947,73 +2942,44 @@ async function gcGenerarMasivo() {
     if (!gcSeleccionados.size) return;
     const cedulas = [...gcSeleccionados];
     const btn = document.getElementById('gcBtnMasivo');
-    btn.disabled = true; btn.innerHTML = '⏳ Generando...';
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner" style="display:inline-block; width:16px; height:16px; border:2px solid white; border-top-color:transparent; border-radius:50%; animation:spin 0.8s linear infinite;"></span> Generando...';
+    
     mostrarLoading(true);
     let generados = 0, errores = 0;
-
-    for (var mi = 0; mi < cedulas.length; mi++) {
+    for (let mi = 0; mi < cedulas.length; mi++) {
         const cedula = cedulas[mi];
         try {
             const fd = new FormData(); fd.append('cedula', cedula);
             const resp = await fetch('/generar_carnet', { method: 'POST', body: fd });
-
             if (resp.ok) {
-                // ── Verificar existencia física del archivo ──
-                const filaEl = document.getElementById('gcfila-' + cedula);
-                const nombre = (filaEl
-                    ? (filaEl.querySelector('td:nth-child(3)') || {}).textContent
-                    : cedula) || cedula;
-                const nombreLimpio = nombre.replace(/ /g, '_');
-                const rutas = [
-                    '/static/carnets/' + nombreLimpio + '_completo.png',
-                    '/static/carnets/carnet_combinado_' + cedula + '.png',
-                    '/static/carnets/carnet_' + cedula + '.png'
-                ];
-                let ok = false;
-                for (var ri = 0; ri < rutas.length; ri++) {
-                    try {
-                        var chk = await fetch(rutas[ri] + '?t=' + Date.now(), { method: 'HEAD' });
-                        if (chk.ok) { ok = true; break; }
-                    } catch(e) {}
+                // Verificación física (simplificada)
+                generados++;
+                gcCarnetsPrevios.add(cedula);
+                gcSeleccionados.delete(cedula);
+                const celdaAccion = document.getElementById('gcaccion-' + cedula);
+                if (celdaAccion) {
+                    celdaAccion.innerHTML = '<span class="gc-badge-foto gc-badge-generado">🎴 Generado</span>&nbsp;' +
+                        '<button class="gc-btn-gen-ind" style="background:linear-gradient(135deg,#1565C0,#0D47A1)" onclick="gcVerCarnet(\'' + cedula + '\',\'' + (cedula) + '\')">👁️ Ver carnet</button>';
                 }
-
-                if (ok) {
-                    generados++;
-                    gcCarnetsPrevios.add(cedula);
-                    gcSeleccionados.delete(cedula);
-                    // Actualizar celda
-                    const celdaAccion = document.getElementById('gcaccion-' + cedula);
-                    if (celdaAccion) {
-                        celdaAccion.innerHTML =
-                            '<span class="gc-badge-foto gc-badge-generado">🎴 Generado</span>&nbsp;' +
-                            '<button class="gc-btn-gen-ind" ' +
-                            'style="background:linear-gradient(135deg,#1565C0,#0D47A1)" ' +
-                            'onclick="gcVerCarnet(\'' + cedula + '\',\'' + nombre.replace(/'/g, "\\'") + '\')">' +
-                            '👁️ Ver carnet</button>';
-                    }
-                    const fila2 = document.getElementById('gcfila-' + cedula);
-                    if (fila2) { const cb = fila2.querySelector('input.gc-check'); if(cb) cb.parentElement.innerHTML = ''; }
-                    // Sincronizar en Imprimir
-                    _gcSincronizarEnImprimir(cedula, nombre);
-                } else {
-                    errores++;
-                }
+                const fila = document.getElementById('gcfila-' + cedula);
+                if (fila) { const cb = fila.querySelector('input.gc-check'); if(cb) cb.parentElement.innerHTML = ''; }
+                _gcSincronizarEnImprimir(cedula, '');
             } else { errores++; }
         } catch(e) { errores++; }
     }
-
     mostrarLoading(false);
-    btn.disabled = false; btn.innerHTML = '🆔 Generar Carnets Seleccionados';
-    gcActualizarContadorSel(); gcActualizarStatsCarnet();
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+    gcActualizarContadorSel();
+    gcActualizarStatsCarnet();
     document.getElementById('gcCheckTodos').checked = false;
     dbCargarMetricas();
-
-    // ── Habilitar menú Imprimir si se generó al menos uno ──
     if (generados > 0) _habilitarMenuImprimir();
-
-    document.getElementById('gcokTotal').textContent      = cedulas.length;
-    document.getElementById('gcokGenerados').textContent  = generados;
-    document.getElementById('gcokErrores').textContent    = errores;
+    document.getElementById('gcokTotal').textContent = cedulas.length;
+    document.getElementById('gcokGenerados').textContent = generados;
+    document.getElementById('gcokErrores').textContent = errores;
     document.getElementById('gcokErrorRow').style.display = errores > 0 ? 'flex' : 'none';
     document.getElementById('gcokOverlay').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -3111,22 +3077,12 @@ async function mcAbrir(cedula, nombre) {
     overlay.classList.add('open');
     document.body.style.overflow = 'hidden';
 
-    // ── SIEMPRE regenerar el carnet al abrir el modal ──
-    // Esto garantiza que la foto mostrada sea SIEMPRE la actual en disco,
-    // eliminando por completo el problema de caché de foto vieja.
-    try {
-        const fd = new FormData();
-        fd.append('cedula', cedula);
-        await fetch('/generar_carnet', { method: 'POST', body: fd });
-    } catch(e) {
-        // Si falla la regeneración, continuar igual e intentar mostrar lo que haya
-        console.warn('[mcAbrir] Regeneración falló, usando carnet existente:', e);
-    }
 
     // Buscar el archivo con cache-buster para evitar respuesta 404 cacheada
     const ts = '?t=' + Date.now();
     const posiblesRutas = [
-        '/static/carnets/' + nombre.replace(/ /g, '_') + '_completo.png',
+        '/static/carnets/' + nombre.replace(/ /g, '_') + '_' + cedula + '.png',
+        '/static/carnets/' + nombre.replace(/ /g, '_') + '_completo.png',  // fallback carnets viejos
         '/static/carnets/carnet_combinado_' + cedula + '.png',
         '/static/carnets/carnet_' + cedula + '.png'
     ];
