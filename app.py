@@ -46,6 +46,34 @@ usuarios = {
     "usuario": {"clave": "123456", "rol": "admin"}
 }
 
+
+#LIMPIEZA DE CACHE----SPRINT 2
+#Este decorador '@app.after_request' interviene en el ciclo de vida de cada petición HTTP.
+#Su objetivo es inyectar cabeceras (headers) de control en la respuesta del servidor para:
+#1. Evitar que el navegador almacene copias locales (caché) de las páginas y datos.
+#2. Garantizar que, tras eliminar un registro (Aprendiz, Ficha o Foto), el usuario 
+#   vea la base de datos actualizada inmediatamente al redireccionar al Dashboard.
+#3. Asegurar la integridad visual: impide que el botón "Atrás" del navegador 
+#   muestre información que ya fue borrada físicamente del servidor o de la DB.
+   
+#Cabeceras utilizadas:
+#- Cache-Control: 'no-store' prohíbe guardar datos en disco; 'no-cache' fuerza la validación.
+#- Pragma: Asegura compatibilidad con protocolos HTTP/1.0 antiguos.
+#- Expires: Define una fecha de expiración inmediata (0), marcando el contenido como obsoleto.
+
+
+@app.after_request
+def add_header(response):
+    """
+    Añade cabeceras de control de caché a cada respuesta de Flask.
+    Esto asegura que después de borrar una ficha o foto, el navegador
+    no muestre datos 'fantasmas' que ya no existen.
+    """
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
 # TAREA DE VALIDACION - 17
 # Vincula y recupera la cédula autorizada de la sesión del aprendiz.
 def obtener_cedula_aprendiz_autenticado():
@@ -90,6 +118,20 @@ def obtener_archivo_carnet_por_cedula(cedula):
         if os.path.exists(carnet_path):
             return os.path.basename(carnet_path)
     return None
+
+
+# ======================================
+# limpieza de cache 
+@app.after_request
+def add_header(response):
+    # Fuerza al navegador a no guardar en caché ninguna respuesta
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+
+
 
 # =============================================
 # FUNCIONES AUXILIARES PRINCIPALES
